@@ -29,6 +29,8 @@
     "@stripe/stripe-js": "^2.4.0",
     "@supabase/ssr": "^0.5.2",
     "@supabase/supabase-js": "^2.47.12",
+    "@upstash/ratelimit": "^2.0.7",
+    "@upstash/redis": "^1.35.6",
     "@vercel/analytics": "^1.4.1",
     "class-variance-authority": "^0.7.1",
     "classnames": "^2.5.1",
