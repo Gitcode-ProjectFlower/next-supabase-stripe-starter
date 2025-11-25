@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
+
+import { getTopKLimit,validateFilterKeys } from '@/libs/facet-config';
 import { checkRateLimit, searchRateLimiter } from '@/libs/ratelimit';
-import { validateFilterKeys, getTopKLimit } from '@/libs/facet-config';
+import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
 import { getUserPlan, maskFields } from '@/libs/user-plan';
 
 const searchSchema = z.object({
