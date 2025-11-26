@@ -1,13 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { getTopKLimit,validateFilterKeys } from '@/libs/facet-config';
+import { getTopKLimit, validateFilterKeys } from '@/libs/facet-config';
 import { checkRateLimit, searchRateLimiter } from '@/libs/ratelimit';
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
 import { getUserPlan, maskFields } from '@/libs/user-plan';
 
 const searchSchema = z.object({
-  lookalike_names: z.array(z.string()).min(0).max(4),
+  names: z.array(z.string()).min(0).max(4).optional(),
+  lookalike_names: z.array(z.string()).min(0).max(4).optional(),
+  sectors: z.array(z.string()).optional(),
+  regions: z.array(z.string()).optional(),
+  experience_years: z.array(z.number()).optional(),
   filters: z.record(z.any()).optional(),
   top_k: z.number().int().min(1).max(5000),
 });
@@ -15,17 +19,17 @@ const searchSchema = z.object({
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createSupabaseServerClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
     if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const rateLimitResult = await checkRateLimit(user.id, searchRateLimiter);
-    
+
     if (!rateLimitResult.success) {
       return NextResponse.json(
         {
@@ -47,7 +51,7 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const validation = searchSchema.safeParse(body);
-    
+
     if (!validation.success) {
       return NextResponse.json(
         {
@@ -58,9 +62,28 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { lookalike_names, filters = {}, top_k } = validation.data;
+    const {
+      names,
+      lookalike_names,
+      sectors,
+      regions,
+      experience_years,
+      filters: explicitFilters,
+      top_k,
+    } = validation.data;
 
-    if (!validateFilterKeys(filters)) {
+    // Map frontend fields to backend expected structure
+    const finalLookalikeNames = names || lookalike_names || [];
+
+    // Construct filters object combining explicit filters and new specific fields
+    const finalFilters = {
+      ...(explicitFilters || {}),
+      ...(sectors && sectors.length > 0 ? { sectors } : {}),
+      ...(regions && regions.length > 0 ? { regions } : {}),
+      ...(experience_years && experience_years.length > 0 ? { experience_years } : {}),
+    };
+
+    if (!validateFilterKeys(finalFilters)) {
       return NextResponse.json(
         { error: 'Invalid filter keys provided' },
         { status: 400 }
@@ -69,7 +92,7 @@ export async function POST(request: NextRequest) {
 
     const userPlan = await getUserPlan(user.id);
     const planLimit = getTopKLimit(userPlan || 'small');
-    
+
     if (top_k > planLimit) {
       return NextResponse.json(
         {
@@ -82,18 +105,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const haystackUrl = process.env.HAYSTACK_BASE_URL || 'http://localhost:8000';
+    const haystackUrl =
+      process.env.HAYSTACK_BASE_URL || 'http://localhost:8000';
     const haystackApiKey = process.env.HAYSTACK_API_KEY || '';
-    
+
     const haystackResponse = await fetch(`${haystackUrl}/similarity`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${haystackApiKey}`,
+        Authorization: `Bearer ${haystackApiKey}`,
       },
       body: JSON.stringify({
-        lookalike_names,
-        filters,
+        lookalike_names: finalLookalikeNames,
+        filters: finalFilters,
         top_k,
         collection: 'en',
       }),

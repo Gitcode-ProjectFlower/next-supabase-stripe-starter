@@ -1,9 +1,20 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 import { FilterSidebar } from '@/components/selection/filter-sidebar';
 import { ResultsWorkspace } from '@/components/selection/results-workspace';
+import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
 
 export interface LookalikeResult {
@@ -19,19 +30,130 @@ export interface LookalikeResult {
 
 export default function NewSelectionPage() {
     const { toast } = useToast();
+    const router = useRouter();
 
     // State for filters
     const [names, setNames] = useState<string[]>([]);
-    const [sectors, setSectors] = useState<string[]>([]);
-    const [regions, setRegions] = useState<string[]>([]);
+    const [sectors, setSectors] = useState<Set<string>>(new Set());
+    const [regions, setRegions] = useState<Set<string>>(new Set());
     const [experience, setExperience] = useState<string[]>([]);
 
+    // State for selection metadata
+    const [selectionName, setSelectionName] = useState('New selection');
+    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+    const [isSaving, setIsSaving] = useState(false);
+    const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
+
     // State for results
-    const [results, setResults] = useState<LookalikeResult[]>([]);
+    const [results, setResults] = useState<LookalikeResult[]>([
+        {
+            doc_id: '1',
+            name: 'John Smith',
+            email: 'john.smith@example.com',
+            city: 'London',
+            street: '123 Baker Street',
+            sectors: ['INFORMATION AND COMMUNICATION', 'PROFESSIONAL'],
+            experience_years: 8,
+            similarity: 0.95,
+        },
+        {
+            doc_id: '2',
+            name: 'Emma Johnson',
+            email: 'emma.johnson@example.com',
+            city: 'Manchester',
+            street: '456 Oxford Road',
+            sectors: ['FINANCIAL AND INSURANCE ACTIVITIES'],
+            experience_years: 12,
+            similarity: 0.92,
+        },
+        {
+            doc_id: '3',
+            name: 'Michael Brown',
+            email: 'michael.brown@example.com',
+            city: 'Birmingham',
+            street: '789 High Street',
+            sectors: ['MANUFACTURING', 'CONSTRUCTION'],
+            experience_years: 15,
+            similarity: 0.88,
+        },
+        {
+            doc_id: '4',
+            name: 'Sarah Davis',
+            email: 'sarah.davis@example.com',
+            city: 'Leeds',
+            street: '321 Park Lane',
+            sectors: ['EDUCATION'],
+            experience_years: 6,
+            similarity: 0.85,
+        },
+        {
+            doc_id: '5',
+            name: 'James Wilson',
+            email: 'james.wilson@example.com',
+            city: 'Liverpool',
+            street: '654 Church Street',
+            sectors: ['HUMAN HEALTH AND SOCIAL WORK ACTIVITIES'],
+            experience_years: 10,
+            similarity: 0.82,
+        },
+        {
+            doc_id: '6',
+            name: 'Olivia Taylor',
+            email: 'olivia.taylor@example.com',
+            city: 'Bristol',
+            street: '987 Queen Street',
+            sectors: ['ARTS', 'OTHER SERVICE ACTIVITIES'],
+            experience_years: 4,
+            similarity: 0.78,
+        },
+        {
+            doc_id: '7',
+            name: 'William Anderson',
+            email: 'william.anderson@example.com',
+            city: 'Newcastle',
+            street: '147 King Street',
+            sectors: ['TRANSPORTATION AND STORAGE'],
+            experience_years: 20,
+            similarity: 0.75,
+        },
+        {
+            doc_id: '8',
+            name: 'Sophia Martinez',
+            email: 'sophia.martinez@example.com',
+            city: 'Sheffield',
+            street: '258 Market Street',
+            sectors: ['WHOLESALE AND RETAIL TRADE; REPAIR OF MOTOR VEHICLES AND MOTORCYCLES'],
+            experience_years: 7,
+            similarity: 0.72,
+        },
+        {
+            doc_id: '9',
+            name: 'Daniel Thomas',
+            email: 'daniel.thomas@example.com',
+            city: 'Nottingham',
+            street: '369 Station Road',
+            sectors: ['REAL ESTATE ACTIVITIES'],
+            experience_years: 9,
+            similarity: 0.68,
+        },
+        {
+            doc_id: '10',
+            name: 'Emily White',
+            email: 'emily.white@example.com',
+            city: 'Leicester',
+            street: '741 Bridge Street',
+            sectors: ['ACCOMMODATION AND FOOD SERVICE ACTIVITIES'],
+            experience_years: 5,
+            similarity: 0.65,
+        },
+    ]);
     const [isLoading, setIsLoading] = useState(false);
 
     const handleSearch = async () => {
         setIsLoading(true);
+        // Clear selection on new search to avoid stale IDs
+        setSelectedIds(new Set());
+
         try {
             const response = await fetch('/api/lookalikes/search', {
                 method: 'POST',
@@ -40,10 +162,10 @@ export default function NewSelectionPage() {
                 },
                 body: JSON.stringify({
                     names,
-                    sectors,
-                    regions,
-                    experience_years: experience.map(e => parseInt(e.split('-')[0])), // Simple parsing for now
-                    top_k: 100, // Default for now
+                    sectors: Array.from(sectors),
+                    regions: Array.from(regions),
+                    experience_years: experience.map((e) => parseInt(e.split('-')[0])),
+                    top_k: 100,
                 }),
             });
 
@@ -70,25 +192,91 @@ export default function NewSelectionPage() {
         }
     };
 
+    const handleSaveClick = () => {
+        if (selectedIds.size === 0) {
+            toast({
+                title: 'No candidates selected',
+                description: 'Please select at least one candidate to save.',
+                variant: 'destructive',
+            });
+            return;
+        }
+        setIsSaveModalOpen(true);
+    };
+
+    const confirmSave = async () => {
+        setIsSaving(true);
+        try {
+            const selectedItems = results.filter((r) => selectedIds.has(r.doc_id));
+
+            const response = await fetch('/api/selections', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    name: selectionName,
+                    criteria: {
+                        names,
+                        sectors: Array.from(sectors),
+                        regions: Array.from(regions),
+                        experience_years: experience.map((e) => parseInt(e.split('-')[0])),
+                    },
+                    top_k: 100, // This should ideally match what was searched
+                    items: selectedItems,
+                }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to save selection');
+            }
+
+            const data = await response.json();
+
+            toast({
+                title: 'Selection saved',
+                description: `Successfully saved ${selectedItems.length} candidates.`,
+            });
+
+            // Redirect to the new selection page
+            router.push(`/selections/${data.selection_id}`);
+        } catch (error) {
+            console.error('Save error:', error);
+            toast({
+                title: 'Save failed',
+                description: error instanceof Error ? error.message : 'Please try again later',
+                variant: 'destructive',
+            });
+            setIsSaving(false); // Only reset if failed, otherwise we redirect
+            setIsSaveModalOpen(false);
+        }
+    };
+
     return (
         <div className="min-h-screen bg-gray-50 text-gray-900">
             {/* Header */}
-            <header className="sticky top-0 z-40 bg-white/90 backdrop-blur border-b">
-                <div className="mx-auto max-w-7xl px-4 py-3 flex items-center gap-3">
+            <header className="sticky top-0 z-40 border-b bg-white/90 backdrop-blur">
+                <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3">
                     <div className="ml-auto flex items-center gap-2">
-                        <input
-                            className="rounded-lg border px-3 py-1.5 text-sm w-64 bg-white"
-                            defaultValue="New selection"
+                        <Input
+                            value={selectionName}
+                            onChange={(e) => setSelectionName(e.target.value)}
+                            placeholder="Selection Name"
                         />
-                        <button className="rounded-lg bg-gray-900 text-white text-sm px-4 py-2 hover:bg-black transition-colors">
-                            Save
-                        </button>
-                        <button className="rounded-lg border text-sm px-3 py-2 hover:bg-gray-100 transition-colors bg-white">
+                        <Button
+                            onClick={handleSaveClick}
+                            disabled={isSaving || selectedIds.size === 0}
+                            className="rounded-lg bg-gray-900 px-4 py-2 text-sm text-white transition-colors hover:bg-black disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                            {isSaving ? 'Saving...' : 'Save'}
+                        </Button>
+                        <Button variant="outline" className="rounded-lg border bg-white px-3 py-2 text-sm transition-colors hover:bg-gray-100">
                             Export CSV
-                        </button>
-                        <button className="rounded-lg border text-sm px-3 py-2 hover:bg-gray-100 transition-colors bg-white">
+                        </Button>
+                        <Button variant="outline" className="rounded-lg border bg-white px-3 py-2 text-sm transition-colors hover:bg-gray-100">
                             History
-                        </button>
+                        </Button>
                         <div className="h-6 w-px bg-gray-200" />
                         <div className="text-sm text-gray-600">Profile</div>
                     </div>
@@ -96,7 +284,7 @@ export default function NewSelectionPage() {
             </header>
 
             {/* Body */}
-            <div className="mx-auto max-w-7xl px-4 py-6 grid grid-cols-12 gap-6">
+            <div className="mx-auto grid max-w-7xl grid-cols-12 gap-6 px-4 py-6">
                 {/* Left: Filters */}
                 <aside className="col-span-12 lg:col-span-3">
                     <FilterSidebar
@@ -123,9 +311,31 @@ export default function NewSelectionPage() {
                         experience={experience}
                         results={results}
                         isLoading={isLoading}
+                        selectedIds={selectedIds}
+                        onSelectionChange={setSelectedIds}
                     />
                 </main>
             </div>
+
+            <Dialog open={isSaveModalOpen} onOpenChange={setIsSaveModalOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Save Selection</DialogTitle>
+                        <DialogDescription>
+                            You are about to save {selectedIds.size} candidates to &quot;{selectionName}&quot;.
+                            This will create a new selection record.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsSaveModalOpen(false)}>
+                            Cancel
+                        </Button>
+                        <Button onClick={confirmSave} disabled={isSaving}>
+                            {isSaving ? 'Saving...' : 'Confirm Save'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

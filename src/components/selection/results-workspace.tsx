@@ -1,8 +1,11 @@
+/* eslint-disable simple-import-sort/imports */
 'use client';
 
-import React from 'react';
+import React, { useMemo, useState } from 'react';
+import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
+import { cn } from '@/utils/cn';
 import { Button } from '@/components/ui/button';
 import {
     Table,
@@ -17,22 +20,26 @@ import { LookalikeResult } from '@/types/selection';
 
 interface ResultsWorkspaceProps {
     names: string[];
-    sectors: string[];
-    regions: string[];
+    sectors: Set<string>;
+    regions: Set<string>;
     experience: string[];
     results: LookalikeResult[];
     isLoading: boolean;
+    selectedIds: Set<string>;
+    onSelectionChange: (ids: Set<string>) => void;
 }
 
 const TABLE_HEADERS = [
-    'Name',
-    'Email',
-    'Sector Level 1',
-    'Sector Level 2',
-    'Region Level 1',
-    'Region Level 2',
-    'Years Experience',
+    { key: 'name', label: 'Name' },
+    { key: 'email', label: 'Email' },
+    { key: 'sectors', label: 'Sector' },
+    { key: 'regions', label: 'Region' }, // Simplified for display
+    { key: 'experience_years', label: 'Years Experience' },
+    { key: 'similarity', label: 'Fit Score' },
 ] as const;
+
+type SortKey = (typeof TABLE_HEADERS)[number]['key'];
+type SortDirection = 'asc' | 'desc';
 
 export function ResultsWorkspace({
     names,
@@ -41,96 +48,210 @@ export function ResultsWorkspace({
     experience,
     results,
     isLoading,
+    selectedIds,
+    onSelectionChange,
 }: ResultsWorkspaceProps) {
+    const [sortKey, setSortKey] = useState<SortKey>('similarity');
+    const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+
+    const handleSort = (key: SortKey) => {
+        if (sortKey === key) {
+            setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+        } else {
+            setSortKey(key);
+            setSortDirection('desc'); // Default to desc for new key (usually better for scores/dates)
+        }
+    };
+
+    const sortedResults = useMemo(() => {
+        if (!results.length) return [];
+        const sorted = [...results].sort((a, b) => {
+            let aVal: any = a[keyToProperty(sortKey)];
+            let bVal: any = b[keyToProperty(sortKey)];
+
+            // Handle arrays (sectors/regions) - take first item
+            if (Array.isArray(aVal)) aVal = aVal[0] || '';
+            if (Array.isArray(bVal)) bVal = bVal[0] || '';
+
+            if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
+            if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1;
+            return 0;
+        });
+        return sorted;
+    }, [results, sortKey, sortDirection]);
+
+    const handleSelectAll = () => {
+        if (selectedIds.size === results.length) {
+            onSelectionChange(new Set());
+        } else {
+            onSelectionChange(new Set(results.map((r) => r.doc_id)));
+        }
+    };
+
+    const handleSelectRow = (id: string) => {
+        const next = new Set(selectedIds);
+        if (next.has(id)) next.delete(id);
+        else next.add(id);
+        onSelectionChange(next);
+    };
+
     return (
         <>
             {/* Tabs */}
             <div className="mb-3 flex items-center gap-2">
                 <Button
                     variant="default"
-                    className="rounded-xl text-sm bg-gray-900 text-white hover:bg-black"
+                    className="rounded-xl bg-gray-900 text-sm text-white hover:bg-black"
                 >
                     Candidates
                 </Button>
                 <Button
                     variant="outline"
-                    className="rounded-xl text-sm bg-white hover:bg-gray-50 border-gray-200"
+                    className="rounded-xl border-gray-200 bg-white text-sm hover:bg-gray-50"
                 >
                     Selected
                 </Button>
                 <div className="ml-auto flex items-center gap-2">
-                    <Button variant="outline" size="sm" className="bg-white hover:bg-gray-50">
-                        Select all
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        className="bg-white hover:bg-gray-50"
+                        onClick={handleSelectAll}
+                        disabled={results.length === 0}
+                    >
+                        {selectedIds.size === results.length && results.length > 0
+                            ? 'Deselect all'
+                            : 'Select all'}
                     </Button>
-                    <Button variant="outline" size="sm" className="bg-white hover:bg-gray-50">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        className="bg-white hover:bg-gray-50"
+                        onClick={() => onSelectionChange(new Set())}
+                        disabled={selectedIds.size === 0}
+                    >
                         Clear
                     </Button>
                     <Badge
                         variant="secondary"
-                        className="px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700 hover:bg-green-100 border-none"
+                        className="border-none bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700 hover:bg-green-100"
                     >
-                        {results.length} selected
+                        {selectedIds.size} selected
                     </Badge>
                 </div>
             </div>
 
             {/* Table */}
-            <div className="rounded-2xl border bg-white shadow-sm overflow-hidden min-h-[400px]">
-                <div className="overflow-auto max-h-[600px]">
+            <div className="min-h-[400px] overflow-hidden rounded-2xl border bg-white shadow-sm">
+                <div className="max-h-[600px] overflow-auto">
                     <Table>
-                        <TableHeader className="bg-gray-50 sticky top-0 z-10">
-                            <TableRow>
+                        <TableHeader className="sticky top-0 z-10 bg-gray-50">
+                            <TableRow className="hover:bg-transparent">
                                 <TableHead className="w-[40px] px-3 py-2">
-                                    <input type="checkbox" className="rounded border-gray-300" />
+                                    <input
+                                        type="checkbox"
+                                        className="rounded border-gray-300"
+                                        checked={
+                                            results.length > 0 && selectedIds.size === results.length
+                                        }
+                                        onChange={handleSelectAll}
+                                        disabled={results.length === 0}
+                                    />
                                 </TableHead>
                                 {TABLE_HEADERS.map((h) => (
                                     <TableHead
-                                        key={h}
-                                        className="px-3 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide whitespace-nowrap"
+                                        key={h.key}
+                                        className="cursor-pointer whitespace-nowrap px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-gray-600 hover:bg-gray-100"
+                                        onClick={() => handleSort(h.key)}
                                     >
-                                        {h}
+                                        <div className="flex items-center gap-1">
+                                            {h.label}
+                                            {sortKey === h.key ? (
+                                                sortDirection === 'asc' ? (
+                                                    <ArrowUp className="h-3 w-3" />
+                                                ) : (
+                                                    <ArrowDown className="h-3 w-3" />
+                                                )
+                                            ) : (
+                                                <ArrowUpDown className="h-3 w-3 opacity-30" />
+                                            )}
+                                        </div>
                                     </TableHead>
                                 ))}
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {isLoading ? (
-                                <TableRow>
-                                    <TableCell colSpan={8} className="h-24 text-center">
+                                <TableRow className="hover:bg-transparent">
+                                    <TableCell colSpan={7} className="h-24 text-center">
                                         Loading candidates...
                                     </TableCell>
                                 </TableRow>
                             ) : results.length === 0 ? (
-                                <TableRow>
-                                    <TableCell colSpan={8} className="h-24 text-center text-gray-500">
-                                        No candidates found. Try adjusting your filters or adding names.
+                                <TableRow className="hover:bg-transparent">
+                                    <TableCell
+                                        colSpan={7}
+                                        className="h-24 text-center text-gray-500"
+                                    >
+                                        No candidates found. Try adjusting your filters or adding
+                                        names.
                                     </TableCell>
                                 </TableRow>
                             ) : (
-                                results.map((r, idx) => (
-                                    <TableRow key={r.doc_id || idx} className="hover:bg-gray-50">
-                                        <TableCell className="px-3 py-2">
-                                            <input type="checkbox" defaultChecked className="rounded border-gray-300" />
-                                        </TableCell>
-                                        <TableCell className="px-3 py-2 font-medium whitespace-nowrap">
-                                            {r.name}
-                                        </TableCell>
-                                        <TableCell className="px-3 py-2 max-w-[200px] truncate" title={r.email}>
-                                            {r.email}
-                                        </TableCell>
-                                        <TableCell className="px-3 py-2 max-w-[150px] truncate" title={r.sectors?.[0] || ''}>
-                                            {r.sectors?.[0] || '-'}
-                                        </TableCell>
-                                        <TableCell className="px-3 py-2 max-w-[150px] truncate" title={r.sectors?.[1] || ''}>
-                                            {r.sectors?.[1] || '-'}
-                                        </TableCell>
-                                        <TableCell className="px-3 py-2 whitespace-nowrap">{r.city || '-'}</TableCell>
-                                        <TableCell className="px-3 py-2 whitespace-nowrap">{r.street || '-'}</TableCell>
-                                        <TableCell className="px-3 py-2 whitespace-nowrap">
-                                            {r.experience_years ? `${r.experience_years} years` : '-'}
-                                        </TableCell>
-                                    </TableRow>
-                                ))
+                                sortedResults.map((r, idx) => {
+                                    const isSelected = selectedIds.has(r.doc_id);
+                                    return (
+                                        <TableRow
+                                            key={r.doc_id || idx}
+                                            className={cn(
+                                                'cursor-pointer hover:bg-gray-50',
+                                                isSelected && 'bg-blue-50/50 hover:bg-blue-100'
+                                            )}
+                                            onClick={() => handleSelectRow(r.doc_id)}
+                                        >
+                                            <TableCell className="px-3 py-2">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={isSelected}
+                                                    onChange={() => handleSelectRow(r.doc_id)}
+                                                    className="rounded border-gray-300"
+                                                    onClick={(e) => e.stopPropagation()}
+                                                />
+                                            </TableCell>
+                                            <TableCell className="whitespace-nowrap px-3 py-2 font-medium">
+                                                {r.name}
+                                            </TableCell>
+                                            <TableCell
+                                                className="max-w-[200px] truncate px-3 py-2"
+                                                title={r.email}
+                                            >
+                                                {r.email}
+                                            </TableCell>
+                                            <TableCell
+                                                className="max-w-[150px] truncate px-3 py-2"
+                                                title={r.sectors?.join(', ') || ''}
+                                            >
+                                                {r.sectors?.[0] || '-'}
+                                            </TableCell>
+                                            <TableCell
+                                                className="max-w-[150px] truncate px-3 py-2"
+                                                title={r.city || ''}
+                                            >
+                                                {r.city || '-'}
+                                            </TableCell>
+                                            <TableCell className="whitespace-nowrap px-3 py-2">
+                                                {r.experience_years
+                                                    ? `${r.experience_years} years`
+                                                    : '-'}
+                                            </TableCell>
+                                            <TableCell className="whitespace-nowrap px-3 py-2">
+                                                {r.similarity
+                                                    ? `${(r.similarity * 100).toFixed(0)}%`
+                                                    : '-'}
+                                            </TableCell>
+                                        </TableRow>
+                                    );
+                                })
                             )}
                         </TableBody>
                     </Table>
@@ -138,23 +259,26 @@ export function ResultsWorkspace({
             </div>
 
             {/* Prompt bar */}
-            <div className="sticky bottom-2 mt-4 z-10">
-                <div className="rounded-2xl border bg-white shadow-lg p-3">
+            <div className="sticky bottom-2 z-10 mt-4">
+                <div className="rounded-2xl border bg-white p-3 shadow-lg">
                     <div className="flex items-start gap-3">
                         <Textarea
-                            className="flex-1 min-h-[72px] rounded-lg border px-3 py-2 text-sm resize-none focus-visible:ring-1 focus-visible:ring-gray-900"
+                            className="min-h-[72px] flex-1 resize-none rounded-lg border px-3 py-2 text-sm focus-visible:ring-1 focus-visible:ring-gray-900"
                             placeholder="Ask your question here (multiple questions allowed) — each resume gives an answer..."
                         />
                         <div className="w-56 space-y-2">
-                            <Button className="w-full rounded-lg bg-blue-600 text-white px-3 py-2 text-sm hover:bg-blue-700">
+                            <Button className="w-full rounded-lg bg-blue-600 px-3 py-2 text-sm text-white hover:bg-blue-700">
                                 Generate answers
                             </Button>
                             <div className="flex items-center justify-between text-xs text-gray-600">
                                 <span>Status</span>
                                 <span>0%</span>
                             </div>
-                            <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-                                <div className="h-full bg-blue-600 transition-all duration-500" style={{ width: '0%' }} />
+                            <div className="h-2 w-full overflow-hidden rounded-full bg-gray-100">
+                                <div
+                                    className="h-full bg-blue-600 transition-all duration-500"
+                                    style={{ width: '0%' }}
+                                />
                             </div>
                         </div>
                     </div>
@@ -162,4 +286,11 @@ export function ResultsWorkspace({
             </div>
         </>
     );
+}
+
+function keyToProperty(key: SortKey): keyof LookalikeResult {
+    // Map sort keys to actual property names if they differ
+    // For 'regions', we're using 'city' as a proxy for now.
+    if (key === 'regions') return 'city';
+    return key as keyof LookalikeResult;
 }

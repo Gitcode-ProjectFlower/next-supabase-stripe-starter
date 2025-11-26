@@ -3,39 +3,26 @@
 import React, { useState } from 'react';
 import { Plus, X } from 'lucide-react';
 
+import { TreeMultiSelect } from '@/components/selection/tree-multi-select';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { REGIONS_TREE } from '@/data/regions-tree';
+import { SECTORS_TREE } from '@/data/sectors-tree';
 
 interface FilterSidebarProps {
     names: string[];
     setNames: (names: string[]) => void;
-    sectors: string[];
-    setSectors: (sectors: string[]) => void;
-    regions: string[];
-    setRegions: (regions: string[]) => void;
+    sectors: Set<string>;
+    setSectors: (sectors: Set<string>) => void;
+    regions: Set<string>;
+    setRegions: (regions: Set<string>) => void;
     experience: string[];
     setExperience: (experience: string[]) => void;
     onSearch: () => void;
     isLoading: boolean;
     resultsCount: number;
 }
-
-const REGION_OPTIONS = [
-    'Scotland',
-    'East of England',
-    'West Midlands',
-    'South West',
-    'London',
-    'Northern Ireland',
-];
-
-const SECTOR_OPTIONS = [
-    '3PL / Warehousing',
-    'E‑commerce Fulfillment',
-    'Freight Forwarding',
-    'Distribution',
-];
 
 const EXPERIENCE_OPTIONS = ['1-5', '6-10', '11-15', '16-20', '21-25'];
 
@@ -80,34 +67,26 @@ export function FilterSidebar({
         }
     };
 
-    const handleMultiSelectChange = (
-        e: React.ChangeEvent<HTMLSelectElement>,
-        setter: (values: string[]) => void
-    ) => {
-        const selectedOptions = Array.from(e.target.selectedOptions, (option) => option.value);
-        setter(selectedOptions);
-    };
-
     return (
         <div className="sticky top-[80px] space-y-6">
             <div className="rounded-2xl border bg-white p-4 shadow-sm">
-                <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-2">
+                <h3 className="mb-2 text-sm font-semibold uppercase tracking-wide text-gray-700">
                     Input
                 </h3>
 
                 {/* Names */}
                 <label className="text-sm text-gray-600">Names (press Enter to add)</label>
-                <div className="mt-2 flex gap-2 flex-wrap">
+                <div className="mt-2 flex flex-wrap gap-2">
                     {names.map((name, idx) => (
                         <Badge
                             key={idx}
                             variant="secondary"
-                            className="inline-flex items-center gap-2 px-3 py-1 text-sm bg-white border shadow-sm font-normal"
+                            className="inline-flex items-center gap-2 border bg-white px-3 py-1 text-sm font-normal shadow-sm"
                         >
                             {name}
                             <button
                                 onClick={() => removeName(idx)}
-                                className="rounded-full p-0.5 hover:bg-gray-100 transition-colors"
+                                className="rounded-full p-0.5 transition-colors hover:bg-gray-100"
                             >
                                 <X className="h-3 w-3" />
                             </button>
@@ -116,8 +95,7 @@ export function FilterSidebar({
                 </div>
                 <div className="mt-2 flex items-center gap-2">
                     <Input
-                        className="flex-1 rounded-lg border px-3 py-2 text-sm bg-white"
-                        placeholder={names.length >= 4 ? "Max 4 names" : "e.g. Jordan Lee"}
+                        placeholder={names.length >= 4 ? 'Max 4 names' : 'e.g. Jordan Lee'}
                         value={nameInput}
                         onChange={(e) => setNameInput(e.target.value)}
                         onKeyDown={handleKeyDown}
@@ -135,50 +113,38 @@ export function FilterSidebar({
                 </div>
 
                 {/* Sector */}
-                <div className="mt-4">
-                    <label className="block text-sm text-gray-600 mb-1">Sector</label>
-                    <select
-                        multiple
-                        className="w-full rounded-lg border px-2 py-2 text-sm h-24 bg-white focus:ring-2 focus:ring-black focus:outline-none"
-                        value={sectors}
-                        onChange={(e) => handleMultiSelectChange(e, setSectors)}
-                    >
-                        {SECTOR_OPTIONS.map((s) => (
-                            <option key={s} value={s} className="py-1 px-2 rounded hover:bg-gray-100 cursor-pointer">
-                                {s}
-                            </option>
-                        ))}
-                    </select>
+                <div className="relative mt-4">
+                    <label className="mb-1 block text-sm text-gray-600">Sector</label>
+                    <TreeMultiSelect
+                        data={SECTORS_TREE}
+                        selected={sectors}
+                        onChange={setSectors}
+                        placeholder="Select sectors..."
+                    />
                 </div>
 
                 {/* Region */}
-                <div className="mt-4">
-                    <label className="block text-sm text-gray-600 mb-1">Region</label>
-                    <select
-                        multiple
-                        className="w-full rounded-lg border px-2 py-2 text-sm h-40 bg-white focus:ring-2 focus:ring-black focus:outline-none"
-                        value={regions}
-                        onChange={(e) => handleMultiSelectChange(e, setRegions)}
-                    >
-                        {REGION_OPTIONS.map((r) => (
-                            <option key={r} value={r} className="py-1 px-2 rounded hover:bg-gray-100 cursor-pointer">
-                                {r}
-                            </option>
-                        ))}
-                    </select>
+                <div className="relative mt-4">
+                    <label className="mb-1 block text-sm text-gray-600">Region</label>
+                    <TreeMultiSelect
+                        data={REGIONS_TREE}
+                        selected={regions}
+                        onChange={setRegions}
+                        placeholder="Select regions..."
+                    />
                 </div>
 
                 {/* Years experience */}
                 <div className="mt-4">
-                    <label className="block text-sm text-gray-600 mb-1">Years experience</label>
+                    <label className="mb-1 block text-sm text-gray-600">Years experience</label>
                     <div className="flex flex-wrap gap-2">
                         {EXPERIENCE_OPTIONS.map((sz) => (
                             <button
                                 key={sz}
                                 onClick={() => toggleExperience(sz)}
-                                className={`px-3 py-1.5 rounded-full border text-sm transition-colors ${experience.includes(sz)
-                                    ? 'bg-gray-900 text-white border-gray-900'
-                                    : 'bg-white hover:bg-gray-50 text-gray-700'
+                                className={`rounded-full border px-3 py-1.5 text-sm transition-colors ${experience.includes(sz)
+                                    ? 'border-gray-900 bg-gray-900 text-white'
+                                    : 'bg-white text-gray-700 hover:bg-gray-50'
                                     }`}
                             >
                                 {sz}
@@ -190,14 +156,18 @@ export function FilterSidebar({
                 {/* CTA */}
                 <div className="mt-4 flex items-center gap-2">
                     <Button
-                        className="rounded-lg bg-blue-600 text-white text-sm px-4 py-2 hover:bg-blue-700 w-full justify-center"
+                        className="w-full justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700"
                         onClick={onSearch}
                         disabled={isLoading}
                     >
-                        {isLoading ? 'Searching...' : names.length > 0 ? 'Find lookalikes' : 'Search candidates'}
+                        {isLoading
+                            ? 'Searching...'
+                            : names.length > 0
+                                ? 'Find lookalikes'
+                                : 'Search candidates'}
                     </Button>
                     {resultsCount > 0 && (
-                        <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 whitespace-nowrap">
+                        <span className="whitespace-nowrap rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700">
                             {resultsCount} candidates
                         </span>
                     )}
@@ -205,10 +175,10 @@ export function FilterSidebar({
             </div>
 
             <div className="rounded-2xl border bg-white p-4 shadow-sm">
-                <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-2">
+                <h3 className="mb-2 text-sm font-semibold uppercase tracking-wide text-gray-700">
                     Info
                 </h3>
-                <ul className="text-sm text-gray-600 space-y-1 list-disc ml-4">
+                <ul className="ml-4 list-disc space-y-1 text-sm text-gray-600">
                     <li>
                         Sector labels are <b>country-specific</b>.
                     </li>

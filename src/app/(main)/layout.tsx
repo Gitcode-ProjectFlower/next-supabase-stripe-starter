@@ -2,8 +2,9 @@ import { PropsWithChildren } from 'react';
 import Link from 'next/link';
 import { IoLogoFacebook, IoLogoInstagram, IoLogoTwitter } from 'react-icons/io5';
 
-import { Logo } from '@/components/logo';
 import { Navigation } from '@/app/navigation';
+import { Logo } from '@/components/logo';
+
 
 export default function MainLayout({ children }: PropsWithChildren) {
     return (

@@ -46,9 +46,9 @@ export function PricingCard({
   const isBillingIntervalYearly = billingInterval === 'year';
   const metadata = productMetadataSchema.parse(product.metadata);
   const buttonVariantMap = {
-    basic: 'default',
-    pro: 'sexy',
-    enterprise: 'orange',
+    basic: 'outline',
+    pro: 'default',
+    enterprise: 'secondary',
   } as const;
 
   function handleBillingIntervalChange(billingInterval: BillingInterval) {
@@ -65,8 +65,8 @@ export function PricingCard({
               {yearPrice && isBillingIntervalYearly
                 ? '$' + yearPrice / 100
                 : monthPrice
-                ? '$' + monthPrice / 100
-                : 'Custom'}
+                  ? '$' + monthPrice / 100
+                  : 'Custom'}
             </span>
             <span>{yearPrice && isBillingIntervalYearly ? '/year' : monthPrice ? '/month' : null}</span>
           </div>
