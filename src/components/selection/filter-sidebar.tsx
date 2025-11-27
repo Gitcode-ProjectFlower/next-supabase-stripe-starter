@@ -19,6 +19,8 @@ interface FilterSidebarProps {
     setRegions: (regions: Set<string>) => void;
     experience: string[];
     setExperience: (experience: string[]) => void;
+    topK: number;
+    setTopK: (topK: number) => void;
     onSearch: () => void;
     isLoading: boolean;
     resultsCount: number;
@@ -35,6 +37,8 @@ export function FilterSidebar({
     setRegions,
     experience,
     setExperience,
+    topK,
+    setTopK,
     onSearch,
     isLoading,
     resultsCount,
@@ -151,6 +155,28 @@ export function FilterSidebar({
                             </button>
                         ))}
                     </div>
+                </div>
+
+                {/* Top-K */}
+                <div className="mt-4">
+                    <label className="mb-1 block text-sm text-gray-600">
+                        Number of results (Top-K)
+                    </label>
+                    <Input
+                        type="number"
+                        min="1"
+                        max="5000"
+                        value={topK}
+                        onChange={(e) => {
+                            const value = parseInt(e.target.value) || 100;
+                            setTopK(Math.min(5000, Math.max(1, value)));
+                        }}
+                        placeholder="100"
+                        className="w-full"
+                    />
+                    <p className="mt-1 text-xs text-gray-500">
+                        Plan cap: <span className="font-semibold">100</span> (Small plan)
+                    </p>
                 </div>
 
                 {/* CTA */}

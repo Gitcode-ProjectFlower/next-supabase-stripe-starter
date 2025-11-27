@@ -37,6 +37,7 @@ export default function NewSelectionPage() {
     const [sectors, setSectors] = useState<Set<string>>(new Set());
     const [regions, setRegions] = useState<Set<string>>(new Set());
     const [experience, setExperience] = useState<string[]>([]);
+    const [topK, setTopK] = useState<number>(100);
 
     // State for selection metadata
     const [selectionName, setSelectionName] = useState('New selection');
@@ -296,6 +297,8 @@ export default function NewSelectionPage() {
                         setRegions={setRegions}
                         experience={experience}
                         setExperience={setExperience}
+                        topK={topK}
+                        setTopK={setTopK}
                         onSearch={handleSearch}
                         isLoading={isLoading}
                         resultsCount={results.length}
@@ -318,14 +321,54 @@ export default function NewSelectionPage() {
             </div>
 
             <Dialog open={isSaveModalOpen} onOpenChange={setIsSaveModalOpen}>
-                <DialogContent>
+                <DialogContent className="bg-white sm:max-w-[500px]">
                     <DialogHeader>
                         <DialogTitle>Save Selection</DialogTitle>
-                        <DialogDescription>
-                            You are about to save {selectedIds.size} candidates to &quot;{selectionName}&quot;.
-                            This will create a new selection record.
-                        </DialogDescription>
                     </DialogHeader>
+
+                    <div className="space-y-3 pt-4">
+                        <div className="text-sm text-gray-700">
+                            You are about to save <span className="font-semibold text-gray-900">{selectedIds.size} candidates</span> to &quot;{selectionName}&quot;.
+                        </div>
+
+                        {/* Filters Summary */}
+                        {(names.length > 0 || sectors.size > 0 || regions.size > 0 || experience.length > 0) && (
+                            <div className="rounded-lg border border-gray-200 bg-white p-3 text-sm">
+                                <div className="font-semibold text-gray-900 mb-2">Filters applied:</div>
+                                <ul className="space-y-1 text-gray-700">
+                                    {names.length > 0 && (
+                                        <li>• Names: {names.join(', ')}</li>
+                                    )}
+                                    {sectors.size > 0 && (
+                                        <li>• Sectors: {sectors.size} selected</li>
+                                    )}
+                                    {regions.size > 0 && (
+                                        <li>• Regions: {regions.size} selected</li>
+                                    )}
+                                    {experience.length > 0 && (
+                                        <li>• Experience: {experience.join(', ')} years</li>
+                                    )}
+                                    <li>• Top-K: {topK}</li>
+                                </ul>
+                            </div>
+                        )}
+
+                        {/* Expiration Info */}
+                        <div className="flex items-center gap-2 text-sm text-gray-700">
+                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span>
+                                Expires on: <span className="font-semibold text-gray-900">
+                                    {new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString('en-GB', {
+                                        day: 'numeric',
+                                        month: 'short',
+                                        year: 'numeric'
+                                    })}
+                                </span> (7 days)
+                            </span>
+                        </div>
+                    </div>
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setIsSaveModalOpen(false)}>
                             Cancel

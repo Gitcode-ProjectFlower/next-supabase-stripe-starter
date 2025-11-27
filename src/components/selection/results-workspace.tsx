@@ -245,9 +245,23 @@ export function ResultsWorkspace({
                                                     : '-'}
                                             </TableCell>
                                             <TableCell className="whitespace-nowrap px-3 py-2">
-                                                {r.similarity
-                                                    ? `${(r.similarity * 100).toFixed(0)}%`
-                                                    : '-'}
+                                                {r.similarity ? (
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="h-2 w-24 overflow-hidden rounded-full bg-gray-200">
+                                                            <div
+                                                                className="h-full bg-gradient-to-r from-blue-500 to-green-500 transition-all"
+                                                                style={{
+                                                                    width: `${(r.similarity * 100).toFixed(0)}%`,
+                                                                }}
+                                                            />
+                                                        </div>
+                                                        <span className="text-xs font-medium text-gray-700">
+                                                            {(r.similarity * 100).toFixed(0)}%
+                                                        </span>
+                                                    </div>
+                                                ) : (
+                                                    '-'
+                                                )}
                                             </TableCell>
                                         </TableRow>
                                     );
