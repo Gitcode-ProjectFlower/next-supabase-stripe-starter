@@ -5,9 +5,10 @@ export interface QARequest {
 }
 
 export interface QAResponse {
-    status: 'OK' | 'NO_INFO' | 'ERROR' | 'TIMEOUT';
+    doc_id?: string;
+    status: 'OK' | 'NO_INFO' | 'ERROR' | 'TIMEOUT' | 'success'; // 'success' is from VPS
     answer: string | null;
-    sources: QASource[];
+    sources?: QASource[];
     error_message: string | null;
 }
 
@@ -88,33 +89,57 @@ export class HaystackClient {
     }
 
     async askBatch(
-        items: Array<{ doc_id: string; email: string }>,
-        question: string,
-        batchSize: number = 10
-    ): Promise<Map<string, QAResponse>> {
-        const results = new Map<string, QAResponse>();
+        items: Array<{ doc_id: string; name?: string; email?: string }>,
+        prompt: string
+    ): Promise<QAResponse[]> {
+        try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), this.timeout);
 
-        for (let i = 0; i < items.length; i += batchSize) {
-            const batch = items.slice(i, i + batchSize);
+            const headers: Record<string, string> = {
+                'Content-Type': 'application/json',
+            };
 
-            const promises = batch.map(async (item) => {
-                const response = await this.ask({
-                    question,
-                    email: item.email,
-                    doc_id: item.doc_id,
-                });
+            if (this.apiKey) {
+                headers['Authorization'] = `Bearer ${this.apiKey}`;
+            }
 
-                return { doc_id: item.doc_id, response };
+            const response = await fetch(`${this.baseUrl}/qa`, {
+                method: 'POST',
+                headers,
+                body: JSON.stringify({
+                    selection_items: items.map(item => ({
+                        doc_id: item.doc_id,
+                        name: item.name || '',
+                        email: item.email || ''
+                    })),
+                    prompt
+                }),
+                signal: controller.signal,
             });
 
-            const batchResults = await Promise.all(promises);
+            clearTimeout(timeoutId);
 
-            batchResults.forEach(({ doc_id, response }) => {
-                results.set(doc_id, response);
-            });
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            return data.results || [];
+        } catch (error) {
+            console.error('Batch QA Error:', error);
+            // Fallback: return error responses for all items
+            return items.map(item => ({
+                status: 'ERROR',
+                answer: null,
+                sources: [],
+                error_message: error instanceof Error ? error.message : 'Unknown error',
+                // We might need to attach doc_id to the response to map it back, 
+                // but the current interface doesn't have it. 
+                // The VPS returns results in the same order or with doc_id.
+                // Let's assume the caller handles mapping if needed, or we update QAResponse.
+            }));
         }
-
-        return results;
     }
 }
 

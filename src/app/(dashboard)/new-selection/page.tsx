@@ -373,7 +373,7 @@ export default function NewSelectionPage() {
                         <Button variant="outline" onClick={() => setIsSaveModalOpen(false)}>
                             Cancel
                         </Button>
-                        <Button onClick={confirmSave} disabled={isSaving}>
+                        <Button className="bg-blue-600 hover:bg-blue-700" onClick={confirmSave} disabled={isSaving}>
                             {isSaving ? 'Saving...' : 'Confirm Save'}
                         </Button>
                     </DialogFooter>

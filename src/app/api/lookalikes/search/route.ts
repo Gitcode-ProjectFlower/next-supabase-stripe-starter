@@ -116,7 +116,7 @@ export async function POST(request: NextRequest) {
         Authorization: `Bearer ${haystackApiKey}`,
       },
       body: JSON.stringify({
-        lookalike_names: finalLookalikeNames,
+        names: finalLookalikeNames,
         filters: finalFilters,
         top_k,
         collection: 'en',

@@ -223,13 +223,11 @@ export default function SelectionDetailPage() {
 
                         toast({
                             title: 'Success',
-                            description: 'Q&A processing completed. Downloading CSV...',
+                            description: 'Q&A processing completed!',
                         });
 
-                        // Download CSV
-                        if (status.csv_url) {
-                            window.open(status.csv_url, '_blank');
-                        }
+                        // Redirect to Q&A results page
+                        router.push(`/selections/${params.id}/qa/${job_id}`);
                     } else if (status.status === 'failed') {
                         clearInterval(pollInterval);
                         throw new Error(status.error || 'Q&A processing failed');
@@ -398,10 +396,10 @@ export default function SelectionDetailPage() {
 
             {/* Q&A Modal */}
             <Dialog open={isQAModalOpen} onOpenChange={setIsQAModalOpen}>
-                <DialogContent className="sm:max-w-[600px]">
+                <DialogContent className="sm:max-w-[600px] bg-white">
                     <DialogHeader>
                         <DialogTitle>Ask Questions to Candidates</DialogTitle>
-                        <DialogDescription>
+                        <DialogDescription className='text-gray-700'>
                             Enter your question(s) below. Each candidate will be asked the same question(s) and their answers will be generated based on their CV.
                         </DialogDescription>
                     </DialogHeader>
@@ -411,7 +409,7 @@ export default function SelectionDetailPage() {
                             placeholder="e.g., What is your experience with React? Do you have leadership experience?"
                             value={qaPrompt}
                             onChange={(e) => setQaPrompt(e.target.value)}
-                            className="min-h-[120px]"
+                            className="min-h-[120px] placeholder:text-gray-500 border-gray-700 focus:bo"
                             disabled={isProcessingQA}
                         />
 

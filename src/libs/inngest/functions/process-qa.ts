@@ -75,45 +75,69 @@ export const processQAJob = inngest.createFunction(
                     process.env.HAYSTACK_API_KEY
                 );
 
-                const batchPromises = batch.map(async (item) => {
-                    try {
-                        const qaResponse = await haystackClient.ask({
-                            question: prompt,
-                            email: item.email || '',
-                            doc_id: item.doc_id,
-                        });
+                const batchItems = batch.map(item => ({
+                    doc_id: item.doc_id,
+                    name: item.name ?? undefined,
+                    email: item.email ?? undefined
+                }));
+
+                try {
+                    const qaResponses = await haystackClient.askBatch(batchItems, prompt);
+
+                    // Map responses back to the full item structure
+                    return qaResponses.map(response => {
+                        // Find original item to get details not in response (like city, street, etc)
+                        // Although response has doc_id, we need to merge with original item data
+                        const originalItem = batch.find(i => i.doc_id === response.doc_id);
+
+                        if (!originalItem) {
+                            console.error(`Original item not found for doc_id: ${response.doc_id}`);
+                            return {
+                                doc_id: response.doc_id || 'unknown',
+                                name: 'Unknown',
+                                email: '',
+                                city: '',
+                                street: '',
+                                sectors: [],
+                                experience_years: 0,
+                                similarity: 0,
+                                answer: null,
+                                status: 'ERROR',
+                                error_message: 'Original item lost in batch processing'
+                            };
+                        }
 
                         return {
-                            doc_id: item.doc_id,
-                            name: item.name,
-                            email: item.email,
-                            city: item.city,
-                            street: item.street,
-                            sectors: item.sectors,
-                            experience_years: item.experience_years,
-                            similarity: item.similarity,
-                            answer: qaResponse.answer,
-                            status: qaResponse.status,
-                            error_message: qaResponse.error_message,
+                            doc_id: originalItem.doc_id,
+                            name: originalItem.name,
+                            email: originalItem.email,
+                            city: originalItem.city,
+                            street: originalItem.street,
+                            sectors: originalItem.sectors,
+                            experience_years: originalItem.experience_years,
+                            similarity: originalItem.similarity,
+                            answer: response.answer,
+                            status: response.status,
+                            error_message: response.error_message,
                         };
-                    } catch (error) {
-                        return {
-                            doc_id: item.doc_id,
-                            name: item.name,
-                            email: item.email,
-                            city: item.city,
-                            street: item.street,
-                            sectors: item.sectors,
-                            experience_years: item.experience_years,
-                            similarity: item.similarity,
-                            answer: null,
-                            status: 'ERROR' as const,
-                            error_message: error instanceof Error ? error.message : 'Unknown error',
-                        };
-                    }
-                });
-
-                return Promise.all(batchPromises);
+                    });
+                } catch (error) {
+                    console.error('Batch processing failed:', error);
+                    // Fallback for entire batch failure
+                    return batch.map(item => ({
+                        doc_id: item.doc_id,
+                        name: item.name,
+                        email: item.email,
+                        city: item.city,
+                        street: item.street,
+                        sectors: item.sectors,
+                        experience_years: item.experience_years,
+                        similarity: item.similarity,
+                        answer: null,
+                        status: 'ERROR',
+                        error_message: error instanceof Error ? error.message : 'Batch processing failed',
+                    }));
+                }
             });
 
             results.push(...batchResults);
