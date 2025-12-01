@@ -229,17 +229,17 @@ export default function SelectionsPage() {
                                         </TableCell>
                                         <TableCell className="px-4 py-3 text-sm text-gray-600">
                                             <div className="flex flex-wrap gap-1">
-                                                {selection.criteria.names && selection.criteria.names.length > 0 && (
+                                                {selection.criteria?.names && selection.criteria.names.length > 0 && (
                                                     <span className="rounded bg-gray-100 px-2 py-0.5 text-xs">
                                                         {selection.criteria.names.length} names
                                                     </span>
                                                 )}
-                                                {selection.criteria.sectors && selection.criteria.sectors.length > 0 && (
+                                                {selection.criteria?.sectors && selection.criteria.sectors.length > 0 && (
                                                     <span className="rounded bg-gray-100 px-2 py-0.5 text-xs">
                                                         {selection.criteria.sectors.length} sectors
                                                     </span>
                                                 )}
-                                                {selection.criteria.regions && selection.criteria.regions.length > 0 && (
+                                                {selection.criteria?.regions && selection.criteria.regions.length > 0 && (
                                                     <span className="rounded bg-gray-100 px-2 py-0.5 text-xs">
                                                         {selection.criteria.regions.length} regions
                                                     </span>

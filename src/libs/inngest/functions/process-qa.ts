@@ -1,4 +1,5 @@
 import { inngest } from '@/libs/inngest/client';
+import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
 
 export const processQAJob = inngest.createFunction(
@@ -184,7 +185,7 @@ export const processQAJob = inngest.createFunction(
             const fileName = `qa_${selectionId}_${Date.now()}.csv`;
             const filePath = `${userId}/${selectionId}/${fileName}`;
 
-            const { error: uploadError } = await supabase.storage
+            const { error: uploadError } = await supabaseAdminClient.storage
                 .from('exports')
                 .upload(filePath, csvWithBOM, {
                     contentType: 'text/csv',
@@ -195,7 +196,7 @@ export const processQAJob = inngest.createFunction(
                 throw new Error(`Failed to upload CSV: ${uploadError.message}`);
             }
 
-            const { data: urlData } = await supabase.storage
+            const { data: urlData } = await supabaseAdminClient.storage
                 .from('exports')
                 .createSignedUrl(filePath, 60 * 60 * 24 * 7);
 
@@ -206,7 +207,7 @@ export const processQAJob = inngest.createFunction(
             const expiresAt = new Date();
             expiresAt.setDate(expiresAt.getDate() + 7);
 
-            await supabase.from('downloads').insert({
+            await supabaseAdminClient.from('downloads').insert({
                 user_id: userId,
                 selection_id: selectionId,
                 type: 'qa',

@@ -3,10 +3,15 @@
 
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { ChevronDown, ChevronRight, Search } from 'lucide-react';
 
 import { useVirtualizer } from '@tanstack/react-virtual';
 
 import type { CheckState, TreeNode } from '@/types/tree';
+import { cn } from '@/utils/cn';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 
 
 
@@ -125,7 +130,7 @@ export function TreeMultiSelect({
     const [open, setOpen] = useState(false);
     const [expanded, setExpanded] = useState<Set<NodeId>>(new Set());
     const [search, setSearch] = useState('');
-    const listboxId = useMemo(() => `tree-listbox-${Math.random().toString(36).substr(2, 9)}`, []);
+    const listboxId = React.useId();
 
     const containerRef = useRef<HTMLDivElement | null>(null);
     const wrapperRef = useRef<HTMLDivElement | null>(null);
@@ -150,8 +155,8 @@ export function TreeMultiSelect({
     const rowVirtualizer = useVirtualizer({
         count: rows.length,
         getScrollElement: () => containerRef.current,
-        estimateSize: () => 36,
-        overscan: 6,
+        estimateSize: () => 32, // Slightly smaller row height
+        overscan: 10,
     });
 
     const toggleExpand = (id: NodeId) => {
@@ -180,59 +185,57 @@ export function TreeMultiSelect({
         const labels: string[] = [];
         const collect = (list: TreeNode[]) => {
             for (const n of list) {
+                // If node is selected and has no children (leaf), OR all children are selected (simplified view)
+                // Actually, standard behavior is usually listing leaves or collapsed parents.
+                // Let's list leaves for now.
                 if (selected.has(n.id) && (!n.children || n.children.length === 0))
                     labels.push(n.name);
                 if (n.children) collect(n.children);
             }
         };
         collect(data);
-        return labels.slice(0, 3).join(', ') + (labels.length > 3 ? ` +${labels.length - 3}` : '');
+
+        if (labels.length === 0) return '';
+        if (labels.length <= 2) return labels.join(', ');
+        return `${labels[0]}, ${labels[1]} +${labels.length - 2} more`;
     }, [selected, data]);
 
     return (
-        <div className={className} ref={wrapperRef}>
+        <div className={cn("relative", className)} ref={wrapperRef}>
             <button
                 role="combobox"
                 aria-expanded={open}
                 aria-controls={listboxId}
                 onClick={() => setOpen((v) => !v)}
-                className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-white px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:border-black disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-white px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
             >
-                <span className={selectedLabels ? 'text-foreground' : 'text-muted-foreground'}>
+                <span className={selectedLabels ? 'text-foreground' : 'text-muted-foreground truncate'}>
                     {selectedLabels || placeholder}
                 </span>
-                <svg
-                    className="h-4 w-4 opacity-50"
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                >
-                    <polyline points="6 9 12 15 18 9" />
-                </svg>
+                <ChevronDown className="h-4 w-4 opacity-50" />
             </button>
 
             {open && (
                 <div
                     id={listboxId}
-                    className="absolute z-50 mt-2 w-full rounded-md border bg-popover p-0 text-popover-foreground shadow-md"
+                    className="absolute z-50 mt-1 w-full rounded-md border bg-popover text-popover-foreground shadow-md outline-none animate-in fade-in-0 zoom-in-95"
                 >
-                    <div className="border-b p-2">
-                        <input
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            placeholder="Search..."
-                            className="flex h-9 w-full rounded-md border border-input bg-white px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-black disabled:cursor-not-allowed disabled:opacity-50"
-                            aria-label="Search"
-                        />
+                    <div className="p-2 border-b">
+                        <div className="relative">
+                            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                                placeholder="Search..."
+                                className="h-9 pl-8"
+                                autoFocus
+                            />
+                        </div>
                     </div>
 
                     <div
                         ref={containerRef}
-                        style={{ height: 320, overflow: 'auto', position: 'relative' }}
+                        className="max-h-[300px] overflow-y-auto overflow-x-hidden py-1"
                     >
                         <div
                             style={{ height: rowVirtualizer.getTotalSize(), position: 'relative' }}
@@ -242,6 +245,7 @@ export function TreeMultiSelect({
                                 const isExpanded = expanded.has(id);
                                 const st = computeState(node, selected);
                                 const hasKids = !!node.children?.length || node.hasChildren;
+
                                 return (
                                     <div
                                         key={id}
@@ -254,45 +258,62 @@ export function TreeMultiSelect({
                                             top: 0,
                                             transform: `translateY(${vi.start}px)`,
                                             width: '100%',
+                                            height: `${vi.size}px`,
                                         }}
-                                        className="flex h-9 items-center gap-2 px-2"
+                                        className="flex items-center gap-1 px-2 hover:bg-accent hover:text-accent-foreground"
                                     >
-                                        <div style={{ width: depth * 16 }} />
+                                        <div style={{ width: depth * 16 }} className="shrink-0" />
+
                                         {hasKids ? (
                                             <button
-                                                className="flex h-5 w-5 items-center justify-center rounded border text-xs"
-                                                onClick={() => toggleExpand(id)}
-                                                aria-label={
-                                                    isExpanded ? `Collapse ${node.name}` : `Expand ${node.name}`
-                                                }
+                                                className="flex h-6 w-6 shrink-0 items-center justify-center rounded-sm hover:bg-gray-100 text-gray-500"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    toggleExpand(id);
+                                                }}
                                             >
-                                                {isExpanded ? '▾' : '▸'}
+                                                {isExpanded ? (
+                                                    <ChevronDown className="h-4 w-4" />
+                                                ) : (
+                                                    <ChevronRight className="h-4 w-4" />
+                                                )}
                                             </button>
                                         ) : (
-                                            <span className="w-5" />
+                                            <span className="w-6 shrink-0" />
                                         )}
 
-                                        <TriCheckbox state={st} onChange={() => toggleCheck(id)} />
-
-                                        <span className="truncate text-sm">{node.name}</span>
+                                        <div
+                                            className="flex flex-1 items-center gap-2 cursor-pointer py-1"
+                                            onClick={() => toggleCheck(id)}
+                                        >
+                                            <TriCheckbox state={st} />
+                                            <span className="truncate text-sm select-none">{node.name}</span>
+                                        </div>
                                     </div>
                                 );
                             })}
                         </div>
+
+                        {rows.length === 0 && (
+                            <div className="py-6 text-center text-sm text-muted-foreground">
+                                No results found.
+                            </div>
+                        )}
                     </div>
 
-                    <div className="flex items-center justify-between border-t p-2 text-sm">
-                        <button
-                            className="rounded border px-3 py-1.5"
-                            onClick={() => {
-                                onChange(new Set());
-                            }}
+                    <div className="flex items-center justify-between border-t p-2 bg-white">
+                        <Button
+                            variant="secondary"
+                            size="sm"
+                            className="h-8 px-2 text-xs"
+                            onClick={() => onChange(new Set())}
+                            disabled={selected.size === 0}
                         >
                             Clear selection
-                        </button>
-                        <div className="text-muted-foreground">
-                            Selected: {Array.from(selected).length}
-                        </div>
+                        </Button>
+                        <span className="text-xs text-accent-foreground px-2">
+                            Selected: {selected.size}
+                        </span>
                     </div>
                 </div>
             )}
@@ -300,27 +321,44 @@ export function TreeMultiSelect({
     );
 }
 
-function TriCheckbox({
-    state,
-    onChange,
-}: {
-    state: CheckState;
-    onChange: () => void;
-}) {
-    const ref = useRef<HTMLInputElement>(null);
-    useEffect(() => {
-        if (ref.current) {
-            ref.current.indeterminate = state === 'indeterminate';
-            ref.current.checked = state === 'checked';
-        }
-    }, [state]);
+function TriCheckbox({ state }: { state: CheckState }) {
     return (
-        <input
-            ref={ref}
-            type="checkbox"
-            aria-checked={state === 'indeterminate' ? 'mixed' : state === 'checked'}
-            onChange={onChange}
-            className="h-4 w-4 shrink-0 rounded border"
-        />
+        <div
+            className={cn(
+                "flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors",
+                state === 'checked' || state === 'indeterminate'
+                    ? "bg-blue-600 border-blue-600 text-white"
+                    : "bg-white border-gray-300"
+            )}
+        >
+            {state === 'checked' && (
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="h-3 w-3"
+                >
+                    <polyline points="20 6 9 17 4 12" />
+                </svg>
+            )}
+            {state === 'indeterminate' && (
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="h-3 w-3"
+                >
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+            )}
+        </div>
     );
 }

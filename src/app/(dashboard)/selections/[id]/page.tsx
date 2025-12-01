@@ -151,7 +151,7 @@ export default function SelectionDetailPage() {
             const response = await fetch(`/api/selections/${id}`);
             if (!response.ok) throw new Error('Failed to fetch selection');
             const data = await response.json();
-            setSelection(data);
+            setSelection(data.selection);
         } catch (error) {
             console.error('Error fetching selection:', error);
             toast({
@@ -200,43 +200,22 @@ export default function SelectionDetailPage() {
 
             if (!response.ok) throw new Error('Failed to start Q&A job');
 
-            const { job_id } = await response.json();
+            const data = await response.json();
 
-            // Poll for progress
-            const pollInterval = setInterval(async () => {
-                try {
-                    const statusResponse = await fetch(`/api/selections/${params.id}/qa?job_id=${job_id}`);
-                    if (!statusResponse.ok) throw new Error('Failed to check status');
+            toast({
+                title: 'Success',
+                description: 'Q&A job started! Processing in background...',
+            });
 
-                    const status = await statusResponse.json();
+            setIsProcessingQA(false);
+            setIsQAModalOpen(false);
+            setQaPrompt('');
 
-                    if (status.progress !== undefined) {
-                        setQaProgress(status.progress);
-                    }
-
-                    if (status.status === 'completed') {
-                        clearInterval(pollInterval);
-                        setIsProcessingQA(false);
-                        setIsQAModalOpen(false);
-                        setQaPrompt('');
-                        setQaProgress(0);
-
-                        toast({
-                            title: 'Success',
-                            description: 'Q&A processing completed!',
-                        });
-
-                        // Redirect to Q&A results page
-                        router.push(`/selections/${params.id}/qa/${job_id}`);
-                    } else if (status.status === 'failed') {
-                        clearInterval(pollInterval);
-                        throw new Error(status.error || 'Q&A processing failed');
-                    }
-                } catch (error) {
-                    clearInterval(pollInterval);
-                    throw error;
-                }
-            }, 2000); // Poll every 2 seconds
+            // For now, redirect to demo results page
+            // In production, you'd create a QA record and poll for its status
+            setTimeout(() => {
+                router.push(`/selections/${params.id}/qa/demo-qa-1`);
+            }, 1000);
 
         } catch (error) {
             console.error('Error processing Q&A:', error);
@@ -361,7 +340,7 @@ export default function SelectionDetailPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {selection.items.map((item) => (
+                            {selection.items?.map((item) => (
                                 <TableRow key={item.doc_id} className="hover:bg-gray-50">
                                     <TableCell className="px-4 py-3 font-medium">{item.name}</TableCell>
                                     <TableCell className="px-4 py-3 text-sm text-gray-600">{item.email}</TableCell>

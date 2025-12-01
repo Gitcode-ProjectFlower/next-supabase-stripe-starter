@@ -53,6 +53,7 @@ export function ResultsWorkspace({
 }: ResultsWorkspaceProps) {
     const [sortKey, setSortKey] = useState<SortKey>('similarity');
     const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+    const [activeTab, setActiveTab] = useState<'candidates' | 'selected'>('candidates');
 
     const handleSort = (key: SortKey) => {
         if (sortKey === key) {
@@ -63,9 +64,15 @@ export function ResultsWorkspace({
         }
     };
 
-    const sortedResults = useMemo(() => {
-        if (!results.length) return [];
-        const sorted = [...results].sort((a, b) => {
+    const displayedResults = useMemo(() => {
+        let data = results;
+        if (activeTab === 'selected') {
+            data = data.filter((r) => selectedIds.has(r.doc_id));
+        }
+
+        if (!data.length) return [];
+
+        return [...data].sort((a, b) => {
             let aVal: any = a[keyToProperty(sortKey)];
             let bVal: any = b[keyToProperty(sortKey)];
 
@@ -77,10 +84,23 @@ export function ResultsWorkspace({
             if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1;
             return 0;
         });
-        return sorted;
-    }, [results, sortKey, sortDirection]);
+    }, [results, sortKey, sortDirection, activeTab, selectedIds]);
 
     const handleSelectAll = () => {
+        // If on "Selected" tab, select all doesn't make sense to add more, maybe just clear?
+        // But let's keep it simple: Select All always operates on the current view?
+        // Actually, standard behavior:
+        // If on Candidates (All): Select All -> Selects all candidates
+        // If on Selected: They are already selected. Maybe "Deselect All" clears them.
+
+        if (activeTab === 'selected') {
+            // If we are viewing selected, "Select All" checkbox should probably be checked if all visible are selected (which they are).
+            // Unchecking it should deselect all visible (which is all selected).
+            onSelectionChange(new Set());
+            return;
+        }
+
+        // On Candidates tab
         if (selectedIds.size === results.length) {
             onSelectionChange(new Set());
         } else {
@@ -100,14 +120,26 @@ export function ResultsWorkspace({
             {/* Tabs */}
             <div className="mb-3 flex items-center gap-2">
                 <Button
-                    variant="default"
-                    className="rounded-xl bg-gray-900 text-sm text-white hover:bg-black"
+                    variant={activeTab === 'candidates' ? 'default' : 'outline'}
+                    className={cn(
+                        "rounded-xl text-sm",
+                        activeTab === 'candidates'
+                            ? "bg-gray-900 text-white hover:bg-black"
+                            : "border-gray-200 bg-white hover:bg-gray-50"
+                    )}
+                    onClick={() => setActiveTab('candidates')}
                 >
                     Candidates
                 </Button>
                 <Button
-                    variant="outline"
-                    className="rounded-xl border-gray-200 bg-white text-sm hover:bg-gray-50"
+                    variant={activeTab === 'selected' ? 'default' : 'outline'}
+                    className={cn(
+                        "rounded-xl text-sm",
+                        activeTab === 'selected'
+                            ? "bg-gray-900 text-white hover:bg-black"
+                            : "border-gray-200 bg-white hover:bg-gray-50"
+                    )}
+                    onClick={() => setActiveTab('selected')}
                 >
                     Selected
                 </Button>
@@ -119,7 +151,7 @@ export function ResultsWorkspace({
                         onClick={handleSelectAll}
                         disabled={results.length === 0}
                     >
-                        {selectedIds.size === results.length && results.length > 0
+                        {selectedIds.size > 0 && selectedIds.size === results.length
                             ? 'Deselect all'
                             : 'Select all'}
                     </Button>
@@ -187,18 +219,19 @@ export function ResultsWorkspace({
                                         Loading candidates...
                                     </TableCell>
                                 </TableRow>
-                            ) : results.length === 0 ? (
+                            ) : displayedResults.length === 0 ? (
                                 <TableRow className="hover:bg-transparent">
                                     <TableCell
                                         colSpan={7}
                                         className="h-24 text-center text-gray-500"
                                     >
-                                        No candidates found. Try adjusting your filters or adding
-                                        names.
+                                        {activeTab === 'selected'
+                                            ? "No candidates selected yet."
+                                            : "No candidates found. Try adjusting your filters or adding names."}
                                     </TableCell>
                                 </TableRow>
                             ) : (
-                                sortedResults.map((r, idx) => {
+                                displayedResults.map((r, idx) => {
                                     const isSelected = selectedIds.has(r.doc_id);
                                     return (
                                         <TableRow

@@ -44,6 +44,11 @@ export function FilterSidebar({
     resultsCount,
 }: FilterSidebarProps) {
     const [nameInput, setNameInput] = useState('');
+    const [localTopK, setLocalTopK] = useState(topK.toString());
+
+    React.useEffect(() => {
+        setLocalTopK(topK.toString());
+    }, [topK]);
 
     const handleAddName = () => {
         if (nameInput.trim() && names.length < 4) {
@@ -166,10 +171,27 @@ export function FilterSidebar({
                         type="number"
                         min="1"
                         max="5000"
-                        value={topK}
+                        value={localTopK}
                         onChange={(e) => {
-                            const value = parseInt(e.target.value) || 100;
-                            setTopK(Math.min(5000, Math.max(1, value)));
+                            setLocalTopK(e.target.value);
+                            const val = parseInt(e.target.value);
+                            if (!isNaN(val) && val >= 1 && val <= 5000) {
+                                setTopK(val);
+                            }
+                        }}
+                        onBlur={() => {
+                            const val = parseInt(localTopK);
+                            if (isNaN(val) || val < 1) {
+                                setLocalTopK('100');
+                                setTopK(100);
+                            } else if (val > 5000) {
+                                setLocalTopK('5000');
+                                setTopK(5000);
+                            } else {
+                                // Ensure format matches (e.g. remove leading zeros)
+                                setLocalTopK(val.toString());
+                                setTopK(val);
+                            }
                         }}
                         placeholder="100"
                         className="w-full"
