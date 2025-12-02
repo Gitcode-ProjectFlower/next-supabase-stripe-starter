@@ -166,7 +166,7 @@ export default function NewSelectionPage() {
                     sectors: Array.from(sectors),
                     regions: Array.from(regions),
                     experience_years: experience.map((e) => parseInt(e.split('-')[0])),
-                    top_k: 100,
+                    top_k: topK,
                 }),
             });
 
@@ -175,11 +175,13 @@ export default function NewSelectionPage() {
             }
 
             const data = await response.json();
-            setResults(data.results || []);
+            // API returns { success: true, data: { preview, total, plan, limit } }
+            setResults(data.data?.preview || []);
 
             toast({
                 title: 'Search completed',
-                description: `Found ${data.results?.length || 0} candidates`,
+                description: `Found ${data.data?.total || 0} candidates`,
+                variant: 'success',
             });
         } catch (error) {
             console.error('Search error:', error);
@@ -238,6 +240,7 @@ export default function NewSelectionPage() {
             toast({
                 title: 'Selection saved',
                 description: `Successfully saved ${selectedItems.length} candidates.`,
+                variant: 'success',
             });
 
             // Redirect to the new selection page

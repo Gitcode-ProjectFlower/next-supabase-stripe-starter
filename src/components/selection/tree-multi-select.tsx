@@ -196,8 +196,7 @@ export function TreeMultiSelect({
         collect(data);
 
         if (labels.length === 0) return '';
-        if (labels.length <= 2) return labels.join(', ');
-        return `${labels[0]}, ${labels[1]} +${labels.length - 2} more`;
+        return labels.join(', ');
     }, [selected, data]);
 
     return (
@@ -209,7 +208,7 @@ export function TreeMultiSelect({
                 onClick={() => setOpen((v) => !v)}
                 className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-white px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
             >
-                <span className={selectedLabels ? 'text-foreground' : 'text-muted-foreground truncate'}>
+                <span className={cn("truncate", selectedLabels ? 'text-gray-900 font-medium' : 'text-muted-foreground')}>
                     {selectedLabels || placeholder}
                 </span>
                 <ChevronDown className="h-4 w-4 opacity-50" />

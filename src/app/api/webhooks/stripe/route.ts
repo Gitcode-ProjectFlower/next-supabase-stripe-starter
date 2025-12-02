@@ -95,6 +95,32 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
 
     const planName = (price as any)?.products?.metadata?.plan_name;
 
+    // Insert subscription into database
+    const { error: insertError } = await supabase
+        .from('subscriptions')
+        .insert({
+            id: subscription.id,
+            user_id: customer.id,
+            status: subscription.status,
+            metadata: subscription.metadata,
+            price_id: priceId,
+            quantity: subscription.items.data[0]?.quantity || 1,
+            cancel_at_period_end: subscription.cancel_at_period_end,
+            cancel_at: subscription.cancel_at ? new Date(subscription.cancel_at * 1000).toISOString() : null,
+            canceled_at: subscription.canceled_at ? new Date(subscription.canceled_at * 1000).toISOString() : null,
+            current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
+            current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+            created: new Date(subscription.created * 1000).toISOString(),
+            ended_at: subscription.ended_at ? new Date(subscription.ended_at * 1000).toISOString() : null,
+            trial_start: subscription.trial_start ? new Date(subscription.trial_start * 1000).toISOString() : null,
+            trial_end: subscription.trial_end ? new Date(subscription.trial_end * 1000).toISOString() : null,
+        });
+
+    if (insertError) {
+        console.error('Error inserting subscription:', insertError);
+        return;
+    }
+
     console.log(`Subscription created for user ${customer.id}, plan: ${planName}`);
 }
 
@@ -132,6 +158,30 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
 
     const planName = (price as any)?.products?.metadata?.plan_name;
 
+    // Update subscription in database
+    const { error: updateError } = await supabase
+        .from('subscriptions')
+        .update({
+            status: subscription.status,
+            metadata: subscription.metadata,
+            price_id: priceId,
+            quantity: subscription.items.data[0]?.quantity || 1,
+            cancel_at_period_end: subscription.cancel_at_period_end,
+            cancel_at: subscription.cancel_at ? new Date(subscription.cancel_at * 1000).toISOString() : null,
+            canceled_at: subscription.canceled_at ? new Date(subscription.canceled_at * 1000).toISOString() : null,
+            current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
+            current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+            ended_at: subscription.ended_at ? new Date(subscription.ended_at * 1000).toISOString() : null,
+            trial_start: subscription.trial_start ? new Date(subscription.trial_start * 1000).toISOString() : null,
+            trial_end: subscription.trial_end ? new Date(subscription.trial_end * 1000).toISOString() : null,
+        })
+        .eq('id', subscription.id);
+
+    if (updateError) {
+        console.error('Error updating subscription:', updateError);
+        return;
+    }
+
     console.log(`Subscription updated for user ${customer.id}, new plan: ${planName}`);
 }
 
@@ -152,6 +202,20 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
 
     if (!customer) {
         console.error('Customer not found for subscription:', subscription.id);
+        return;
+    }
+
+    // Update subscription status to canceled
+    const { error: updateError } = await supabase
+        .from('subscriptions')
+        .update({
+            status: 'canceled',
+            ended_at: new Date().toISOString(),
+        })
+        .eq('id', subscription.id);
+
+    if (updateError) {
+        console.error('Error updating subscription:', updateError);
         return;
     }
 

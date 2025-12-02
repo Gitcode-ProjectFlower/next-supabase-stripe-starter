@@ -4,11 +4,17 @@ import { redirect } from 'next/navigation';
 
 import { getOrCreateCustomer } from '@/features/account/controllers/get-or-create-customer';
 import { getSession } from '@/features/account/controllers/get-session';
-import { Price } from '@/features/pricing/types';
+import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
 import { stripeAdmin } from '@/libs/stripe/stripe-admin';
 import { getURL } from '@/utils/get-url';
 
-export async function createCheckoutAction({ price }: { price: Price }) {
+export async function createCheckoutAction(formData: FormData) {
+  const priceId = formData.get('priceId') as string;
+
+  if (!priceId) {
+    throw new Error('Price ID is required');
+  }
+
   // 1. Get the user from session
   const session = await getSession();
 
@@ -26,7 +32,19 @@ export async function createCheckoutAction({ price }: { price: Price }) {
     email: session.user.email,
   });
 
-  // 3. Create a checkout session in Stripe
+  // 3. Fetch price from database to determine type
+  const supabase = await createSupabaseServerClient();
+  const { data: price } = await supabase
+    .from('prices')
+    .select('*')
+    .eq('id', priceId)
+    .single();
+
+  if (!price) {
+    throw new Error('Price not found');
+  }
+
+  // 4. Create a checkout session in Stripe
   const checkoutSession = await stripeAdmin.checkout.sessions.create({
     payment_method_types: ['card'],
     billing_address_collection: 'required',
@@ -36,20 +54,25 @@ export async function createCheckoutAction({ price }: { price: Price }) {
     },
     line_items: [
       {
-        price: price.id,
+        price: priceId,
         quantity: 1,
       },
     ],
     mode: price.type === 'recurring' ? 'subscription' : 'payment',
     allow_promotion_codes: true,
-    success_url: `${getURL()}/account`,
-    cancel_url: `${getURL()}/`,
+    subscription_data: price.type === 'recurring' ? {
+      metadata: {
+        userId: session.user.id,
+      },
+    } : undefined,
+    success_url: `${getURL()}/account?success=true`,
+    cancel_url: `${getURL()}/pricing?canceled=true`,
   });
 
   if (!checkoutSession || !checkoutSession.url) {
     throw Error('checkoutSession is not defined');
   }
 
-  // 4. Redirect to checkout url
+  // 5. Redirect to checkout url
   redirect(checkoutSession.url);
 }

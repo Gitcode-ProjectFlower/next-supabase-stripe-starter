@@ -81,6 +81,7 @@ export default function SelectionsPage() {
             toast({
                 title: 'Success',
                 description: 'Selection deleted successfully',
+                variant: 'success',
             });
 
             setSelections(selections.filter((s) => s.id !== deleteId));
@@ -186,9 +187,6 @@ export default function SelectionsPage() {
                                 <TableHead className="px-4 py-3 font-semibold text-gray-700">
                                     Expires
                                 </TableHead>
-                                <TableHead className="px-4 py-3 font-semibold text-gray-700">
-                                    Filters
-                                </TableHead>
                                 <TableHead className="px-4 py-3 text-right font-semibold text-gray-700">
                                     Actions
                                 </TableHead>
@@ -227,25 +225,6 @@ export default function SelectionsPage() {
                                                 )}
                                             </div>
                                         </TableCell>
-                                        <TableCell className="px-4 py-3 text-sm text-gray-600">
-                                            <div className="flex flex-wrap gap-1">
-                                                {selection.criteria?.names && selection.criteria.names.length > 0 && (
-                                                    <span className="rounded bg-gray-100 px-2 py-0.5 text-xs">
-                                                        {selection.criteria.names.length} names
-                                                    </span>
-                                                )}
-                                                {selection.criteria?.sectors && selection.criteria.sectors.length > 0 && (
-                                                    <span className="rounded bg-gray-100 px-2 py-0.5 text-xs">
-                                                        {selection.criteria.sectors.length} sectors
-                                                    </span>
-                                                )}
-                                                {selection.criteria?.regions && selection.criteria.regions.length > 0 && (
-                                                    <span className="rounded bg-gray-100 px-2 py-0.5 text-xs">
-                                                        {selection.criteria.regions.length} regions
-                                                    </span>
-                                                )}
-                                            </div>
-                                        </TableCell>
                                         <TableCell className="px-4 py-3 text-right">
                                             <div className="flex items-center justify-end gap-2">
                                                 <Button
@@ -271,11 +250,12 @@ export default function SelectionsPage() {
                             })}
                         </TableBody>
                     </Table>
-                </div>
-            </div>
+                </div >
+            </div >
 
             {/* Delete Confirmation Modal */}
-            <Dialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
+            < Dialog open={!!deleteId
+            } onOpenChange={() => setDeleteId(null)}>
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>Delete Selection</DialogTitle>
@@ -296,7 +276,7 @@ export default function SelectionsPage() {
                         </Button>
                     </DialogFooter>
                 </DialogContent>
-            </Dialog>
-        </div>
+            </Dialog >
+        </div >
     );
 }

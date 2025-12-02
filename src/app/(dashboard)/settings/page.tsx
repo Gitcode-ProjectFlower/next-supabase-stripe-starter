@@ -80,8 +80,8 @@ export default function SettingsPage() {
                                 <button
                                     onClick={() => setActiveSection('overview')}
                                     className={`block w-full text-left px-3 py-2 rounded-lg ${activeSection === 'overview'
-                                            ? 'bg-gray-900 text-white'
-                                            : 'hover:bg-gray-50'
+                                        ? 'bg-gray-900 text-white'
+                                        : 'hover:bg-gray-50'
                                         }`}
                                 >
                                     Overview
@@ -100,8 +100,8 @@ export default function SettingsPage() {
                                 <button
                                     onClick={() => setActiveSection('notifications')}
                                     className={`block w-full text-left px-3 py-2 rounded-lg ${activeSection === 'notifications'
-                                            ? 'bg-gray-900 text-white'
-                                            : 'hover:bg-gray-50'
+                                        ? 'bg-gray-900 text-white'
+                                        : 'hover:bg-gray-50'
                                         }`}
                                 >
                                     Notifications
@@ -111,8 +111,8 @@ export default function SettingsPage() {
                                 <button
                                     onClick={() => setActiveSection('downloads')}
                                     className={`block w-full text-left px-3 py-2 rounded-lg ${activeSection === 'downloads'
-                                            ? 'bg-gray-900 text-white'
-                                            : 'hover:bg-gray-50'
+                                        ? 'bg-gray-900 text-white'
+                                        : 'hover:bg-gray-50'
                                         }`}
                                 >
                                     Ready to download
@@ -267,10 +267,10 @@ export default function SettingsPage() {
                                             <tr key={d.id} className="border-t hover:bg-gray-50">
                                                 <td className="px-3 py-2">{d.type}</td>
                                                 <td className="px-3 py-2">{d.selection}</td>
-                                                <td className="px-3 py-2 whitespace-nowrap">
+                                                <td className="px-3 py-2 whitespace-nowrap" suppressHydrationWarning>
                                                     {new Date(d.createdAt).toLocaleString()}
                                                 </td>
-                                                <td className="px-3 py-2 whitespace-nowrap">
+                                                <td className="px-3 py-2 whitespace-nowrap" suppressHydrationWarning>
                                                     {new Date(d.expiresAt).toLocaleString()}
                                                 </td>
                                                 <td className="px-3 py-2">{d.size}</td>
