@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { FilterSidebar } from '@/components/selection/filter-sidebar';
 import { ResultsWorkspace } from '@/components/selection/results-workspace';
 import { Button } from '@/components/ui/button';
+import { trackEvent } from '@/libs/analytics/posthog';
 import {
     Dialog,
     DialogContent,
@@ -178,6 +179,14 @@ export default function NewSelectionPage() {
             // API returns { success: true, data: { preview, total, plan, limit } }
             setResults(data.data?.preview || []);
 
+            // Track search completed event
+            trackEvent.searchCompleted({
+                namesCount: names.length,
+                topK,
+                filterCount: sectors.size + regions.size + experience.length,
+                resultsCount: data.data?.total || 0,
+            });
+
             toast({
                 title: 'Search completed',
                 description: `Found ${data.data?.total || 0} candidates`,
@@ -185,6 +194,14 @@ export default function NewSelectionPage() {
             });
         } catch (error) {
             console.error('Search error:', error);
+
+            // Track search failed event
+            trackEvent.searchFailed({
+                namesCount: names.length,
+                topK,
+                error: error instanceof Error ? error.message : 'Unknown error',
+            });
+
             toast({
                 title: 'Search failed',
                 description: 'Please try again later',
@@ -236,6 +253,13 @@ export default function NewSelectionPage() {
             }
 
             const data = await response.json();
+
+            // Track selection created event
+            trackEvent.selectionCreated({
+                selectionId: data.selection_id,
+                itemCount: selectedItems.length,
+                hasFilters: sectors.size > 0 || regions.size > 0 || experience.length > 0,
+            });
 
             toast({
                 title: 'Selection saved',

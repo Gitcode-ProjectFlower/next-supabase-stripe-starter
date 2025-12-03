@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 
 import { getOrCreateCustomer } from '@/features/account/controllers/get-or-create-customer';
 import { getSession } from '@/features/account/controllers/get-session';
+import { trackServerEvent } from '@/libs/analytics/posthog-server';
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
 import { stripeAdmin } from '@/libs/stripe/stripe-admin';
 import { getURL } from '@/utils/get-url';
@@ -44,6 +45,17 @@ export async function createCheckoutAction(formData: FormData) {
     throw new Error('Price not found');
   }
 
+  // Get product info for tracking
+  let product = null;
+  if (price.product_id) {
+    const { data } = await supabase
+      .from('products')
+      .select('name')
+      .eq('id', price.product_id)
+      .single();
+    product = data;
+  }
+
   // 4. Create a checkout session in Stripe
   const checkoutSession = await stripeAdmin.checkout.sessions.create({
     payment_method_types: ['card'],
@@ -72,6 +84,14 @@ export async function createCheckoutAction(formData: FormData) {
   if (!checkoutSession || !checkoutSession.url) {
     throw Error('checkoutSession is not defined');
   }
+
+  // Track checkout started event
+  trackServerEvent.checkoutStarted({
+    userId: session.user.id,
+    planName: product?.name || 'Unknown',
+    price: price.unit_amount ? price.unit_amount / 100 : 0,
+    interval: price.interval || 'month',
+  });
 
   // 5. Redirect to checkout url
   redirect(checkoutSession.url);

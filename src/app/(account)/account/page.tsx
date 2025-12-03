@@ -12,8 +12,9 @@ import { Price, ProductWithPrices } from '@/features/pricing/types';
 export default async function AccountPage({
   searchParams,
 }: {
-  searchParams: { success?: string };
+  searchParams: Promise<{ success?: string }>;
 }) {
+  const params = await searchParams;
   const [session, subscription, products] = await Promise.all([getSession(), getSubscription(), getProducts()]);
 
   if (!session) {
@@ -79,7 +80,7 @@ export default async function AccountPage({
           <p className="mt-2 text-gray-600">Manage your subscription and billing details.</p>
         </div>
 
-        {searchParams?.success && (
+        {params?.success && (
           <div className="mb-6 rounded-lg bg-green-50 p-4 text-green-800 border border-green-200">
             <p className="font-medium">Subscription updated successfully!</p>
           </div>

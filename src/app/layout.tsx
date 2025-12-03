@@ -1,8 +1,9 @@
-import { PropsWithChildren } from 'react';
+import { PropsWithChildren, Suspense } from 'react';
 import type { Metadata } from 'next';
 import { Montserrat, Montserrat_Alternates } from 'next/font/google';
 
 import { Toaster } from '@/components/ui/toaster';
+import { PostHogProvider, PostHogPageView } from '@/providers/posthog-provider';
 import { cn } from '@/utils/cn';
 import { Analytics } from '@vercel/analytics/react';
 
@@ -30,9 +31,14 @@ export default function RootLayout({ children }: PropsWithChildren) {
   return (
     <html lang='en'>
       <body className={cn('font-sans antialiased', montserrat.variable, montserratAlternates.variable)}>
-        {children}
-        <Toaster />
-        <Analytics />
+        <PostHogProvider>
+          <Suspense fallback={null}>
+            <PostHogPageView />
+          </Suspense>
+          {children}
+          <Toaster />
+          <Analytics />
+        </PostHogProvider>
       </body>
     </html>
   );

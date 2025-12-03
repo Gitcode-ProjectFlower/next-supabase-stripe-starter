@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Trash2 } from 'lucide-react';
 
+import { trackEvent } from '@/libs/analytics/posthog';
+
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -77,6 +79,11 @@ export default function SelectionsPage() {
                 method: 'DELETE',
             });
             if (!response.ok) throw new Error('Failed to delete selection');
+
+            // Track selection deleted event
+            trackEvent.selectionDeleted({
+                selectionId: deleteId,
+            });
 
             toast({
                 title: 'Success',
