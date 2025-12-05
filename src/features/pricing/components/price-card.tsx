@@ -8,13 +8,14 @@ import { SexyBoarder } from '@/components/sexy-boarder';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
+import { createCheckoutAction } from '../actions/create-checkout-action';
 import { PriceCardVariant, productMetadataSchema } from '../models/product-metadata';
 import { BillingInterval, Price, ProductWithPrices } from '../types';
 
 export function PricingCard({
   product,
   price,
-  createCheckoutAction,
+  createCheckoutAction: _createCheckoutAction,
 }: {
   product: ProductWithPrices;
   price?: Price;
@@ -83,24 +84,25 @@ export function PricingCard({
           {<CheckItem text={`${metadata.supportLevel} support`} />}
         </div>
 
-        {createCheckoutAction && (
-          <div className='py-4'>
-            {currentPrice && (
+        <div className='py-4'>
+          {currentPrice && (
+            <form action={createCheckoutAction}>
+              <input type="hidden" name="priceId" value={currentPrice.id} />
               <Button
+                type="submit"
                 variant={buttonVariantMap[metadata.priceCardVariant]}
                 className='w-full'
-                onClick={() => createCheckoutAction({ price: currentPrice })}
               >
                 Get Started
               </Button>
-            )}
-            {!currentPrice && (
-              <Button variant={buttonVariantMap[metadata.priceCardVariant]} className='w-full' asChild>
-                <Link href='/contact'>Contact Us</Link>
-              </Button>
-            )}
-          </div>
-        )}
+            </form>
+          )}
+          {!currentPrice && (
+            <Button variant={buttonVariantMap[metadata.priceCardVariant]} className='w-full' asChild>
+              <Link href='/contact'>Contact Us</Link>
+            </Button>
+          )}
+        </div>
       </div>
     </WithSexyBorder>
   );

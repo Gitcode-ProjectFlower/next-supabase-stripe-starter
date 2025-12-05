@@ -5,8 +5,6 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Trash2 } from 'lucide-react';
 
-import { trackEvent } from '@/libs/analytics/posthog';
-
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -25,6 +23,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { useToast } from '@/components/ui/use-toast';
+import { trackEvent } from '@/libs/analytics/posthog';
 
 interface Selection {
     id: string;
@@ -50,7 +49,7 @@ export default function SelectionsPage() {
 
     useEffect(() => {
         fetchSelections();
-    }, []);
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     const fetchSelections = async () => {
         setIsLoading(true);

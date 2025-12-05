@@ -15,10 +15,18 @@ export async function getSubscription() {
     .select('*, prices(*, products(*))')
     .eq('user_id', user.id)
     .in('status', ['trialing', 'active'])
+    .order('created', { ascending: false })
+    .limit(1)
     .maybeSingle();
 
   if (error) {
-    console.error(error);
+    console.error('[getSubscription] Error fetching subscription:', {
+      error,
+      userId: user.id,
+      message: error.message,
+      details: error.details,
+      hint: error.hint,
+    });
   }
 
   return data;

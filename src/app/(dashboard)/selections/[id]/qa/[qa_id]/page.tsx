@@ -50,7 +50,7 @@ export default function QAResultsPage() {
         if (params.id && params.qa_id) {
             fetchQAResult(params.id as string, params.qa_id as string);
         }
-    }, [params.id, params.qa_id]);
+    }, [params.id, params.qa_id]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const fetchQAResult = async (selectionId: string, qaId: string) => {
         setIsLoading(true);
@@ -292,8 +292,8 @@ export default function QAResultsPage() {
                                         <TableCell className="px-4 py-3">
                                             <span
                                                 className={`rounded-full px-2 py-1 text-xs font-medium ${answer.status === 'success'
-                                                        ? 'bg-green-100 text-green-800'
-                                                        : 'bg-red-100 text-red-800'
+                                                    ? 'bg-green-100 text-green-800'
+                                                    : 'bg-red-100 text-red-800'
                                                     }`}
                                             >
                                                 {answer.status}

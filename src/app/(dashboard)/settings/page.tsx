@@ -54,23 +54,6 @@ export default function SettingsPage() {
 
     return (
         <div className="min-h-screen bg-gray-50 text-gray-900">
-            {/* Header */}
-            <header className="sticky top-0 z-40 border-b bg-white/90 backdrop-blur">
-                <div className="mx-auto max-w-6xl px-4 py-3 flex items-center gap-3">
-                    <div className="font-semibold tracking-tight">⚙️ Settings</div>
-                    <div className="ml-auto flex items-center gap-2">
-                        <div className="text-sm text-gray-600">Signed in as</div>
-                        <div className="text-sm font-medium">you@example.com</div>
-                        <div className="h-6 w-px bg-gray-200" />
-                        <Link href="/api/auth/signout">
-                            <Button variant="outline" size="sm">
-                                Sign out
-                            </Button>
-                        </Link>
-                    </div>
-                </div>
-            </header>
-
             <div className="mx-auto max-w-6xl px-4 py-6 grid grid-cols-12 gap-6">
                 {/* Left nav */}
                 <nav className="col-span-12 md:col-span-3">

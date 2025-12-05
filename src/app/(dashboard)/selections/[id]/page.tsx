@@ -66,7 +66,7 @@ export default function SelectionDetailPage() {
         if (params.id) {
             fetchSelection(params.id as string);
         }
-    }, [params.id]);
+    }, [params.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const fetchSelection = async (id: string) => {
         setIsLoading(true);

@@ -283,33 +283,31 @@ export default function NewSelectionPage() {
 
     return (
         <div className="min-h-screen bg-gray-50 text-gray-900">
-            {/* Header */}
-            <header className="sticky top-0 z-40 border-b bg-white/90 backdrop-blur">
-                <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3">
-                    <div className="ml-auto flex items-center gap-2">
+            {/* Action Buttons */}
+            <div className="border-b bg-white">
+                <div className="mx-auto max-w-7xl px-4 py-3">
+                    <div className="flex items-center justify-between gap-3">
                         <Input
                             value={selectionName}
                             onChange={(e) => setSelectionName(e.target.value)}
                             placeholder="Selection Name"
+                            className="max-w-xs"
                         />
-                        <Button
-                            onClick={handleSaveClick}
-                            disabled={isSaving || selectedIds.size === 0}
-                            className="rounded-lg bg-gray-900 px-4 py-2 text-sm text-white transition-colors hover:bg-black disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                            {isSaving ? 'Saving...' : 'Save'}
-                        </Button>
-                        <Button variant="outline" className="rounded-lg border bg-white px-3 py-2 text-sm transition-colors hover:bg-gray-100">
-                            Export CSV
-                        </Button>
-                        <Button variant="outline" className="rounded-lg border bg-white px-3 py-2 text-sm transition-colors hover:bg-gray-100">
-                            History
-                        </Button>
-                        <div className="h-6 w-px bg-gray-200" />
-                        <div className="text-sm text-gray-600">Profile</div>
+                        <div className="flex items-center gap-2">
+                            <Button
+                                onClick={handleSaveClick}
+                                disabled={isSaving || selectedIds.size === 0}
+                                className="bg-gray-900 hover:bg-black"
+                            >
+                                {isSaving ? 'Saving...' : 'Save Selection'}
+                            </Button>
+                            <Button variant="outline">
+                                Export CSV
+                            </Button>
+                        </div>
                     </div>
                 </div>
-            </header>
+            </div>
 
             {/* Body */}
             <div className="mx-auto grid max-w-7xl grid-cols-12 gap-6 px-4 py-6">

@@ -5,8 +5,8 @@ import { redirect } from 'next/navigation';
 import { getOrCreateCustomer } from '@/features/account/controllers/get-or-create-customer';
 import { getSession } from '@/features/account/controllers/get-session';
 import { trackServerEvent } from '@/libs/analytics/posthog-server';
-import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
 import { stripeAdmin } from '@/libs/stripe/stripe-admin';
+import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
 import { getURL } from '@/utils/get-url';
 
 export async function createCheckoutAction(formData: FormData) {
@@ -33,8 +33,23 @@ export async function createCheckoutAction(formData: FormData) {
     email: session.user.email,
   });
 
-  // 3. Fetch price from database to determine type
+  // 3. Check for existing active subscription
   const supabase = await createSupabaseServerClient();
+
+  const { data: existingSubscription } = await supabase
+    .from('subscriptions')
+    .select('id, status, prices(*, products(*))')
+    .eq('user_id', session.user.id)
+    .in('status', ['active', 'trialing'])
+    .maybeSingle();
+
+  // If user has active subscription, redirect to Customer Portal instead
+  if (existingSubscription) {
+    // User should use Customer Portal to change plans
+    return redirect(`${getURL()}/account`);
+  }
+
+  // 4. Fetch price from database to determine type
   const { data: price } = await supabase
     .from('prices')
     .select('*')
@@ -56,7 +71,7 @@ export async function createCheckoutAction(formData: FormData) {
     product = data;
   }
 
-  // 4. Create a checkout session in Stripe
+  // 5. Create a checkout session in Stripe
   const checkoutSession = await stripeAdmin.checkout.sessions.create({
     payment_method_types: ['card'],
     billing_address_collection: 'required',
@@ -93,6 +108,6 @@ export async function createCheckoutAction(formData: FormData) {
     interval: price.interval || 'month',
   });
 
-  // 5. Redirect to checkout url
+  // 6. Redirect to checkout url
   redirect(checkoutSession.url);
 }

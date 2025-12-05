@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 import { Montserrat, Montserrat_Alternates } from 'next/font/google';
 
 import { Toaster } from '@/components/ui/toaster';
-import { PostHogProvider, PostHogPageView } from '@/providers/posthog-provider';
+import { PostHogPageView,PostHogProvider } from '@/providers/posthog-provider';
 import { cn } from '@/utils/cn';
 import { Analytics } from '@vercel/analytics/react';
 

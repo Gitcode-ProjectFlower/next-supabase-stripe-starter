@@ -1,9 +1,8 @@
 import { Check } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
-
 import { createCheckoutAction } from '@/features/pricing/actions/create-checkout-action';
+import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
 
 const PLANS = [
   {
@@ -11,6 +10,7 @@ const PLANS = [
     topK: 100,
     price: 29,
     interval: 'month',
+    popular: false,
     features: [
       'Up to 100 results per search',
       'Basic similarity search',
@@ -39,6 +39,7 @@ const PLANS = [
     topK: 5000,
     price: 299,
     interval: 'month',
+    popular: false,
     features: [
       'Up to 5,000 results per search',
       'Premium similarity search',
@@ -54,6 +55,21 @@ const PLANS = [
 export default async function PricingPage() {
   const supabase = await createSupabaseServerClient();
 
+  // Get current user
+  const { data: { user } } = await supabase.auth.getUser();
+
+  // Fetch current subscription if user is logged in
+  let currentSubscription = null;
+  if (user) {
+    const { data } = await supabase
+      .from('subscriptions')
+      .select('*, prices(*, products(*))')
+      .eq('user_id', user.id)
+      .in('status', ['active', 'trialing'])
+      .maybeSingle();
+    currentSubscription = data;
+  }
+
   // Fetch products and prices from Stripe
   const { data: products } = await supabase
     .from('products')
@@ -63,18 +79,11 @@ export default async function PricingPage() {
     .order('metadata->index')
     .order('unit_amount', { referencedTable: 'prices' });
 
+  // Get current plan name
+  const currentPlanName = currentSubscription?.prices?.products?.name;
+
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="border-b bg-white">
-        <div className="mx-auto max-w-7xl px-4 py-6">
-          <h1 className="text-3xl font-bold text-gray-900">Pricing</h1>
-          <p className="mt-2 text-gray-600">
-            Choose the plan that fits your needs. Upgrade or downgrade at any time.
-          </p>
-        </div>
-      </header>
-
       {/* Pricing Cards */}
       <div className="mx-auto max-w-7xl px-4 py-12">
         <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
@@ -82,6 +91,11 @@ export default async function PricingPage() {
             // Find matching product from database
             const product = products?.find((p) => p.name === plan.name);
             const price = product?.prices?.find((p) => p.interval === 'month');
+
+            const isCurrentPlan = currentPlanName === plan.name;
+            const currentPlanIndex = PLANS.findIndex(p => p.name === currentPlanName);
+            const isUpgrade = currentPlanName && idx > currentPlanIndex;
+            const isDowngrade = currentPlanName && idx < currentPlanIndex;
 
             return (
               <div
@@ -124,19 +138,42 @@ export default async function PricingPage() {
                   ))}
                 </ul>
 
-                <form action={createCheckoutAction}>
-                  {price && <input type="hidden" name="priceId" value={price.id} />}
-                  <Button
-                    type="submit"
-                    className={`w-full ${plan.popular
-                        ? 'bg-blue-600 hover:bg-blue-700'
-                        : 'bg-gray-900 hover:bg-black'
-                      }`}
-                    disabled={!price}
-                  >
-                    {price ? 'Subscribe' : 'Coming Soon'}
-                  </Button>
-                </form>
+                {isCurrentPlan ? (
+                  // Current plan - show badge
+                  <div className="flex flex-col gap-2">
+                    <div className="rounded-lg bg-blue-50 border border-blue-200 px-4 py-3 text-center">
+                      <span className="text-sm font-medium text-blue-700">Current Plan</span>
+                    </div>
+                    <Button variant="outline" className="w-full" disabled>
+                      Subscribed
+                    </Button>
+                  </div>
+                ) : currentPlanName ? (
+                  // Has different plan - show upgrade/downgrade
+                  <form action={createCheckoutAction}>
+                    {price && <input type="hidden" name="priceId" value={price.id} />}
+                    <Button
+                      type="submit"
+                      variant={isUpgrade ? 'default' : 'outline'}
+                      className={`w-full ${isUpgrade ? 'bg-blue-600 hover:bg-blue-700' : ''}`}
+                    >
+                      {isUpgrade ? 'Upgrade' : 'Downgrade'}
+                    </Button>
+                  </form>
+                ) : (
+                  // No subscription - show subscribe button
+                  <form action={createCheckoutAction}>
+                    {price && <input type="hidden" name="priceId" value={price.id} />}
+                    <Button
+                      type="submit"
+                      variant={plan.popular ? 'default' : 'outline'}
+                      className={`w-full ${plan.popular ? 'bg-blue-600 hover:bg-blue-700' : ''}`}
+                      disabled={!price}
+                    >
+                      {price ? 'Subscribe' : 'Coming Soon'}
+                    </Button>
+                  </form>
+                )}
               </div>
             );
           })}

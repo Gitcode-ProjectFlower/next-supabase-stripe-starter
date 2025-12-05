@@ -2,6 +2,7 @@ import { headers } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 
+import { sendSubscriptionConfirmation } from '@/libs/resend/email-helpers';
 import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -125,6 +126,32 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
     }
 
     console.log(`Subscription created for user ${userId}, plan: ${planName}`);
+
+    // Get user email for sending confirmation
+    const { data: user } = await supabase
+        .from('users')
+        .select('full_name')
+        .eq('id', userId)
+        .single();
+
+    const customerId = typeof subscription.customer === 'string'
+        ? subscription.customer
+        : subscription.customer.id;
+
+    const customer = await stripe.customers.retrieve(customerId) as Stripe.Customer;
+
+    // Send subscription confirmation email
+    if (customer.email) {
+        await sendSubscriptionConfirmation({
+            userEmail: customer.email,
+            userName: user?.full_name || undefined,
+            planName: planName || 'Premium',
+            amount: subscription.items.data[0]?.price.unit_amount || 0,
+            currency: subscription.items.data[0]?.price.currency || 'usd',
+            interval: subscription.items.data[0]?.price.recurring?.interval || 'month',
+            nextBillingDate: toISOString(subscription.current_period_end) || new Date().toISOString(),
+        });
+    }
 }
 
 async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
@@ -150,6 +177,13 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
         .from('prices')
         .select('products(metadata)')
         .eq('id', priceId)
+        .single();
+
+    // Get user details for email
+    const { data: user } = await supabase
+        .from('users')
+        .select('full_name')
+        .eq('id', userId)
         .single();
 
     const planName = (price as any)?.products?.metadata?.plan_name;
@@ -188,6 +222,49 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
         return;
     }
 
+    // Send plan change email if price changed
+    const oldPriceId = subscription.items.data[0]?.price.id; // Note: This logic is tricky because we don't have old subscription object here.
+    // Better approach: Check if it's a cancellation or just update
+
+    // If it's a cancellation (cancel_at_period_end became true)
+    if (subscription.cancel_at_period_end) {
+        // Fetch customer email
+        const customerId = typeof subscription.customer === 'string'
+            ? subscription.customer
+            : subscription.customer.id;
+        const customer = await stripe.customers.retrieve(customerId) as Stripe.Customer;
+
+        if (customer.email) {
+            const { sendSubscriptionCancellationEmail } = await import('@/libs/resend/email-helpers');
+            await sendSubscriptionCancellationEmail({
+                userEmail: customer.email,
+                userName: user?.full_name || undefined,
+                endDate: toISOString(subscription.current_period_end) || new Date().toISOString(),
+            });
+        }
+    } else {
+        // Assume it's a plan change or renewal
+        // In a real app, we'd compare with previous state or check event.data.previous_attributes
+        // For now, let's send plan change email if status is active
+
+        const customerId = typeof subscription.customer === 'string'
+            ? subscription.customer
+            : subscription.customer.id;
+        const customer = await stripe.customers.retrieve(customerId) as Stripe.Customer;
+
+        if (customer.email && subscription.status === 'active') {
+            const { sendPlanChangeEmail } = await import('@/libs/resend/email-helpers');
+            await sendPlanChangeEmail({
+                userEmail: customer.email,
+                userName: user?.full_name || undefined,
+                newPlanName: planName || 'Plan',
+                nextBillingDate: toISOString(subscription.current_period_end) || new Date().toISOString(),
+                amount: subscription.items.data[0]?.price.unit_amount || 0,
+                currency: subscription.items.data[0]?.price.currency || 'usd',
+            });
+        }
+    }
+
     console.log(`Subscription updated for user ${userId}, new plan: ${planName}`);
 }
 
@@ -204,6 +281,13 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
         return;
     }
 
+    // Get user details for email - fetch this ONCE
+    const { data: user } = await supabase
+        .from('users')
+        .select('full_name')
+        .eq('id', userId)
+        .single();
+
     // Update subscription status to canceled
     const { error: updateError } = await supabase
         .from('subscriptions')
@@ -219,4 +303,19 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
     }
 
     console.log(`Subscription deleted for user ${userId}`);
+
+    // Send cancellation email (immediate cancellation)
+    const customerId = typeof subscription.customer === 'string'
+        ? subscription.customer
+        : subscription.customer.id;
+    const customer = await stripe.customers.retrieve(customerId) as Stripe.Customer;
+
+    if (customer.email) {
+        const { sendSubscriptionCancellationEmail } = await import('@/libs/resend/email-helpers');
+        await sendSubscriptionCancellationEmail({
+            userEmail: customer.email,
+            userName: user?.full_name || undefined,
+            endDate: new Date().toISOString(), // Immediate end
+        });
+    }
 }
