@@ -12,7 +12,6 @@ const navigation = [
     { name: 'Dashboard', href: '/dashboard' },
     { name: 'Selections', href: '/selections' },
     { name: 'Pricing', href: '/pricing' },
-    { name: 'Account', href: '/account' },
     { name: 'Settings', href: '/settings' },
 ];
 

@@ -2,7 +2,6 @@ import * as React from 'react';
 
 import {
     Body,
-    Button,
     Container,
     Head,
     Heading,
@@ -53,10 +52,24 @@ export const ExportReadyEmail = ({
                     </Section>
 
                     <Section style={buttonContainer}>
-                        <Button style={button} href={downloadUrl}>
-                            Download CSV
-                        </Button>
+                        <table cellPadding="0" cellSpacing="0" border={0}>
+                            <tr>
+                                <td style={button}>
+                                    <a href={downloadUrl} style={buttonLink}>
+                                        Download CSV
+                                    </a>
+                                </td>
+                            </tr>
+                        </table>
                     </Section>
+
+                    <Text style={text}>
+                        If the button above doesn&apos;t work, copy and paste this link into your browser:
+                    </Text>
+
+                    <Text style={linkText}>
+                        {downloadUrl}
+                    </Text>
 
                     <Text style={text}>
                         If you have any issues downloading your file, please contact our support team.
@@ -133,6 +146,26 @@ const button = {
     textAlign: 'center' as const,
     display: 'inline-block',
     padding: '12px 24px',
+    cursor: 'pointer',
+    border: 'none',
+};
+
+const buttonLink = {
+    color: '#fff',
+    textDecoration: 'none',
+    fontWeight: 'bold',
+    display: 'block',
+};
+
+const linkText = {
+    color: '#0066cc',
+    fontSize: '12px',
+    wordBreak: 'break-all' as const,
+    margin: '16px 24px',
+    padding: '12px',
+    backgroundColor: '#f5f5f5',
+    borderRadius: '4px',
+    fontFamily: 'monospace',
 };
 
 const footer = {

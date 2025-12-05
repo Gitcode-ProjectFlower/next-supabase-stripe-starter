@@ -66,6 +66,8 @@ export default async function PricingPage() {
       .select('*, prices(*, products(*))')
       .eq('user_id', user.id)
       .in('status', ['active', 'trialing'])
+      .order('created', { ascending: false })
+      .limit(1)
       .maybeSingle();
     currentSubscription = data;
   }

@@ -61,6 +61,7 @@ export default function SelectionDetailPage() {
     const [qaPrompt, setQaPrompt] = useState('');
     const [isProcessingQA, setIsProcessingQA] = useState(false);
     const [qaProgress, setQaProgress] = useState(0);
+    const [isExporting, setIsExporting] = useState(false);
 
     useEffect(() => {
         if (params.id) {
@@ -229,6 +230,33 @@ export default function SelectionDetailPage() {
         }
     };
 
+    const handleExport = async () => {
+        setIsExporting(true);
+        try {
+            const response = await fetch(`/api/selections/${params.id}/export`, {
+                method: 'POST',
+            });
+
+            if (!response.ok) {
+                throw new Error('Export failed');
+            }
+
+            toast({
+                title: 'Export started',
+                description: 'You will receive an email when your export is ready',
+            });
+        } catch (error) {
+            console.error('Export error:', error);
+            toast({
+                title: 'Export failed',
+                description: 'Please try again later',
+                variant: 'destructive',
+            });
+        } finally {
+            setIsExporting(false);
+        }
+    };
+
     if (isLoading) {
         return (
             <div className="flex min-h-screen items-center justify-center">
@@ -279,15 +307,11 @@ export default function SelectionDetailPage() {
                             </Button>
                             <Button
                                 className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-                                onClick={() => {
-                                    toast({
-                                        title: 'Coming soon',
-                                        description: 'CSV export will be available soon',
-                                    });
-                                }}
+                                onClick={handleExport}
+                                disabled={isExporting}
                             >
                                 <Download className="mr-2 h-4 w-4" />
-                                Export CSV
+                                {isExporting ? 'Exporting...' : 'Export CSV'}
                             </Button>
                         </div>
                     </div>

@@ -97,16 +97,17 @@ export async function sendExportReadyEmail({
     expiresIn: string;
 }) {
     try {
+        console.log(`[sendExportReadyEmail] Sending email to ${userEmail} from ${FROM_EMAIL}`);
         const { data, error } = await resendClient.emails.send({
             from: FROM_EMAIL,
-            to: userEmail, // Changed from hardcoded 'olehkhomynn@gmail.com' to userEmail
+            to: userEmail,
             subject: 'Your export is ready to download',
             react: ExportReadyEmail({
                 userName,
-                userEmail, // Added missing required prop
-                downloadUrl: downloadLink, // Mapped downloadLink to downloadUrl
+                userEmail,
+                downloadUrl: downloadLink,
                 selectionName,
-                expiresAt: expiresIn, // Mapped expiresIn to expiresAt
+                expiresAt: expiresIn,
             }),
         });
 

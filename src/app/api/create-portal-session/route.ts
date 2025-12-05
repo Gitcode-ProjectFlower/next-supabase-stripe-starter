@@ -24,7 +24,9 @@ export async function POST(request: NextRequest) {
             .select('*')
             .eq('user_id', user.id)
             .in('status', ['active', 'trialing', 'past_due'])
-            .single();
+            .order('created', { ascending: false })
+            .limit(1)
+            .maybeSingle();
 
         if (!subscription) {
             return NextResponse.json(
@@ -42,7 +44,7 @@ export async function POST(request: NextRequest) {
         // Create portal session
         const session = await stripe.billingPortal.sessions.create({
             customer: customerId,
-            return_url: `${process.env.NEXT_PUBLIC_SITE_URL}/account`,
+            return_url: `${process.env.NEXT_PUBLIC_SITE_URL}/settings?tab=plan`,
         });
 
         return NextResponse.json({ url: session.url });

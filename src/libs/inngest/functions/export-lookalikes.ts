@@ -1,5 +1,5 @@
 import { inngest } from '@/libs/inngest/client';
-import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
+import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
 
 export const exportLookalikesJob = inngest.createFunction(
     {
@@ -14,7 +14,7 @@ export const exportLookalikesJob = inngest.createFunction(
         console.log(`Starting Lookalikes CSV export for selection ${selectionId}`);
 
         const items = await step.run('fetch-selection-items', async () => {
-            const supabase = await createSupabaseServerClient();
+            const supabase = supabaseAdminClient;
 
             const { data, error } = await supabase
                 .from('selection_items')
@@ -32,7 +32,7 @@ export const exportLookalikesJob = inngest.createFunction(
         console.log(`Found ${items.length} items to export`);
 
         const downloadUrl = await step.run('generate-and-upload-csv', async () => {
-            const supabase = await createSupabaseServerClient();
+            const supabase = supabaseAdminClient;
 
             const headers = [
                 'Name',
@@ -69,7 +69,7 @@ export const exportLookalikesJob = inngest.createFunction(
             const { error: uploadError } = await supabase.storage
                 .from('exports')
                 .upload(filePath, csvWithBOM, {
-                    contentType: 'text/csv; charset=utf-8',
+                    contentType: 'text/csv',
                     upsert: false,
                 });
 
@@ -98,6 +98,45 @@ export const exportLookalikesJob = inngest.createFunction(
             });
 
             return urlData.signedUrl;
+        });
+
+        await step.run('send-email-notification', async () => {
+            const supabase = supabaseAdminClient;
+
+            // Get user email and selection name
+            const { data } = await supabase.auth.admin.getUserById(userId);
+            const { data: selection } = await supabase
+                .from('selections')
+                .select('name')
+                .eq('id', selectionId)
+                .single();
+
+            if (data?.user?.email) {
+                console.log(`Attempting to send email to ${data.user.email}`);
+                const { sendExportReadyEmail } = await import('@/libs/resend/email-helpers');
+
+                // Calculate expiration date (7 days from now)
+                const expirationDate = new Date();
+                expirationDate.setDate(expirationDate.getDate() + 7);
+
+                const result = await sendExportReadyEmail({
+                    userEmail: data.user.email,
+                    userName: data.user.user_metadata?.name,
+                    downloadLink: downloadUrl,
+                    selectionName: selection?.name || 'Your selection',
+                    fileSize: `${items.length} rows`,
+                    expiresIn: expirationDate.toISOString(),
+                });
+
+                if (result.success) {
+                    console.log(`Export ready email sent successfully to ${data.user.email}`);
+                } else {
+                    console.error(`Failed to send export ready email:`, result.error);
+                }
+            } else {
+                console.warn(`Could not send email: User email not found for userId ${userId}`);
+                console.log('User data:', JSON.stringify(data?.user, null, 2));
+            }
         });
 
         console.log(`Lookalikes CSV export completed. Download URL: ${downloadUrl}`);

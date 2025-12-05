@@ -38,16 +38,12 @@ export async function createCheckoutAction(formData: FormData) {
 
   const { data: existingSubscription } = await supabase
     .from('subscriptions')
-    .select('id, status, prices(*, products(*))')
+    .select('id, status, price_id, prices(*, products(*))')
     .eq('user_id', session.user.id)
     .in('status', ['active', 'trialing'])
+    .order('created', { ascending: false })
+    .limit(1)
     .maybeSingle();
-
-  // If user has active subscription, redirect to Customer Portal instead
-  if (existingSubscription) {
-    // User should use Customer Portal to change plans
-    return redirect(`${getURL()}/account`);
-  }
 
   // 4. Fetch price from database to determine type
   const { data: price } = await supabase
@@ -58,6 +54,18 @@ export async function createCheckoutAction(formData: FormData) {
 
   if (!price) {
     throw new Error('Price not found');
+  }
+
+  // If user has active subscription, check if it's the same plan
+  if (existingSubscription) {
+    // If trying to subscribe to the same price, redirect to settings
+    if (existingSubscription.price_id === priceId) {
+      return redirect(`${getURL()}/settings?error=same-plan&tab=plan`);
+    }
+
+    // For plan changes (upgrade/downgrade), redirect to Customer Portal
+    // User should use Stripe Customer Portal to manage plan changes
+    return redirect(`${getURL()}/settings?error=use-portal&tab=plan`);
   }
 
   // Get product info for tracking
@@ -92,7 +100,7 @@ export async function createCheckoutAction(formData: FormData) {
         userId: session.user.id,
       },
     } : undefined,
-    success_url: `${getURL()}/account?success=true`,
+    success_url: `${getURL()}/settings?success=true&tab=plan`,
     cancel_url: `${getURL()}/pricing?canceled=true`,
   });
 
