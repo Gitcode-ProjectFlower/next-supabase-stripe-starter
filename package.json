@@ -3,7 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
+    "dev": "concurrently \"npm run dev:next\" \"npm run dev:inngest\" --names \"NEXT,INNGEST\" --prefix-colors \"blue,green\"",
+    "dev:next": "next dev --turbopack",
+    "dev:inngest": "npx inngest-cli@latest dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
@@ -62,6 +64,7 @@
     "@types/react": "19.0.4",
     "@types/react-dom": "19.0.2",
     "autoprefixer": "^10.4.20",
+    "concurrently": "^9.2.1",
     "env-cmd": "^10.1.0",
     "eslint": "^8.57.1",
     "eslint-config-next": "^15.1.4",

@@ -78,8 +78,8 @@ export async function POST(request: NextRequest) {
     // Construct filters object combining explicit filters and new specific fields
     const finalFilters = {
       ...(explicitFilters || {}),
-      ...(sectors && sectors.length > 0 ? { sectors } : {}),
-      ...(regions && regions.length > 0 ? { regions } : {}),
+      ...(sectors && sectors.length > 0 ? { sector: sectors } : {}),
+      ...(regions && regions.length > 0 ? { region: regions } : {}),
       ...(experience_years && experience_years.length > 0 ? { experience_years } : {}),
     };
 
@@ -109,18 +109,24 @@ export async function POST(request: NextRequest) {
       process.env.HAYSTACK_BASE_URL || 'http://localhost:8000';
     const haystackApiKey = process.env.HAYSTACK_API_KEY || '';
 
+    const haystackPayload = {
+      names: finalLookalikeNames,
+      filters: finalFilters,
+      top_k,
+    };
+
+    console.log('[Haystack API] Request:', {
+      url: `${haystackUrl}/similarity`,
+      payload: haystackPayload,
+    });
+
     const haystackResponse = await fetch(`${haystackUrl}/similarity`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${haystackApiKey}`,
+        ...(haystackApiKey ? { 'X-API-Key': haystackApiKey } : {}),
       },
-      body: JSON.stringify({
-        names: finalLookalikeNames,
-        filters: finalFilters,
-        top_k,
-        collection: 'en',
-      }),
+      body: JSON.stringify(haystackPayload),
     });
 
     if (!haystackResponse.ok) {
@@ -128,18 +134,17 @@ export async function POST(request: NextRequest) {
     }
 
     const haystackData = await haystackResponse.json();
+    console.log('[Haystack API] Response:', haystackData);
+
     const results = haystackData.results || [];
 
     const maskedResults = maskFields(results, userPlan);
 
-    const preview = maskedResults.slice(0, 3);
-    const total = maskedResults.length;
-
     return NextResponse.json({
       success: true,
       data: {
-        preview,
-        total,
+        preview: maskedResults,  // Return all results
+        total: maskedResults.length,
         plan: userPlan || 'free',
         limit: planLimit,
       },

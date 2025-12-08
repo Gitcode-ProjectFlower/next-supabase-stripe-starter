@@ -9,7 +9,11 @@
       "sector_level2",
       "region_level2",
       "region_level4",
-      "experience_years"
+      "experience_years",
+      "sector",
+      "region",
+      "sectors",
+      "regions"
     ],
     "top_k_limits": {
       "small": 100,
