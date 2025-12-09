@@ -1,5 +1,5 @@
-import { Calendar, CreditCard, Shield } from 'lucide-react';
 import Link from 'next/link';
+import { Calendar, CreditCard, Shield } from 'lucide-react';
 
 import { ManageSubscriptionButton } from '@/components/manage-subscription-button';
 import { Button } from '@/components/ui/button';
