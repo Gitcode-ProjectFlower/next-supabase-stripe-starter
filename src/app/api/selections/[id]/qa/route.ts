@@ -3,9 +3,12 @@ import { z } from 'zod';
 
 import { inngest } from '@/libs/inngest/client';
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
+import { getUserPlan } from '@/libs/user-plan';
+import { checkUsageLimit, logUsage } from '@/libs/usage-tracking';
 
 const qaRequestSchema = z.object({
     prompt: z.string().min(1, 'Prompt is required'),
+    resume_ids: z.array(z.string()).optional().default([]),
 });
 
 export async function POST(
@@ -26,7 +29,7 @@ export async function POST(
 
         const { data: selection, error: selectionError } = await supabase
             .from('selections')
-            .select('id, user_id')
+            .select('id, user_id, item_count')
             .eq('id', selectionId)
             .single();
 
@@ -48,7 +51,38 @@ export async function POST(
             );
         }
 
-        const { prompt } = validation.data;
+        const { prompt, resume_ids } = validation.data;
+
+        // Calculate AI calls: each resume counts as 1 AI call
+        const aiCallCount = resume_ids.length > 0 ? resume_ids.length : selection.item_count || 1;
+
+        // Get user plan
+        const userPlan = await getUserPlan(user.id);
+
+        // Check usage limit before allowing Q&A
+        const usageCheck = await checkUsageLimit(
+            user.id,
+            'ai_question',
+            aiCallCount,
+            userPlan
+        );
+
+        if (!usageCheck.allowed) {
+            return NextResponse.json(
+                {
+                    error: 'CAP_REACHED',
+                    type: 'ai_limit',
+                    message: 'You have reached your monthly AI question limit. Upgrade to continue.',
+                    current: usageCheck.current,
+                    limit: usageCheck.limit,
+                    remaining: usageCheck.remaining,
+                },
+                { status: 403 }
+            );
+        }
+
+        // Log usage
+        await logUsage(user.id, 'ai_question', aiCallCount);
 
         await inngest.send({
             name: 'qa/process',
@@ -56,12 +90,19 @@ export async function POST(
                 selectionId,
                 userId: user.id,
                 prompt,
+                resumeIds: resume_ids,
             },
         });
 
         return NextResponse.json({
             message: 'Q&A job started',
             selectionId,
+            aiCallsUsed: aiCallCount,
+            usage: {
+                current: usageCheck.current + aiCallCount,
+                limit: usageCheck.limit,
+                remaining: usageCheck.remaining - aiCallCount,
+            },
         });
     } catch (error) {
         console.error('Q&A trigger error:', error);

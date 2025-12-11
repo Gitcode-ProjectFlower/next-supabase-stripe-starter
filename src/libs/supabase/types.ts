@@ -292,6 +292,30 @@ export type Database = {
           },
         ]
       }
+      usage_log: {
+        Row: {
+          action: string
+          count: number
+          created_at: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          action: string
+          count: number
+          created_at?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          action?: string
+          count?: number
+          created_at?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       users: {
         Row: {
           avatar_url: string | null
@@ -321,11 +345,21 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_usage_limit: {
+        Args: {
+          p_action: string
+          p_count: number
+          p_limit: number
+          p_user_id: string
+        }
+        Returns: boolean
+      }
       create_selection: {
         Args: { p_criteria_json: Json; p_items: Json; p_name: string }
         Returns: string
       }
       delete_selection: { Args: { p_selection_id: string }; Returns: undefined }
+      get_usage_stats: { Args: { p_user_id: string }; Returns: Json }
       list_selections: {
         Args: never
         Returns: {

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 
 import { FilterSidebar } from '@/components/selection/filter-sidebar';
 import { ResultsWorkspace } from '@/components/selection/results-workspace';
+import { UsageMeter } from '@/components/usage/usage-meter';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -211,7 +212,7 @@ export default function NewSelectionPage() {
             {/* Body */}
             <div className="mx-auto grid max-w-7xl grid-cols-12 gap-6 px-4 py-6">
                 {/* Left: Filters */}
-                <aside className="col-span-12 lg:col-span-3">
+                <aside className="col-span-12 lg:col-span-3 space-y-6">
                     <FilterSidebar
                         names={names}
                         setNames={setNames}
@@ -227,6 +228,9 @@ export default function NewSelectionPage() {
                         isLoading={isLoading}
                         resultsCount={results.length}
                     />
+
+                    {/* Usage Meter */}
+                    <UsageMeter />
                 </aside>
 
                 {/* Right: Workspace */}

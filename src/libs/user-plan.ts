@@ -1,6 +1,35 @@
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
 
-export type UserPlan = 'small' | 'medium' | 'large' | null;
+export type UserPlan = 'free_tier' | 'small' | 'medium' | 'large' | 'promo_medium' | null;
+
+// Plan configuration with monthly limits
+export const PLAN_CONFIGS = {
+  free_tier: {
+    maxDownloadsPer30Days: 100,
+    maxAiCallsPer30Days: 5,
+    visibleColumns: ['name', 'city', 'sectors', 'experience_years'],
+  },
+  small: {
+    maxDownloadsPer30Days: 300,
+    maxAiCallsPer30Days: 150,
+    visibleColumns: ['name', 'city', 'street', 'sectors', 'experience_years'],
+  },
+  medium: {
+    maxDownloadsPer30Days: 2000,
+    maxAiCallsPer30Days: 1000,
+    visibleColumns: ['name', 'email', 'phone', 'city', 'street', 'sectors', 'experience_years'],
+  },
+  large: {
+    maxDownloadsPer30Days: 8000,
+    maxAiCallsPer30Days: 5000,
+    visibleColumns: ['name', 'email', 'phone', 'city', 'street', 'sectors', 'experience_years', 'similarity'],
+  },
+  promo_medium: {
+    maxDownloadsPer30Days: 2000,
+    maxAiCallsPer30Days: 1000,
+    visibleColumns: ['name', 'email', 'phone', 'city', 'street', 'sectors', 'experience_years'],
+  },
+};
 
 export async function getUserPlan(userId: string): Promise<UserPlan> {
   const supabase = await createSupabaseServerClient();
@@ -13,38 +42,34 @@ export async function getUserPlan(userId: string): Promise<UserPlan> {
     .single();
 
   if (error || !subscription) {
-    return null;
+    return 'free_tier'; // Default to free tier instead of null
   }
 
   const productMetadata = (subscription.prices as any)?.products?.metadata;
   const planName = productMetadata?.plan_name as UserPlan;
 
-  return planName || null;
+  return planName || 'free_tier';
 }
 
+// Legacy function - kept for backward compatibility
+// Use PLAN_CONFIGS[plan].maxDownloadsPer30Days instead
 export function getPlanCap(plan: UserPlan): number {
+  if (!plan || plan === 'free_tier') return 100;
+
   const capsByPlan = {
-    small: 100,
-    medium: 500,
-    large: 5000,
+    free_tier: 100,
+    small: 300,
+    medium: 2000,
+    large: 8000,
+    promo_medium: 2000,
   };
 
-  return plan ? capsByPlan[plan] : 100;
+  return capsByPlan[plan] || 100;
 }
-
 
 export function getVisibleColumns(plan: UserPlan): string[] {
-  if (!plan) {
-    return ['name', 'city', 'sectors', 'experience_years'];
-  }
-
-  const columnsByPlan = {
-    small: ['name', 'city', 'street', 'sectors', 'experience_years'],
-    medium: ['name', 'email', 'phone', 'city', 'street', 'sectors', 'experience_years'],
-    large: ['name', 'email', 'phone', 'city', 'street', 'sectors', 'experience_years', 'similarity'],
-  };
-
-  return columnsByPlan[plan] || columnsByPlan.small;
+  const effectivePlan = plan || 'free_tier';
+  return PLAN_CONFIGS[effectivePlan]?.visibleColumns || PLAN_CONFIGS.free_tier.visibleColumns;
 }
 
 export function maskFields(
@@ -62,6 +87,7 @@ export function maskFields(
       }
     });
 
+    // Always include doc_id
     if (item.doc_id) {
       masked.doc_id = item.doc_id;
     }
