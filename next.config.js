@@ -4,10 +4,7 @@ const nextConfig = {
     // Exclude test files and scripts from build type checking
     ignoreBuildErrors: false,
   },
-  eslint: {
-    // Exclude test files from build linting
-    ignoreDuringBuilds: false,
-  },
+
 };
 
 module.exports = nextConfig;
