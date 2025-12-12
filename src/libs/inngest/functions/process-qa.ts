@@ -1,6 +1,5 @@
 import { inngest } from '@/libs/inngest/client';
 import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
-import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
 
 export const processQAJob = inngest.createFunction(
     {
@@ -13,14 +12,12 @@ export const processQAJob = inngest.createFunction(
     },
     { event: 'qa/process' },
     async ({ event, step }) => {
-        const { selectionId, prompt, userId } = event.data;
+        const { selectionId, prompt, userId, qaSessionId } = event.data;
 
         console.log(`Starting Q&A job for selection ${selectionId}`);
 
         const items = await step.run('fetch-selection-items', async () => {
-            const supabase = await createSupabaseServerClient();
-
-            const { data, error } = await supabase
+            const { data, error } = await supabaseAdminClient
                 .from('selection_items')
                 .select('*')
                 .eq('selection_id', selectionId)
@@ -36,9 +33,7 @@ export const processQAJob = inngest.createFunction(
         console.log(`Found ${items.length} items to process`);
 
         const maxProfiles = await step.run('determine-max-profiles', async () => {
-            const supabase = await createSupabaseServerClient();
-
-            const { data: subscription } = await supabase
+            const { data: subscription } = await supabaseAdminClient
                 .from('subscriptions')
                 .select('metadata, prices(products(metadata))')
                 .eq('user_id', userId)
@@ -79,7 +74,12 @@ export const processQAJob = inngest.createFunction(
                 const batchItems = batch.map(item => ({
                     doc_id: item.doc_id,
                     name: item.name ?? undefined,
-                    email: item.email ?? undefined
+                    email: item.email ?? undefined,
+                    city: item.city ?? undefined,
+                    street: item.street ?? undefined,
+                    sectors: item.sectors ?? undefined,
+                    experience_years: item.experience_years ?? undefined,
+                    similarity: item.similarity ?? undefined
                 }));
 
                 try {
@@ -141,14 +141,44 @@ export const processQAJob = inngest.createFunction(
                 }
             });
 
+            // Insert answers into DB
+            if (qaSessionId) {
+                await step.run(`save-answers-${i}`, async () => {
+                    const answersToInsert = batchResults.map(r => ({
+                        session_id: qaSessionId,
+                        doc_id: r.doc_id,
+                        name: r.name,
+                        email: r.email,
+                        city: r.city,
+                        answer: r.answer,
+                        status: r.status === 'success' ? 'success' : 'failed',
+                        error_message: r.error_message
+                    }));
+
+                    const { error: insertError } = await supabaseAdminClient
+                        .from('qa_answers')
+                        .insert(answersToInsert);
+
+                    if (insertError) {
+                        console.error('Failed to insert QA answers:', insertError);
+                        throw new Error(`Failed to insert answers: ${insertError.message}`);
+                    }
+
+                    // Update progress
+                    const progress = Math.round(((i + batchSize) / itemsToProcess.length) * 100);
+                    await supabaseAdminClient
+                        .from('qa_sessions')
+                        .update({ progress: Math.min(progress, 99) })
+                        .eq('id', qaSessionId);
+                });
+            }
+
             results.push(...batchResults);
 
             console.log(`Processed batch ${i / batchSize + 1}, total: ${results.length}`);
         }
 
         const downloadUrl = await step.run('generate-csv', async () => {
-            const supabase = await createSupabaseServerClient();
-
             const headers = [
                 'Name',
                 'Email',
@@ -218,6 +248,19 @@ export const processQAJob = inngest.createFunction(
 
             return urlData.signedUrl;
         });
+
+        // Update session as completed
+        if (qaSessionId) {
+            await supabaseAdminClient
+                .from('qa_sessions')
+                .update({
+                    status: 'completed',
+                    progress: 100,
+                    completed_at: new Date().toISOString(),
+                    csv_url: downloadUrl
+                })
+                .eq('id', qaSessionId);
+        }
 
         console.log(`Q&A job completed. Download URL: ${downloadUrl}`);
 

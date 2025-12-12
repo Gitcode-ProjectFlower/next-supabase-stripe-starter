@@ -147,6 +147,100 @@ export type Database = {
         }
         Relationships: []
       }
+      qa_answers: {
+        Row: {
+          answer: string | null
+          city: string | null
+          created_at: string | null
+          doc_id: string
+          email: string | null
+          error_message: string | null
+          id: string
+          name: string | null
+          session_id: string
+          status: string
+        }
+        Insert: {
+          answer?: string | null
+          city?: string | null
+          created_at?: string | null
+          doc_id: string
+          email?: string | null
+          error_message?: string | null
+          id?: string
+          name?: string | null
+          session_id: string
+          status?: string
+        }
+        Update: {
+          answer?: string | null
+          city?: string | null
+          created_at?: string | null
+          doc_id?: string
+          email?: string | null
+          error_message?: string | null
+          id?: string
+          name?: string | null
+          session_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_answers_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "qa_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qa_sessions: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          csv_url: string | null
+          error_message: string | null
+          id: string
+          progress: number | null
+          prompt: string
+          selection_id: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          csv_url?: string | null
+          error_message?: string | null
+          id?: string
+          progress?: number | null
+          prompt: string
+          selection_id: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          csv_url?: string | null
+          error_message?: string | null
+          id?: string
+          progress?: number | null
+          prompt?: string
+          selection_id?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_sessions_selection_id_fkey"
+            columns: ["selection_id"]
+            isOneToOne: false
+            referencedRelation: "selections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       selection_items: {
         Row: {
           city: string | null

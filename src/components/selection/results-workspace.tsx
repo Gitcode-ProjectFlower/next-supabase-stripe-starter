@@ -27,6 +27,8 @@ interface ResultsWorkspaceProps {
     isLoading: boolean;
     selectedIds: Set<string>;
     onSelectionChange: (ids: Set<string>) => void;
+    onGenerateAnswers?: (prompt: string) => void;
+    isProcessingQA?: boolean;
 }
 
 const TABLE_HEADERS = [
@@ -50,10 +52,13 @@ export function ResultsWorkspace({
     isLoading,
     selectedIds,
     onSelectionChange,
+    onGenerateAnswers,
+    isProcessingQA = false,
 }: ResultsWorkspaceProps) {
     const [sortKey, setSortKey] = useState<SortKey>('similarity');
     const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
     const [activeTab, setActiveTab] = useState<'candidates' | 'selected'>('candidates');
+    const [prompt, setPrompt] = useState('');
 
     const handleSort = (key: SortKey) => {
         if (sortKey === key) {
@@ -312,21 +317,32 @@ export function ResultsWorkspace({
                         <Textarea
                             className="min-h-[72px] flex-1 resize-none rounded-lg border px-3 py-2 text-sm focus-visible:ring-1 focus-visible:ring-gray-900"
                             placeholder="Ask your question here (multiple questions allowed) — each resume gives an answer..."
+                            value={prompt}
+                            onChange={(e) => setPrompt(e.target.value)}
+                            disabled={isProcessingQA}
                         />
                         <div className="w-56 space-y-2">
-                            <Button className="w-full rounded-lg bg-blue-600 px-3 py-2 text-sm text-white hover:bg-blue-700">
-                                Generate answers
+                            <Button
+                                className="w-full rounded-lg bg-blue-600 px-3 py-2 text-sm text-white hover:bg-blue-700"
+                                onClick={() => onGenerateAnswers?.(prompt)}
+                                disabled={isProcessingQA || !prompt.trim()}
+                            >
+                                {isProcessingQA ? 'Processing...' : 'Generate answers'}
                             </Button>
-                            <div className="flex items-center justify-between text-xs text-gray-600">
-                                <span>Status</span>
-                                <span>0%</span>
-                            </div>
-                            <div className="h-2 w-full overflow-hidden rounded-full bg-gray-100">
-                                <div
-                                    className="h-full bg-blue-600 transition-all duration-500"
-                                    style={{ width: '0%' }}
-                                />
-                            </div>
+                            {isProcessingQA && (
+                                <div className="space-y-1">
+                                    <div className="flex items-center justify-between text-xs text-gray-600">
+                                        <span>Status</span>
+                                        <span>Processing...</span>
+                                    </div>
+                                    <div className="h-2 w-full overflow-hidden rounded-full bg-gray-100">
+                                        <div
+                                            className="h-full bg-blue-600 animate-pulse"
+                                            style={{ width: '100%' }}
+                                        />
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

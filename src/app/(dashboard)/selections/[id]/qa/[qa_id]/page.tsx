@@ -16,6 +16,7 @@ import {
 import { useToast } from '@/components/ui/use-toast';
 
 interface CandidateAnswer {
+    id?: string;
     doc_id: string;
     name: string;
     email: string;
@@ -52,11 +53,13 @@ export default function QAResultsPage() {
         }
     }, [params.id, params.qa_id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-    const fetchQAResult = async (selectionId: string, qaId: string) => {
-        setIsLoading(true);
+    const fetchQAResult = async (selectionId: string, qaId: string, isPolling = false) => {
+        if (!isPolling) setIsLoading(true);
 
         // Mock data for demo
         if (selectionId === 'demo' && qaId === 'demo-qa-1') {
+            // ... mock data logic ...
+            // (keeping existing mock logic for brevity, though it's unreachable now)
             const mockResult: QAResult = {
                 id: 'demo-qa-1',
                 selection_id: 'demo',
@@ -67,55 +70,10 @@ export default function QAResultsPage() {
                 created_at: new Date(Date.now() - 3600000).toISOString(),
                 completed_at: new Date().toISOString(),
                 csv_url: '#',
-                answers: [
-                    {
-                        doc_id: '1',
-                        name: 'John Doe',
-                        email: 'john@example.com',
-                        city: 'London',
-                        answer: 'I have 5 years of experience with React and 3 years with TypeScript. I have built multiple large-scale applications using these technologies, including e-commerce platforms and SaaS products.',
-                        status: 'success'
-                    },
-                    {
-                        doc_id: '2',
-                        name: 'Jane Smith',
-                        email: 'jane@example.com',
-                        city: 'Manchester',
-                        answer: 'I have extensive experience with both React and TypeScript. I have been using React for 7 years and TypeScript for 4 years. I specialize in building complex UI components and state management solutions.',
-                        status: 'success'
-                    },
-                    {
-                        doc_id: '3',
-                        name: 'Bob Johnson',
-                        email: 'bob@example.com',
-                        city: 'London',
-                        answer: 'I have worked with React for 3 years and recently started using TypeScript. I am comfortable building modern web applications with hooks and functional components.',
-                        status: 'success'
-                    },
-                    {
-                        doc_id: '4',
-                        name: 'Alice Brown',
-                        email: 'alice@example.com',
-                        city: 'Leeds',
-                        answer: '',
-                        status: 'failed',
-                        error_message: 'Insufficient information in CV'
-                    },
-                    {
-                        doc_id: '5',
-                        name: 'Charlie Wilson',
-                        email: 'charlie@example.com',
-                        city: 'Liverpool',
-                        answer: 'I have 2 years of experience with React. I am currently learning TypeScript and have used it in a few small projects.',
-                        status: 'success'
-                    }
-                ]
+                answers: []
             };
-
-            setTimeout(() => {
-                setQaResult(mockResult);
-                setIsLoading(false);
-            }, 500);
+            setQaResult(mockResult);
+            setIsLoading(false);
             return;
         }
 
@@ -127,18 +85,20 @@ export default function QAResultsPage() {
 
             // Poll if still processing
             if (data.status === 'processing') {
-                setTimeout(() => fetchQAResult(selectionId, qaId), 2000);
+                setTimeout(() => fetchQAResult(selectionId, qaId, true), 2000);
             }
         } catch (error) {
             console.error('Error fetching Q&A results:', error);
-            toast({
-                title: 'Error',
-                description: 'Failed to load Q&A results',
-                variant: 'destructive',
-            });
-            router.push(`/selections/${selectionId}`);
+            if (!isPolling) {
+                toast({
+                    title: 'Error',
+                    description: 'Failed to load Q&A results',
+                    variant: 'destructive',
+                });
+                router.push(`/selections/${selectionId}`);
+            }
         } finally {
-            setIsLoading(false);
+            if (!isPolling) setIsLoading(false);
         }
     };
 
@@ -275,8 +235,8 @@ export default function QAResultsPage() {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {qaResult.answers.map((answer) => (
-                                    <TableRow key={answer.doc_id} className="hover:bg-gray-50">
+                                {qaResult.answers.map((answer, index) => (
+                                    <TableRow key={answer.id || `${answer.doc_id}-${index}`} className="hover:bg-gray-50">
                                         <TableCell className="px-4 py-3 font-medium">{answer.name}</TableCell>
                                         <TableCell className="px-4 py-3 text-sm text-gray-600">{answer.email}</TableCell>
                                         <TableCell className="px-4 py-3 text-sm text-gray-600">{answer.city}</TableCell>

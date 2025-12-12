@@ -212,7 +212,7 @@ export default function NewSelectionPage() {
             {/* Body */}
             <div className="mx-auto grid max-w-7xl grid-cols-12 gap-6 px-4 py-6">
                 {/* Left: Filters */}
-                <aside className="col-span-12 lg:col-span-3 space-y-6">
+                <aside className="col-span-12 lg:col-span-3 space-y-6 sticky top-[80px] self-start">
                     <FilterSidebar
                         names={names}
                         setNames={setNames}

@@ -177,7 +177,10 @@ export default function SelectionDetailPage() {
     };
 
     const handleQA = async () => {
+        console.log('[handleQA] Button clicked');
+
         if (!qaPrompt.trim()) {
+            console.log('[handleQA] Empty prompt');
             toast({
                 title: 'Validation Error',
                 description: 'Please enter a question',
@@ -186,8 +189,12 @@ export default function SelectionDetailPage() {
             return;
         }
 
-        if (!params.id) return;
+        if (!params.id) {
+            console.error('[handleQA] Missing params.id');
+            return;
+        }
 
+        console.log('[handleQA] Starting request for selection:', params.id);
         setIsProcessingQA(true);
         setQaProgress(0);
 
@@ -199,7 +206,22 @@ export default function SelectionDetailPage() {
                 body: JSON.stringify({ prompt: qaPrompt }),
             });
 
-            if (!response.ok) throw new Error('Failed to start Q&A job');
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+
+                if (response.status === 403 && errorData.error === 'CAP_REACHED') {
+                    toast({
+                        title: 'Limit Reached',
+                        description: errorData.message || 'You have reached your AI usage limit.',
+                        variant: 'destructive',
+                    });
+                    // Optional: You could redirect to pricing here
+                    // router.push('/pricing');
+                    throw new Error('Limit reached');
+                }
+
+                throw new Error(errorData.error || 'Failed to start Q&A job');
+            }
 
             const data = await response.json();
 
@@ -212,19 +234,26 @@ export default function SelectionDetailPage() {
             setIsQAModalOpen(false);
             setQaPrompt('');
 
-            // For now, redirect to demo results page
-            // In production, you'd create a QA record and poll for its status
-            setTimeout(() => {
-                router.push(`/selections/${params.id}/qa/demo-qa-1`);
-            }, 1000);
+            // Redirect to QA results page
+            if (data.qaSessionId) {
+                router.push(`/selections/${params.id}/qa/${data.qaSessionId}`);
+            } else {
+                // Fallback for demo or error
+                console.warn('No QA Session ID returned, redirecting to demo');
+                setTimeout(() => {
+                    router.push(`/selections/${params.id}/qa/demo-qa-1`);
+                }, 1000);
+            }
 
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error processing Q&A:', error);
-            toast({
-                title: 'Error',
-                description: 'Failed to process Q&A',
-                variant: 'destructive',
-            });
+            if (error.message !== 'Limit reached') {
+                toast({
+                    title: 'Error',
+                    description: error.message || 'Failed to process Q&A',
+                    variant: 'destructive',
+                });
+            }
             setIsProcessingQA(false);
             setQaProgress(0);
         }

@@ -281,6 +281,100 @@ export default function NewSelectionPage() {
         }
     };
 
+    const handleGenerateAnswers = async (prompt: string) => {
+        setIsLoading(true);
+        try {
+            // 1. Auto-save selection first
+            const selectedItems = results.filter((r) => selectedIds.has(r.doc_id));
+
+            // If nothing selected, use all results (or maybe top K?)
+            // Let's default to selectedIds if any, otherwise all results (up to limit?)
+            // For now, enforce selection like save does, or select all if none?
+            // User expectation: if I see a list and click generate, maybe I want all of them?
+            // But let's stick to "selectedIds" to be safe and consistent with UI.
+            // If 0 selected, we should probably select all?
+
+            let itemsToSave = selectedItems;
+            if (itemsToSave.length === 0) {
+                // Auto-select all if nothing selected
+                itemsToSave = results;
+                setSelectedIds(new Set(results.map(r => r.doc_id)));
+            }
+
+            const saveResponse = await fetch('/api/selections', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: selectionName, // Use current name input
+                    criteria: {
+                        names,
+                        sectors: Array.from(sectors),
+                        regions: Array.from(regions),
+                        experience_years: experience.map((e) => parseInt(e.split('-')[0])),
+                    },
+                    top_k: topK,
+                    items: itemsToSave,
+                }),
+            });
+
+            if (!saveResponse.ok) {
+                const errorData = await saveResponse.json();
+                throw new Error(errorData.error || 'Failed to auto-save selection');
+            }
+
+            const saveData = await saveResponse.json();
+            const selectionId = saveData.selection_id;
+
+            // 2. Trigger QA
+            const qaResponse = await fetch(`/api/selections/${selectionId}/qa`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompt }),
+            });
+
+            if (!qaResponse.ok) {
+                const errorData = await qaResponse.json().catch(() => ({}));
+
+                if (qaResponse.status === 403 && errorData.error === 'CAP_REACHED') {
+                    toast({
+                        title: 'Limit Reached',
+                        description: errorData.message || 'You have reached your AI usage limit.',
+                        variant: 'destructive',
+                    });
+                    // We still saved the selection, so maybe redirect to it?
+                    router.push(`/selections/${selectionId}`);
+                    return;
+                }
+                throw new Error(errorData.error || 'Failed to start Q&A job');
+            }
+
+            const qaData = await qaResponse.json();
+
+            toast({
+                title: 'Success',
+                description: 'Q&A job started! Redirecting...',
+                variant: 'success',
+            });
+
+            // 3. Redirect
+            if (qaData.qaSessionId) {
+                router.push(`/selections/${selectionId}/qa/${qaData.qaSessionId}`);
+            } else {
+                router.push(`/selections/${selectionId}`);
+            }
+
+        } catch (error: any) {
+            console.error('Generate answers error:', error);
+            toast({
+                title: 'Error',
+                description: error.message || 'Failed to generate answers',
+                variant: 'destructive',
+            });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     return (
         <div className="min-h-screen bg-gray-50 text-gray-900">
             {/* Header */}
@@ -343,6 +437,8 @@ export default function NewSelectionPage() {
                         isLoading={isLoading}
                         selectedIds={selectedIds}
                         onSelectionChange={setSelectedIds}
+                        onGenerateAnswers={handleGenerateAnswers}
+                        isProcessingQA={isLoading}
                     />
                 </main>
             </div>

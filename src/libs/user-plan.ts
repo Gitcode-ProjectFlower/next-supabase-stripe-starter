@@ -32,23 +32,67 @@ export const PLAN_CONFIGS = {
 };
 
 export async function getUserPlan(userId: string): Promise<UserPlan> {
-  const supabase = await createSupabaseServerClient();
+  try {
+    const supabase = await createSupabaseServerClient();
 
-  const { data: subscription, error } = await supabase
-    .from('subscriptions')
-    .select('metadata, prices(products(metadata))')
-    .eq('user_id', userId)
-    .eq('status', 'active')
-    .single();
+    const { data: subscription, error } = await supabase
+      .from('subscriptions')
+      .select('*, prices(*, products(*))')
+      .eq('user_id', userId)
+      .in('status', ['trialing', 'active'])
+      .order('created', { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
-  if (error || !subscription) {
-    return 'free_tier'; // Default to free tier instead of null
+    if (error) {
+      console.error('[getUserPlan] DB Error:', error);
+      return 'free_tier';
+    }
+
+    if (!subscription) {
+      console.log('[getUserPlan] No subscription found');
+      return 'free_tier';
+    }
+
+    // Safe access with logging
+    const price = subscription.prices;
+    if (!price) {
+      console.log('[getUserPlan] No price found in subscription');
+      return 'free_tier';
+    }
+
+    // Handle array or object for price
+    const priceData = Array.isArray(price) ? price[0] : price;
+
+    const product = priceData?.products;
+    if (!product) {
+      console.log('[getUserPlan] No product found in price');
+      return 'free_tier';
+    }
+
+    // Handle array or object for product
+    const productData = Array.isArray(product) ? product[0] : product;
+
+    const metadata = productData?.metadata;
+    if (!metadata) {
+      console.log('[getUserPlan] No metadata found in product');
+      return 'free_tier';
+    }
+
+    const planName = metadata.plan_name;
+    console.log('[getUserPlan] Found plan name:', planName);
+
+    // Validate plan name against known plans
+    if (planName && ['free_tier', 'small', 'medium', 'large', 'promo_medium'].includes(planName)) {
+      return planName as UserPlan;
+    }
+
+    console.log('[getUserPlan] Unknown or missing plan name, defaulting to free_tier');
+    return 'free_tier';
+  } catch (error) {
+    console.error('[getUserPlan] CRITICAL ERROR:', error);
+    return 'free_tier';
   }
-
-  const productMetadata = (subscription.prices as any)?.products?.metadata;
-  const planName = productMetadata?.plan_name as UserPlan;
-
-  return planName || 'free_tier';
 }
 
 // Legacy function - kept for backward compatibility

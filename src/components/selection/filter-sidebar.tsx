@@ -77,7 +77,7 @@ export function FilterSidebar({
     };
 
     return (
-        <div className="sticky top-[80px] space-y-6">
+        <div className="space-y-6">
             <div className="rounded-2xl border bg-white p-4 shadow-sm">
                 <h3 className="mb-2 text-sm font-semibold uppercase tracking-wide text-gray-700">
                     Input

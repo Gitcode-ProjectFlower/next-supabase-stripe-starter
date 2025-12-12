@@ -60,6 +60,25 @@ export async function checkUsageLimit(
 ): Promise<UsageCheckResult> {
     const supabase = await createSupabaseServerClient();
 
+    // Check for unlimited usage override via environment variable OR development mode
+    if (process.env.NODE_ENV === 'development' || (action === 'ai_question' && process.env.UNLIMITED_AI_USAGE === 'true')) {
+        // Get current usage just for reporting
+        const { data: rawStats } = await supabase.rpc('get_usage_stats', {
+            p_user_id: userId,
+        });
+        const stats = rawStats as unknown as UsageStats;
+        const current = action === 'record_download'
+            ? (stats?.downloads || 0)
+            : (stats?.ai_calls || 0);
+
+        return {
+            allowed: true,
+            current,
+            limit: 999999,
+            remaining: 999999
+        };
+    }
+
     const effectivePlan = plan || 'free_tier';
     const planConfig = PLAN_CONFIGS[effectivePlan];
 

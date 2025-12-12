@@ -14,12 +14,16 @@ export async function GET() {
         }
 
         // Get user plan
+        // Get user plan
         const userPlan = await getUserPlan(user.id);
+        console.log(`[Usage Stats] User: ${user.id}, Plan: ${userPlan}`);
+
         const effectivePlan = userPlan || 'free_tier';
         const planConfig = PLAN_CONFIGS[effectivePlan];
 
         // Get usage stats
         const stats = await getUsageStats(user.id);
+        console.log(`[Usage Stats] Stats:`, stats);
 
         return NextResponse.json({
             downloads: stats?.downloads || 0,

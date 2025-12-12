@@ -84,6 +84,27 @@ export async function POST(
         // Log usage
         await logUsage(user.id, 'ai_question', aiCallCount);
 
+        // Create QA session record
+        const { data: qaSession, error: sessionError } = await supabase
+            .from('qa_sessions')
+            .insert({
+                user_id: user.id,
+                selection_id: selectionId,
+                prompt,
+                status: 'processing',
+                progress: 0
+            })
+            .select('id')
+            .single();
+
+        if (sessionError || !qaSession) {
+            console.error('Failed to create QA session:', sessionError);
+            return NextResponse.json(
+                { error: 'Failed to create QA session' },
+                { status: 500 }
+            );
+        }
+
         await inngest.send({
             name: 'qa/process',
             data: {
@@ -91,12 +112,14 @@ export async function POST(
                 userId: user.id,
                 prompt,
                 resumeIds: resume_ids,
+                qaSessionId: qaSession.id,
             },
         });
 
         return NextResponse.json({
             message: 'Q&A job started',
             selectionId,
+            qaSessionId: qaSession.id,
             aiCallsUsed: aiCallCount,
             usage: {
                 current: usageCheck.current + aiCallCount,

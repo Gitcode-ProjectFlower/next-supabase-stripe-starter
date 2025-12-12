@@ -89,7 +89,7 @@ export class HaystackClient {
     }
 
     async askBatch(
-        items: Array<{ doc_id: string; name?: string; email?: string }>,
+        items: Array<{ doc_id: string; name?: string; email?: string; city?: string;[key: string]: any }>,
         prompt: string
     ): Promise<QAResponse[]> {
         try {
@@ -108,11 +108,16 @@ export class HaystackClient {
                 method: 'POST',
                 headers,
                 body: JSON.stringify({
-                    selection_items: items.map(item => ({
-                        doc_id: item.doc_id,
-                        name: item.name || '',
-                        email: item.email || ''
-                    })),
+                    selection_items: items.map(item => {
+                        const { doc_id, name, email, city, ...rest } = item;
+                        return {
+                            doc_id,
+                            name: name || '',
+                            email: email || '',
+                            city: city || '',
+                            ...rest
+                        };
+                    }),
                     prompt
                 }),
                 signal: controller.signal,
