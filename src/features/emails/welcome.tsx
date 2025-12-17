@@ -21,7 +21,7 @@ export function WelcomeEmail() {
                 Thanks for signing up.
               </Heading>
               <Text className='my-6 text-[16px]'>Go to your dashboard to get started.</Text>
-              <Button href={baseUrl + '/dashboard'} className='rounded-md bg-black px-4 py-2 font-medium text-white'>
+              <Button href={baseUrl + '/'} className='rounded-md bg-black px-4 py-2 font-medium text-white'>
                 Dashboard
               </Button>
             </Section>

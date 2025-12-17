@@ -1,35 +1,8 @@
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
+import { PLAN_CONFIGS, UserPlan } from './plan-config';
 
-export type UserPlan = 'free_tier' | 'small' | 'medium' | 'large' | 'promo_medium' | null;
-
-// Plan configuration with monthly limits
-export const PLAN_CONFIGS = {
-  free_tier: {
-    maxDownloadsPer30Days: 100,
-    maxAiCallsPer30Days: 5,
-    visibleColumns: ['name', 'city', 'sectors', 'experience_years'],
-  },
-  small: {
-    maxDownloadsPer30Days: 300,
-    maxAiCallsPer30Days: 150,
-    visibleColumns: ['name', 'city', 'street', 'sectors', 'experience_years'],
-  },
-  medium: {
-    maxDownloadsPer30Days: 2000,
-    maxAiCallsPer30Days: 1000,
-    visibleColumns: ['name', 'email', 'phone', 'city', 'street', 'sectors', 'experience_years'],
-  },
-  large: {
-    maxDownloadsPer30Days: 8000,
-    maxAiCallsPer30Days: 5000,
-    visibleColumns: ['name', 'email', 'phone', 'city', 'street', 'sectors', 'experience_years', 'similarity'],
-  },
-  promo_medium: {
-    maxDownloadsPer30Days: 2000,
-    maxAiCallsPer30Days: 1000,
-    visibleColumns: ['name', 'email', 'phone', 'city', 'street', 'sectors', 'experience_years'],
-  },
-};
+export { PLAN_CONFIGS };
+export type { UserPlan };
 
 export async function getUserPlan(userId: string): Promise<UserPlan> {
   try {
@@ -95,10 +68,9 @@ export async function getUserPlan(userId: string): Promise<UserPlan> {
   }
 }
 
-// Legacy function - kept for backward compatibility
-// Use PLAN_CONFIGS[plan].maxDownloadsPer30Days instead
 export function getPlanCap(plan: UserPlan): number {
-  if (!plan || plan === 'free_tier') return 100;
+  if (!plan || plan === 'anonymous') return 3;
+  if (plan === 'free_tier') return 100;
 
   const capsByPlan = {
     free_tier: 100,
@@ -106,26 +78,29 @@ export function getPlanCap(plan: UserPlan): number {
     medium: 2000,
     large: 8000,
     promo_medium: 2000,
+    anonymous: 3,
   };
 
-  return capsByPlan[plan] || 100;
+  return capsByPlan[plan] || capsByPlan.anonymous;
 }
 
 export function getVisibleColumns(plan: UserPlan): string[] {
-  const effectivePlan = plan || 'free_tier';
-  return PLAN_CONFIGS[effectivePlan]?.visibleColumns || PLAN_CONFIGS.free_tier.visibleColumns;
+  const effectivePlan = plan || 'anonymous';
+  return Array.from(PLAN_CONFIGS[effectivePlan]?.visibleColumns || PLAN_CONFIGS.anonymous.visibleColumns);
 }
 
-export function maskFields(
-  items: any[],
-  plan: UserPlan
-): any[] {
-  const visibleColumns = getVisibleColumns(plan);
+export function getAnonymousPlan(): UserPlan {
+  return 'anonymous';
+}
 
-  return items.map(item => {
+export function maskFields(items: any[], plan: UserPlan): any[] {
+  const effectivePlan = plan || 'anonymous';
+  const visibleColumns = getVisibleColumns(effectivePlan);
+
+  return items.map((item) => {
     const masked: any = {};
 
-    visibleColumns.forEach(col => {
+    visibleColumns.forEach((col) => {
       if (item[col] !== undefined) {
         masked[col] = item[col];
       }

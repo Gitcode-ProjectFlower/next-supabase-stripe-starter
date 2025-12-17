@@ -1,9 +1,10 @@
-import { PropsWithChildren, Suspense } from 'react';
 import type { Metadata } from 'next';
 import { Montserrat, Montserrat_Alternates } from 'next/font/google';
+import { PropsWithChildren, Suspense } from 'react';
 
 import { Toaster } from '@/components/ui/toaster';
-import { PostHogPageView,PostHogProvider } from '@/providers/posthog-provider';
+import { PostHogPageView, PostHogProvider } from '@/providers/posthog-provider';
+import { ReactQueryProvider } from '@/providers/react-query-provider';
 import { cn } from '@/utils/cn';
 import { Analytics } from '@vercel/analytics/react';
 
@@ -35,7 +36,7 @@ export default function RootLayout({ children }: PropsWithChildren) {
           <Suspense fallback={null}>
             <PostHogPageView />
           </Suspense>
-          {children}
+          <ReactQueryProvider>{children}</ReactQueryProvider>
           <Toaster />
           <Analytics />
         </PostHogProvider>

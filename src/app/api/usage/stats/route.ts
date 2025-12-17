@@ -1,7 +1,8 @@
-import { NextResponse } from 'next/server';
-import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
-import { getUserPlan, PLAN_CONFIGS } from '@/libs/user-plan';
-import { getUsageStats } from '@/libs/usage-tracking';
+import { PLAN_CONFIGS } from '@/libs/plan-config'
+import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client'
+import { getUsageStats } from '@/libs/usage-tracking'
+import { getUserPlan } from '@/libs/user-plan'
+import { NextResponse } from 'next/server'
 
 export async function GET() {
     try {
@@ -13,7 +14,6 @@ export async function GET() {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        // Get user plan
         // Get user plan
         const userPlan = await getUserPlan(user.id);
         console.log(`[Usage Stats] User: ${user.id}, Plan: ${userPlan}`);

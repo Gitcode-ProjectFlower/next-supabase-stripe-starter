@@ -1,5 +1,5 @@
 import facetConfig from '@/../facet-config.json';
-import { PLAN_CONFIGS, UserPlan } from './user-plan';
+import { PLAN_CONFIGS, type UserPlan } from './plan-config';
 
 export interface FacetConfig {
   gateway: {
@@ -30,13 +30,13 @@ export function getAllowedFilterKeys(): string[] {
  * Now derived from PLAN_CONFIGS.maxDownloadsPer30Days instead of hardcoded values
  */
 export function getTopKLimit(plan: UserPlan): number {
-  const effectivePlan = plan || 'free_tier';
-  return PLAN_CONFIGS[effectivePlan]?.maxDownloadsPer30Days || 100;
+  const effectivePlan = plan || 'anonymous';
+  return PLAN_CONFIGS[effectivePlan]?.maxDownloadsPer30Days || 3;
 }
 
 export function validateFilterKeys(filters: Record<string, any>): boolean {
   const allowedKeys = getAllowedFilterKeys();
   const filterKeys = Object.keys(filters);
 
-  return filterKeys.every(key => allowedKeys.includes(key));
+  return filterKeys.every((key) => allowedKeys.includes(key));
 }

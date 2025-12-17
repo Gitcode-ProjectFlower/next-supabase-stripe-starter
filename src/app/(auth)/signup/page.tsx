@@ -8,7 +8,7 @@ export default async function SignupPage() {
   const session = await getSession();
 
   if (session) {
-    redirect('/new-selection');
+    redirect('/');
   }
 
   return <AuthUI mode='signup' />;

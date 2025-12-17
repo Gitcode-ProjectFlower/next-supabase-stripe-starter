@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { getTopKLimit, validateFilterKeys } from '@/libs/facet-config';
 import { checkRateLimit, searchRateLimiter } from '@/libs/ratelimit';
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
-import { getUserPlan, maskFields } from '@/libs/user-plan';
+import { getAnonymousPlan, getUserPlan, maskFields } from '@/libs/user-plan';
 
 const searchSchema = z.object({
   names: z.array(z.string()).min(0).max(4).optional(),
@@ -24,35 +24,43 @@ export async function POST(request: NextRequest) {
       error: authError,
     } = await supabase.auth.getUser();
 
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const isAnonymous = !user || authError;
 
-    const rateLimitResult = await checkRateLimit(user.id, searchRateLimiter);
+    if (!isAnonymous) {
+      const rateLimitResult = await checkRateLimit(user.id, searchRateLimiter);
 
-    if (!rateLimitResult.success) {
-      return NextResponse.json(
-        {
-          error: 'Rate limit exceeded. Please try again later.',
-          limit: rateLimitResult.limit,
-          remaining: rateLimitResult.remaining,
-          reset: rateLimitResult.reset,
-        },
-        {
-          status: 429,
-          headers: {
-            'X-RateLimit-Limit': rateLimitResult.limit.toString(),
-            'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
-            'X-RateLimit-Reset': rateLimitResult.reset.toISOString(),
+      if (!rateLimitResult.success) {
+        return NextResponse.json(
+          {
+            error: 'Rate limit exceeded. Please try again later.',
+            limit: rateLimitResult.limit,
+            remaining: rateLimitResult.remaining,
+            reset: rateLimitResult.reset,
           },
-        }
-      );
+          {
+            status: 429,
+            headers: {
+              'X-RateLimit-Limit': rateLimitResult.limit.toString(),
+              'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
+              'X-RateLimit-Reset': rateLimitResult.reset.toISOString(),
+            },
+          }
+        );
+      }
     }
 
     const body = await request.json();
+
+    // Debug: Log what we received from frontend
+    console.log('[API] Received request body:', {
+      raw: body,
+      formatted: JSON.stringify(body, null, 2),
+    });
+
     const validation = searchSchema.safeParse(body);
 
     if (!validation.success) {
+      console.error('[API] Validation failed:', validation.error.errors);
       return NextResponse.json(
         {
           error: 'Invalid request data',
@@ -72,32 +80,35 @@ export async function POST(request: NextRequest) {
       top_k,
     } = validation.data;
 
+    // Debug: Log validated data
+    console.log('[API] Validated data:', {
+      names,
+      sectors,
+      regions,
+      experience_years,
+      top_k,
+    });
+
     // Map frontend fields to backend expected structure
     const finalLookalikeNames = names || lookalike_names || [];
 
-    // Construct filters object combining explicit filters and new specific fields
-    const finalFilters = {
-      ...(explicitFilters || {}),
-      ...(sectors && sectors.length > 0 ? { sector: sectors } : {}),
-      ...(regions && regions.length > 0 ? { region: regions } : {}),
-      ...(experience_years && experience_years.length > 0 ? { experience_years } : {}),
-    };
-
-    if (!validateFilterKeys(finalFilters)) {
-      return NextResponse.json(
-        { error: 'Invalid filter keys provided' },
-        { status: 400 }
-      );
+    // Validate filter keys if explicit filters are provided
+    if (explicitFilters && Object.keys(explicitFilters).length > 0) {
+      if (!validateFilterKeys(explicitFilters)) {
+        return NextResponse.json({ error: 'Invalid filter keys provided' }, { status: 400 });
+      }
     }
 
-    const userPlan = await getUserPlan(user.id);
-    const planLimit = getTopKLimit(userPlan || 'small');
+    const userPlan = isAnonymous ? getAnonymousPlan() : await getUserPlan(user.id);
+    const planLimit = getTopKLimit(userPlan);
+
+    const effectiveTopK = isAnonymous ? Math.min(top_k, 3) : top_k;
 
     if (top_k > planLimit) {
       return NextResponse.json(
         {
           error: `Top-K limit exceeded for your plan. Maximum allowed: ${planLimit}`,
-          plan: userPlan || 'free',
+          plan: userPlan || 'anonymous',
           limit: planLimit,
           requested: top_k,
         },
@@ -105,19 +116,39 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const haystackUrl =
-      process.env.HAYSTACK_BASE_URL || 'http://localhost:8000';
+    const haystackUrl = process.env.HAYSTACK_BASE_URL || 'http://localhost:8000';
     const haystackApiKey = process.env.HAYSTACK_API_KEY || '';
 
-    const haystackPayload = {
+    // Build Haystack payload matching curl examples (filters at top level, not nested)
+    // Per curl-filter-tests.md: sectors, regions, experience_years are top-level fields
+    const haystackPayload: Record<string, any> = {
       names: finalLookalikeNames,
-      filters: finalFilters,
-      top_k,
+      top_k: effectiveTopK,
     };
 
+    // Add filters at top level (per backend API spec from curl-filter-tests.md)
+    // Only include if they have values (empty arrays [] are treated as no filter by backend)
+    if (sectors && sectors.length > 0) {
+      haystackPayload.sectors = sectors;
+    }
+    if (regions && regions.length > 0) {
+      haystackPayload.regions = regions;
+    }
+    if (experience_years && experience_years.length > 0) {
+      haystackPayload.experience_years = experience_years;
+    }
+
+    // Merge any explicit filters (for backward compatibility)
+    if (explicitFilters && Object.keys(explicitFilters).length > 0) {
+      Object.assign(haystackPayload, explicitFilters);
+    }
+
+    // Debug: Log exact payload being sent to Haystack backend
     console.log('[Haystack API] Request:', {
       url: `${haystackUrl}/similarity`,
+      method: 'POST',
       payload: haystackPayload,
+      formatted: JSON.stringify(haystackPayload, null, 2),
     });
 
     const haystackResponse = await fetch(`${haystackUrl}/similarity`, {
@@ -138,18 +169,19 @@ export async function POST(request: NextRequest) {
 
     const results = haystackData.results || [];
 
-    const maskedResults = maskFields(results, userPlan);
+    const limitedResults = isAnonymous ? results.slice(0, 3) : results;
+    const maskedResults = maskFields(limitedResults, userPlan);
 
     return NextResponse.json({
       success: true,
       data: {
-        preview: maskedResults,  // Return all results
-        total: maskedResults.length,
-        plan: userPlan || 'free',
+        preview: maskedResults,
+        total: isAnonymous ? limitedResults.length : maskedResults.length,
+        plan: userPlan || 'anonymous',
         limit: planLimit,
+        isAnonymous,
       },
     });
-
   } catch (error) {
     console.error('Search API Error:', error);
     return NextResponse.json(

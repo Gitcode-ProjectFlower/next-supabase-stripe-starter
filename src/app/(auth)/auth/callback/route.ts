@@ -24,18 +24,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(`${siteUrl}/login`);
     }
 
-    // Check if user is subscribed, if not redirect to pricing page
-    const { data: userSubscription } = await supabase
-      .from('subscriptions')
-      .select('*, prices(*, products(*))')
-      .in('status', ['trialing', 'active'])
-      .maybeSingle();
-
-    if (!userSubscription) {
-      return NextResponse.redirect(`${siteUrl}/pricing`);
-    } else {
-      return NextResponse.redirect(`${siteUrl}`);
-    }
+    // Allow all users (including free tier) to access the app
+    // Free tier users don't have a subscription but can still use the app
+    // Redirect to new-selection page (main app page)
+    return NextResponse.redirect(`${siteUrl}/`);
   }
 
   return NextResponse.redirect(siteUrl);

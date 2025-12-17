@@ -39,7 +39,7 @@ export function AuthUI({ mode }: { mode: 'login' | 'signup' }) {
         description: isLogin ? 'Logged in successfully' : 'Account created successfully',
       });
 
-      router.push('/new-selection');
+      router.push('/');
     } catch (error: any) {
       toast({
         variant: 'destructive',
