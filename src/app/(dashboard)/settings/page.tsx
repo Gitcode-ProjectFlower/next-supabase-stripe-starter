@@ -1,115 +1,141 @@
 import { redirect } from 'next/navigation';
 
 import { SubscriptionCard } from '@/components/subscription-card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent } from '@/components/ui/tabs';
+import { UsageMeter } from '@/components/usage/usage-meter';
+import { getNotificationPreference } from '@/features/account/controllers/get-notification-preference';
 import { getSession } from '@/features/account/controllers/get-session';
 import { getSubscription } from '@/features/account/controllers/get-subscription';
 import { getProducts } from '@/features/pricing/controllers/get-products';
 import { Price, ProductWithPrices } from '@/features/pricing/types';
+import { getUserPlan } from '@/libs/user-plan';
+import { DownloadsSection } from '../../../components/settings/downloads-section';
+import { GeneralSection } from '../../../components/settings/general-section';
+import { NotificationsSection } from '../../../components/settings/notifications-section';
+import { PlanSelector } from '../../../components/settings/plan-selector';
+import { SettingsNav } from '../../../components/settings/settings-nav';
 
-export default async function SettingsPage({
-    searchParams,
-}: {
-    searchParams: Promise<{ success?: string; tab?: string; error?: string }>;
-}) {
-    const params = await searchParams;
-    const [session, subscription, products] = await Promise.all([
-        getSession(),
-        getSubscription(),
-        getProducts(),
-    ]);
+interface SettingsPageProps {
+  searchParams: Promise<{ success?: string; tab?: string; error?: string }>;
+}
 
-    if (!session) {
-        redirect('/login');
-    }
+/**
+ * Settings page - Server component that fetches user data and renders settings sections
+ */
+export default async function SettingsPage({ searchParams }: SettingsPageProps) {
+  const params = await searchParams;
+  const [session, subscription, products] = await Promise.all([getSession(), getSubscription(), getProducts()]);
 
-    let userProduct: ProductWithPrices | undefined;
-    let userPrice: Price | undefined;
+  if (!session) {
+    redirect('/login');
+  }
 
-    if (subscription) {
-        for (const product of products) {
-            for (const price of product.prices) {
-                if (price.id === subscription.price_id) {
-                    userProduct = product;
-                    userPrice = price;
-                }
-            }
+  // Get user plan and notification preference
+  const [userPlan, emailNotificationsEnabled] = await Promise.all([
+    getUserPlan(session.user.id),
+    getNotificationPreference(session.user.id),
+  ]);
+
+  // Find user's product and price
+  let userProduct: ProductWithPrices | undefined;
+  let userPrice: Price | undefined;
+
+  if (subscription) {
+    for (const product of products) {
+      for (const price of product.prices) {
+        if (price.id === subscription.price_id) {
+          userProduct = product;
+          userPrice = price;
         }
+      }
     }
+  }
 
-    const defaultTab = params?.tab || 'general';
+  const defaultTab = params?.tab || 'general';
 
-    return (
-        <div className="min-h-screen bg-gray-50">
-            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
-                <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
-                    <p className="mt-2 text-gray-600">Manage your account settings and preferences.</p>
-                </div>
-
-                {params?.success && (
-                    <div className="mb-6 rounded-lg bg-green-50 p-4 text-green-800 border border-green-200">
-                        <p className="font-medium">Subscription updated successfully!</p>
-                    </div>
-                )}
-
-                {params?.error === 'same-plan' && (
-                    <div className="mb-6 rounded-lg bg-yellow-50 p-4 text-yellow-800 border border-yellow-200">
-                        <p className="font-medium">You are already subscribed to this plan.</p>
-                    </div>
-                )}
-
-                {params?.error === 'use-portal' && (
-                    <div className="mb-6 rounded-lg bg-blue-50 p-4 text-blue-800 border border-blue-200">
-                        <p className="font-medium">
-                            To change your plan, please use the &quot;Manage Subscription&quot; button below.
-                        </p>
-                    </div>
-                )}
-
-                <Tabs defaultValue={defaultTab} className="space-y-6">
-                    <TabsList className="bg-white border border-gray-200">
-                        <TabsTrigger value="general">General</TabsTrigger>
-                        <TabsTrigger value="plan">Plan</TabsTrigger>
-                        <TabsTrigger value="downloads">Downloads</TabsTrigger>
-                    </TabsList>
-
-                    <TabsContent value="general" className="space-y-6">
-                        <div className="rounded-xl bg-white p-6 shadow-sm border border-gray-200">
-                            <h2 className="text-lg font-semibold text-gray-900 mb-4">Account Information</h2>
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="text-sm font-medium text-gray-700">Email</label>
-                                    <p className="mt-1 text-gray-900">{session.user.email}</p>
-                                </div>
-                                <div>
-                                    <label className="text-sm font-medium text-gray-700">User ID</label>
-                                    <p className="mt-1 text-sm text-gray-500 font-mono">{session.user.id}</p>
-                                </div>
-                            </div>
-                        </div>
-                    </TabsContent>
-
-                    <TabsContent value="plan" className="space-y-6">
-                        <SubscriptionCard subscription={subscription} product={userProduct} price={userPrice} />
-                    </TabsContent>
-
-                    <TabsContent value="downloads" className="space-y-6">
-                        <div className="rounded-xl bg-white p-6 shadow-sm border border-gray-200">
-                            <h2 className="text-lg font-semibold text-gray-900 mb-4">Export History</h2>
-                            {/* TODO: Fetch downloads from database */}
-                            <p className="text-gray-600 text-sm">
-                                Your CSV exports will appear here. Exports are available for 7 days after generation.
-                            </p>
-                            <div className="mt-4 text-sm text-gray-500">
-                                <p>• Click &quot;Export CSV&quot; on any selection to generate a download</p>
-                                <p>• You&apos;ll receive an email when your export is ready</p>
-                                <p>• Downloads expire after 7 days</p>
-                            </div>
-                        </div>
-                    </TabsContent>
-                </Tabs>
-            </div>
+  return (
+    <div className='min-h-screen bg-gray-50'>
+      <div className='mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8'>
+        {/* Header */}
+        <div className='mb-8'>
+          <h1 className='text-3xl font-bold text-gray-900'>Settings</h1>
+          <p className='mt-2 text-gray-600'>Manage your account settings and preferences.</p>
         </div>
-    );
+
+        {/* Success/Error Messages */}
+        {params?.success && (
+          <div className='mb-6 rounded-lg border border-green-200 bg-green-50 p-4 text-green-800'>
+            <p className='font-medium'>Subscription updated successfully!</p>
+          </div>
+        )}
+
+        {params?.error === 'same-plan' && (
+          <div className='mb-6 rounded-lg border border-yellow-200 bg-yellow-50 p-4 text-yellow-800'>
+            <p className='font-medium'>You are already subscribed to this plan.</p>
+          </div>
+        )}
+
+        {params?.error === 'use-portal' && (
+          <div className='mb-6 rounded-lg border border-blue-200 bg-blue-50 p-4 text-blue-800'>
+            <p className='font-medium'>
+              To change your plan, please use the &quot;Manage Subscription&quot; button below.
+            </p>
+          </div>
+        )}
+
+        {/* Main Content with Tabs */}
+        <Tabs defaultValue={defaultTab} className='mx-auto grid w-full grid-cols-12 gap-6 py-6'>
+          <SettingsNav currentTab={defaultTab} />
+
+          <div className='col-span-12 space-y-6 md:col-span-9'>
+            {/* General Tab */}
+            <TabsContent value='general' className='mt-0 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm'>
+              <GeneralSection
+                userEmail={session.user.email!}
+                userId={session.user.id}
+                userPlan={userPlan}
+                downloadsCount={0} // TODO: Fetch actual downloads count
+                emailNotificationsEnabled={emailNotificationsEnabled}
+              />
+            </TabsContent>
+
+            {/* Plan Tab */}
+            <TabsContent value='plan' className='mt-0 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm'>
+              <div className='space-y-4'>
+                <PlanSelector products={products} currentPriceId={subscription?.price_id ?? null} />
+                <SubscriptionCard subscription={subscription} product={userProduct} price={userPrice} />
+              </div>
+            </TabsContent>
+
+            {/* Usage & Limits Tab */}
+            <TabsContent value='limits' className='mt-0 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm'>
+              <div className='space-y-4'>
+                <h2 className='mb-6 text-lg font-semibold text-gray-900'>Usage & Limits</h2>
+                <p className='mb-6 text-sm text-gray-600'>
+                  Track your usage for the current 30-day period. Limits reset on a rolling basis.
+                </p>
+                <UsageMeter />
+              </div>
+            </TabsContent>
+
+            {/* Notifications Tab */}
+            <TabsContent
+              value='notifications'
+              className='mt-0 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm'
+            >
+              <NotificationsSection initialEmailNotifications={emailNotificationsEnabled} />
+            </TabsContent>
+
+            {/* Downloads Tab */}
+            <TabsContent value='downloads' className='mt-0 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm'>
+              <div className='space-y-4'>
+                <h2 className='mb-4 text-lg font-semibold text-gray-900'>Ready to download</h2>
+                <DownloadsSection />
+              </div>
+            </TabsContent>
+          </div>
+        </Tabs>
+      </div>
+    </div>
+  );
 }
