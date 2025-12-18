@@ -112,10 +112,23 @@ export default function SelectionDetailPage() {
   });
 
   const visibleColumns = useMemo<ColumnKey[]>(() => {
-    const cols = getVisibleColumns(userPlan).filter((c): c is ColumnKey =>
-      Object.prototype.hasOwnProperty.call(COLUMN_CONFIG, c)
-    );
-    return cols.length ? cols : ['name'];
+    // Get columns allowed for this plan
+    const allowedColumns = getVisibleColumns(userPlan);
+
+    // Filter to only include columns that exist in COLUMN_CONFIG
+    const cols = allowedColumns.filter((c): c is ColumnKey => Object.prototype.hasOwnProperty.call(COLUMN_CONFIG, c));
+
+    // Debug: Log column visibility (remove in production if needed)
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[SelectionDetail] Column visibility:', {
+        userPlan,
+        allowedColumns,
+        filteredColumns: cols,
+      });
+    }
+
+    // Always include 'name' as fallback, but ensure we only show what's allowed
+    return cols.length > 0 ? cols : ['name'];
   }, [userPlan]);
 
   useEffect(() => {
@@ -127,6 +140,12 @@ export default function SelectionDetailPage() {
   }, [usageError, usageStats]);
 
   useEffect(() => {
+    if (isDemo) {
+      // Allow demo selection without auth redirects to keep previews and tests stable.
+      setIsCheckingAuth(false);
+      return;
+    }
+
     const checkAuth = async () => {
       const {
         data: { user },
@@ -138,7 +157,7 @@ export default function SelectionDetailPage() {
       setIsCheckingAuth(false);
     };
     checkAuth();
-  }, [router, supabase]);
+  }, [isDemo, router, supabase]);
 
   useEffect(() => {
     if (selectionError) {

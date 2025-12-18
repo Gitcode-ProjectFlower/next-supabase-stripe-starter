@@ -11,6 +11,15 @@ const searchSchema = z.object({
   lookalike_names: z.array(z.string()).min(0).max(4).optional(),
   sectors: z.array(z.string()).optional(),
   regions: z.array(z.string()).optional(),
+  // Hierarchical sector filters
+  sector_level1: z.array(z.string()).optional(),
+  sector_level2: z.array(z.string()).optional(),
+  sector_level3: z.array(z.string()).optional(),
+  // Hierarchical region filters
+  region_level1: z.array(z.string()).optional(),
+  region_level2: z.array(z.string()).optional(),
+  region_level3: z.array(z.string()).optional(),
+  region_level4: z.array(z.string()).optional(),
   experience_years: z.array(z.number()).optional(),
   filters: z.record(z.any()).optional(),
   top_k: z.number().int().min(1).max(5000),
@@ -75,6 +84,13 @@ export async function POST(request: NextRequest) {
       lookalike_names,
       sectors,
       regions,
+      sector_level1,
+      sector_level2,
+      sector_level3,
+      region_level1,
+      region_level2,
+      region_level3,
+      region_level4,
       experience_years,
       filters: explicitFilters,
       top_k,
@@ -121,19 +137,50 @@ export async function POST(request: NextRequest) {
 
     // Build Haystack payload matching curl examples (filters at top level, not nested)
     // Per curl-filter-tests.md: sectors, regions, experience_years are top-level fields
+    // NEW: Support hierarchical filters (sector_level1, sector_level2, etc.)
     const haystackPayload: Record<string, any> = {
       names: finalLookalikeNames,
       top_k: effectiveTopK,
     };
 
-    // Add filters at top level (per backend API spec from curl-filter-tests.md)
-    // Only include if they have values (empty arrays [] are treated as no filter by backend)
-    if (sectors && sectors.length > 0) {
-      haystackPayload.sectors = sectors;
+    // Add hierarchical sector filters (preferred method)
+    if (sector_level1 && sector_level1.length > 0) {
+      haystackPayload.sector_level1 = sector_level1;
     }
-    if (regions && regions.length > 0) {
-      haystackPayload.regions = regions;
+    if (sector_level2 && sector_level2.length > 0) {
+      haystackPayload.sector_level2 = sector_level2;
     }
+    if (sector_level3 && sector_level3.length > 0) {
+      haystackPayload.sector_level3 = sector_level3;
+    }
+
+    // Add hierarchical region filters (preferred method)
+    if (region_level1 && region_level1.length > 0) {
+      haystackPayload.region_level1 = region_level1;
+    }
+    if (region_level2 && region_level2.length > 0) {
+      haystackPayload.region_level2 = region_level2;
+    }
+    if (region_level3 && region_level3.length > 0) {
+      haystackPayload.region_level3 = region_level3;
+    }
+    if (region_level4 && region_level4.length > 0) {
+      haystackPayload.region_level4 = region_level4;
+    }
+
+    // Legacy support: flat sectors/regions arrays (for backward compatibility)
+    // Only use if hierarchical filters are not provided
+    if (!sector_level1 && !sector_level2 && !sector_level3) {
+      if (sectors && sectors.length > 0) {
+        haystackPayload.sectors = sectors;
+      }
+    }
+    if (!region_level1 && !region_level2 && !region_level3 && !region_level4) {
+      if (regions && regions.length > 0) {
+        haystackPayload.regions = regions;
+      }
+    }
+
     if (experience_years && experience_years.length > 0) {
       haystackPayload.experience_years = experience_years;
     }

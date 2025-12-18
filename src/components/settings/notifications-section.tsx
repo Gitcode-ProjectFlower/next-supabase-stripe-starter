@@ -1,7 +1,10 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { useEffect, useState } from 'react';
+import { useToast } from '@/components/ui/use-toast';
+import { createSupabaseBrowserClient } from '@/libs/supabase/supabase-browser-client';
+import { useRouter } from 'next/navigation';
+import { useEffect, useRef, useState } from 'react';
 import { SectionTitle } from './section-title';
 
 interface NotificationsSectionProps {
@@ -10,24 +13,77 @@ interface NotificationsSectionProps {
 
 /**
  * Notifications settings section with email toggle
+ * Manages email_notifications_enabled field in Supabase users table
  */
 export function NotificationsSection({ initialEmailNotifications }: NotificationsSectionProps) {
+  const { toast } = useToast();
+  const router = useRouter();
+  const supabase = createSupabaseBrowserClient();
+  // Use ref to track the last saved value
+  const lastSavedValue = useRef(initialEmailNotifications ?? false);
   const [emailNotifications, setEmailNotifications] = useState(initialEmailNotifications ?? false);
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(!initialEmailNotifications);
+  const [hasChanges, setHasChanges] = useState(false);
+
+  // Update state when initialEmailNotifications prop changes (e.g., after page refresh)
+  useEffect(() => {
+    const newValue = initialEmailNotifications ?? false;
+    setEmailNotifications(newValue);
+    lastSavedValue.current = newValue;
+  }, [initialEmailNotifications]);
 
   // Fetch current preferences on mount if not provided
   useEffect(() => {
     if (initialEmailNotifications === undefined) {
       const fetchPreferences = async () => {
         try {
-          const response = await fetch('/api/settings/notifications');
-          if (response.ok) {
-            const data = await response.json();
-            setEmailNotifications(data.enabled ?? false);
+          // Get current user
+          const {
+            data: { user },
+            error: authError,
+          } = await supabase.auth.getUser();
+
+          if (authError || !user) {
+            toast({
+              title: 'Error',
+              description: 'Please sign in to view notification preferences',
+              variant: 'destructive',
+            });
+            setIsLoading(false);
+            return;
+          }
+
+          // Fetch user preferences from Supabase
+          const { data: userData, error } = await supabase
+            .from('users')
+            .select('email_notifications_enabled')
+            .eq('id', user.id)
+            .single();
+
+          if (error) {
+            console.error('Failed to fetch notification preferences:', error);
+            toast({
+              title: 'Error',
+              description: 'Failed to load notification preferences',
+              variant: 'destructive',
+            });
+            // Default to false if error
+            const defaultValue = false;
+            setEmailNotifications(defaultValue);
+            lastSavedValue.current = defaultValue;
+          } else {
+            const enabled = userData?.email_notifications_enabled ?? false;
+            setEmailNotifications(enabled);
+            lastSavedValue.current = enabled;
           }
         } catch (error) {
           console.error('Failed to fetch notification preferences:', error);
+          toast({
+            title: 'Error',
+            description: 'Failed to load notification preferences. Please refresh the page.',
+            variant: 'destructive',
+          });
         } finally {
           setIsLoading(false);
         }
@@ -37,31 +93,68 @@ export function NotificationsSection({ initialEmailNotifications }: Notification
     } else {
       setIsLoading(false);
     }
-  }, [initialEmailNotifications]);
+  }, [initialEmailNotifications, supabase, toast]);
+
+  // Track changes from last saved value
+  useEffect(() => {
+    setHasChanges(emailNotifications !== lastSavedValue.current);
+  }, [emailNotifications]);
 
   const handleSave = async () => {
+    if (!hasChanges) {
+      toast({
+        title: 'No changes',
+        description: 'No changes to save.',
+      });
+      return;
+    }
+
     setIsSaving(true);
     try {
-      const response = await fetch('/api/settings/notifications', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ enabled: emailNotifications }),
-      });
+      // Get current user
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser();
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to save preferences');
+      if (authError || !user) {
+        throw new Error('Please sign in to update notification preferences');
       }
 
-      // Show success feedback (could use a toast library here)
-      console.log('Notification preferences saved successfully');
+      // Update email_notifications_enabled in Supabase users table
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({ email_notifications_enabled: emailNotifications })
+        .eq('id', user.id);
+
+      if (updateError) {
+        console.error('Failed to update notification preferences:', updateError);
+        throw new Error(updateError.message || 'Failed to save preferences');
+      }
+
+      // Update last saved value to reflect saved state
+      lastSavedValue.current = emailNotifications;
+      setHasChanges(false);
+
+      toast({
+        title: 'Success',
+        description: `Email notifications ${emailNotifications ? 'enabled' : 'disabled'} successfully.`,
+      });
+
+      // Refresh server components to update General tab
+      router.refresh();
     } catch (error) {
       console.error('Failed to save notification preferences:', error);
-      // TODO: Show error toast to user
-      // Revert state on error
-      setEmailNotifications((prev) => !prev);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to save preferences';
+
+      toast({
+        title: 'Error',
+        description: errorMessage,
+        variant: 'destructive',
+      });
+
+      // Revert state on error - use last saved value
+      setEmailNotifications(lastSavedValue.current);
     } finally {
       setIsSaving(false);
     }
@@ -98,12 +191,12 @@ export function NotificationsSection({ initialEmailNotifications }: Notification
           aria-checked={emailNotifications}
           onClick={handleToggle}
           disabled={isSaving}
-          className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 ${
+          className={`relative inline-flex h-[25px] w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 ${
             emailNotifications ? 'bg-blue-600' : 'bg-gray-300'
           }`}
         >
           <span
-            className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${
+            className={`block h-5 w-5 transform rounded-full bg-white transition-transform ${
               emailNotifications ? 'translate-x-[22px]' : 'translate-x-0.5'
             }`}
           />
@@ -113,12 +206,17 @@ export function NotificationsSection({ initialEmailNotifications }: Notification
       <div className='mt-4 flex items-center gap-2'>
         <Button
           onClick={handleSave}
-          disabled={isSaving}
-          className='rounded-lg bg-gray-900 px-4 py-2 text-sm text-white hover:bg-black disabled:opacity-50'
+          disabled={isSaving || !hasChanges}
+          className='rounded-lg bg-gray-900 px-4 py-2 text-sm text-white hover:bg-black disabled:cursor-not-allowed disabled:opacity-50'
         >
           {isSaving ? 'Saving...' : 'Save preferences'}
         </Button>
-        <span className='text-xs text-gray-600'>Current: {emailNotifications ? 'On' : 'Off'}</span>
+        {hasChanges && <span className='text-xs text-amber-600'>You have unsaved changes</span>}
+        {!hasChanges && (
+          <span className='text-xs text-gray-600'>
+            {emailNotifications ? 'Notifications enabled' : 'Notifications disabled'}
+          </span>
+        )}
       </div>
     </>
   );

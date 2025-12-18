@@ -1,6 +1,8 @@
 'use client';
 
 import { getTopKLimit, type UserPlan } from '@/libs/plan-config';
+import { createSupabaseBrowserClient } from '@/libs/supabase/supabase-browser-client';
+import { useEffect, useState } from 'react';
 
 interface OverviewSectionProps {
   userPlan: UserPlan;
@@ -10,12 +12,64 @@ interface OverviewSectionProps {
 
 /**
  * Overview section showing key account information at a glance
+ * Fetches email notification status reactively to stay in sync
  */
 export function OverviewSection({
   userPlan,
   downloadsCount = 0,
-  emailNotificationsEnabled = false,
+  emailNotificationsEnabled: initialEmailNotificationsEnabled = false,
 }: OverviewSectionProps) {
+  const supabase = createSupabaseBrowserClient();
+  const [emailNotificationsEnabled, setEmailNotificationsEnabled] = useState(initialEmailNotificationsEnabled);
+
+  // Fetch current notification status on mount and when prop changes
+  useEffect(() => {
+    let mounted = true;
+
+    const fetchNotificationStatus = async () => {
+      try {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
+        if (!user || !mounted) return;
+
+        const { data: userData } = await supabase
+          .from('users')
+          .select('email_notifications_enabled')
+          .eq('id', user.id)
+          .single();
+
+        if (userData && mounted) {
+          setEmailNotificationsEnabled(userData.email_notifications_enabled ?? false);
+        }
+      } catch (error) {
+        console.error('Failed to fetch notification status:', error);
+      }
+    };
+
+    // Fetch on mount
+    fetchNotificationStatus();
+
+    // Also listen for visibility changes (when user switches tabs back)
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        fetchNotificationStatus();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      mounted = false;
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [supabase]);
+
+  // Update when initial prop changes (from router.refresh() or server-side update)
+  useEffect(() => {
+    setEmailNotificationsEnabled(initialEmailNotificationsEnabled);
+  }, [initialEmailNotificationsEnabled]);
   const planDisplayName = userPlan
     ? userPlan === 'free_tier'
       ? 'Free Tier'

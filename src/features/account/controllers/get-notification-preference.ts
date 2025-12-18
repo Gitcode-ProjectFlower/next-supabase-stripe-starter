@@ -9,15 +9,20 @@ export async function getNotificationPreference(userId: string): Promise<boolean
   try {
     const supabase = await createSupabaseServerClient();
 
-    // TypeScript cast needed until migration is run and types are regenerated
-    const { data, error } = await supabase.from('users').select('id').eq('id', userId).single();
+    // Select the email_notifications_enabled field
+    const { data, error } = await supabase
+      .from('users')
+      .select('email_notifications_enabled')
+      .eq('id', userId)
+      .single();
 
     if (error) {
       console.error('[getNotificationPreference] Error:', error);
       return false; // Default to false on error
     }
 
-    return ((data as any)?.email_notifications_enabled as boolean) ?? false;
+    // Return the preference (default to false if not set)
+    return data?.email_notifications_enabled ?? false;
   } catch (error) {
     console.error('[getNotificationPreference] Unexpected error:', error);
     return false;

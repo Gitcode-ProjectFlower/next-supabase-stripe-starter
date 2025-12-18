@@ -4,6 +4,7 @@ import { ArrowLeft, Download } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
+import { useQAResultQuery } from '@/libs/queries';
 import { createSupabaseBrowserClient } from '@/libs/supabase/supabase-browser-client';
 
 import { Button } from '@/components/ui/button';
@@ -41,10 +42,45 @@ export default function QAResultsPage() {
   const { toast } = useToast();
   const supabase = createSupabaseBrowserClient();
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
-  const [qaResult, setQaResult] = useState<QAResult | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const selectionId = params.id as string;
+  const qaId = params.qa_id as string;
+
+  // Skip auth check for demo
+  const isDemo = selectionId === 'demo' && qaId === 'demo-qa-1';
+
+  // Use TanStack Query with automatic polling for processing status
+  // Skip query for demo (will use mock data below)
+  const {
+    data: qaResult,
+    isLoading,
+    error,
+  } = useQAResultQuery(selectionId, qaId, {
+    enabled: !isCheckingAuth && !!selectionId && !!qaId && !isDemo,
+    retry: 1,
+  });
+
+  // Demo data
+  const demoResult: QAResult | null = isDemo
+    ? {
+        id: 'demo-qa-1',
+        selection_id: 'demo',
+        selection_name: 'Demo Selection',
+        prompt: 'What is your experience with React and TypeScript?',
+        status: 'completed',
+        progress: 100,
+        created_at: new Date(Date.now() - 3600000).toISOString(),
+        completed_at: new Date().toISOString(),
+        csv_url: '#',
+        answers: [],
+      }
+    : null;
 
   useEffect(() => {
+    if (isDemo) {
+      setIsCheckingAuth(false);
+      return;
+    }
+
     const checkAuth = async () => {
       const {
         data: { user },
@@ -56,61 +92,19 @@ export default function QAResultsPage() {
       setIsCheckingAuth(false);
     };
     checkAuth();
-  }, [router, supabase]);
+  }, [router, supabase, isDemo]);
 
+  // Handle errors
   useEffect(() => {
-    if (isCheckingAuth || !params.id || !params.qa_id) return;
-    fetchQAResult(params.id as string, params.qa_id as string);
-  }, [params.id, params.qa_id, isCheckingAuth]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const fetchQAResult = async (selectionId: string, qaId: string, isPolling = false) => {
-    if (!isPolling) setIsLoading(true);
-
-    // Mock data for demo
-    if (selectionId === 'demo' && qaId === 'demo-qa-1') {
-      // ... mock data logic ...
-      // (keeping existing mock logic for brevity, though it's unreachable now)
-      const mockResult: QAResult = {
-        id: 'demo-qa-1',
-        selection_id: 'demo',
-        selection_name: 'Demo Selection',
-        prompt: 'What is your experience with React and TypeScript?',
-        status: 'completed',
-        progress: 100,
-        created_at: new Date(Date.now() - 3600000).toISOString(),
-        completed_at: new Date().toISOString(),
-        csv_url: '#',
-        answers: [],
-      };
-      setQaResult(mockResult);
-      setIsLoading(false);
-      return;
+    if (error && !isCheckingAuth) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to load Q&A results',
+        variant: 'destructive',
+      });
+      router.push(`/selections/${selectionId}`);
     }
-
-    try {
-      const response = await fetch(`/api/selections/${selectionId}/qa/${qaId}`);
-      if (!response.ok) throw new Error('Failed to fetch Q&A results');
-      const data = await response.json();
-      setQaResult(data);
-
-      // Poll if still processing
-      if (data.status === 'processing') {
-        setTimeout(() => fetchQAResult(selectionId, qaId, true), 2000);
-      }
-    } catch (error) {
-      console.error('Error fetching Q&A results:', error);
-      if (!isPolling) {
-        toast({
-          title: 'Error',
-          description: 'Failed to load Q&A results',
-          variant: 'destructive',
-        });
-        router.push(`/selections/${selectionId}`);
-      }
-    } finally {
-      if (!isPolling) setIsLoading(false);
-    }
-  };
+  }, [error, isCheckingAuth, toast, router, selectionId]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-GB', {
@@ -136,8 +130,8 @@ export default function QAResultsPage() {
   };
 
   const handleDownloadCSV = () => {
-    if (qaResult?.csv_url) {
-      window.open(qaResult.csv_url, '_blank');
+    if (result?.csv_url && result.csv_url !== '#') {
+      window.open(result.csv_url, '_blank');
     } else {
       toast({
         title: 'Coming soon',
@@ -146,7 +140,10 @@ export default function QAResultsPage() {
     }
   };
 
-  if (isCheckingAuth || isLoading) {
+  // Use demo result if available, otherwise use query result
+  const result = demoResult || qaResult;
+
+  if (isCheckingAuth || (isLoading && !isDemo)) {
     return (
       <div className='flex min-h-screen items-center justify-center'>
         <div className='text-center'>
@@ -156,7 +153,7 @@ export default function QAResultsPage() {
     );
   }
 
-  if (!qaResult) {
+  if (!result) {
     return null;
   }
 
@@ -178,20 +175,20 @@ export default function QAResultsPage() {
             <div>
               <h1 className='text-3xl font-bold text-black'>Q&A Results</h1>
               <div className='mt-2 flex items-center gap-4 text-sm text-gray-600'>
-                <span>{qaResult.selection_name}</span>
+                <span>{result.selection_name}</span>
                 <span>•</span>
-                <span>Created: {formatDate(qaResult.created_at)}</span>
-                {qaResult.completed_at && (
+                <span>Created: {formatDate(result.created_at)}</span>
+                {result.completed_at && (
                   <>
                     <span>•</span>
-                    <span>Completed: {formatDate(qaResult.completed_at)}</span>
+                    <span>Completed: {formatDate(result.completed_at)}</span>
                   </>
                 )}
               </div>
             </div>
             <div className='flex items-center gap-3'>
-              {getStatusBadge(qaResult.status)}
-              {qaResult.status === 'completed' && (
+              {getStatusBadge(result.status)}
+              {result.status === 'completed' && (
                 <Button
                   className='rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700'
                   onClick={handleDownloadCSV}
@@ -207,32 +204,26 @@ export default function QAResultsPage() {
         {/* Question Card */}
         <div className='mb-6 rounded-2xl border bg-white p-6'>
           <h2 className='mb-2 font-semibold text-gray-900'>Question</h2>
-          <p className='text-gray-700'>{qaResult.prompt}</p>
+          <p className='text-gray-700'>{result.prompt}</p>
 
-          {qaResult.status === 'processing' && (
+          {result.status === 'processing' && (
             <div className='mt-4 space-y-2'>
               <div className='flex items-center justify-between text-sm text-gray-600'>
                 <span>Processing...</span>
-                <span>{qaResult.progress}%</span>
+                <span>{result.progress}%</span>
               </div>
               <div className='h-2 w-full overflow-hidden rounded-full bg-gray-200'>
                 <div
                   className='h-full bg-blue-600 transition-all duration-500'
-                  style={{ width: `${qaResult.progress}%` }}
+                  style={{ width: `${result.progress}%` }}
                 />
               </div>
-            </div>
-          )}
-
-          {qaResult.status === 'failed' && qaResult.error_message && (
-            <div className='mt-4 rounded-lg bg-red-50 p-4 text-sm text-red-800'>
-              <strong>Error:</strong> {qaResult.error_message}
             </div>
           )}
         </div>
 
         {/* Results Table */}
-        {qaResult.answers.length > 0 && (
+        {result.answers.length > 0 && (
           <div className='overflow-hidden rounded-2xl border bg-white'>
             <Table>
               <TableHeader className='bg-gray-50'>
@@ -245,8 +236,8 @@ export default function QAResultsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {qaResult.answers.map((answer, index) => (
-                  <TableRow key={answer.id || `${answer.doc_id}-${index}`} className='hover:bg-gray-50'>
+                {result.answers.map((answer, index) => (
+                  <TableRow key={answer.doc_id || `${answer.doc_id}-${index}`} className='hover:bg-gray-50'>
                     <TableCell className='px-4 py-3 font-medium'>{answer.name}</TableCell>
                     <TableCell className='px-4 py-3 text-sm text-gray-600'>{answer.email}</TableCell>
                     <TableCell className='px-4 py-3 text-sm text-gray-600'>{answer.city}</TableCell>

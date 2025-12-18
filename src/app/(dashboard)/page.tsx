@@ -93,6 +93,9 @@ export default function DashboardPage() {
     }
   }, [userPlan]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  /**
+   * Get leaf node names from tree (for saving criteria - backward compatibility)
+   */
   const getNamesFromIds = (ids: Set<string>, tree: TreeNode[]): string[] => {
     const names: string[] = [];
     const findNodeById = (nodes: TreeNode[], id: string): TreeNode | null => {
@@ -115,6 +118,91 @@ export default function DashboardPage() {
       }
     });
     return names;
+  };
+
+  /**
+   * Get hierarchical values from tree nodes for filtering
+   * Returns object with level1, level2, level3 (and level4 for regions) arrays
+   */
+  const getHierarchicalValuesFromIds = (
+    ids: Set<string>,
+    tree: TreeNode[],
+    isRegion: boolean = false
+  ): {
+    level1: string[];
+    level2: string[];
+    level3: string[];
+    level4?: string[];
+  } => {
+    const result: {
+      level1: string[];
+      level2: string[];
+      level3: string[];
+      level4?: string[];
+    } = {
+      level1: [],
+      level2: [],
+      level3: [],
+    };
+
+    if (isRegion) {
+      result.level4 = [];
+    }
+
+    /**
+     * Find path from root to target node
+     * Returns array of nodes from root to target (inclusive)
+     */
+    const getPathToNode = (targetId: string, nodes: TreeNode[], currentPath: TreeNode[] = []): TreeNode[] | null => {
+      for (const node of nodes) {
+        const newPath = [...currentPath, node];
+
+        // If this is the target node, return the path
+        if (node.id === targetId) {
+          return newPath;
+        }
+
+        // Recursively search children
+        if (node.children && node.children.length > 0) {
+          const found = getPathToNode(targetId, node.children, newPath);
+          if (found) {
+            return found;
+          }
+        }
+      }
+      return null;
+    };
+
+    ids.forEach((id) => {
+      const path = getPathToNode(id, tree);
+
+      if (path && path.length > 0) {
+        // Path is from root to selected node
+        // path[0] = level1 (root), path[1] = level2, path[2] = level3, path[3] = level4 (for regions)
+
+        // Add level1 (always first in path)
+        if (path.length > 0 && !result.level1.includes(path[0].name)) {
+          result.level1.push(path[0].name);
+        }
+
+        // Add level2 (if exists)
+        if (path.length > 1 && !result.level2.includes(path[1].name)) {
+          result.level2.push(path[1].name);
+        }
+
+        // Add level3 (if exists)
+        if (path.length > 2 && !result.level3.includes(path[2].name)) {
+          result.level3.push(path[2].name);
+        }
+
+        // Add level4 for regions (if exists)
+        if (isRegion && path.length > 3 && result.level4 && !result.level4.includes(path[3].name)) {
+          result.level4.push(path[3].name);
+        }
+      }
+    });
+
+    return result;
   };
 
   const buildExperienceYears = () => {
@@ -144,18 +232,46 @@ export default function DashboardPage() {
     try {
       const experienceYears = buildExperienceYears();
 
-      // Convert selected IDs to names for sectors and regions
-      const sectorNames = sectors.size > 0 ? getNamesFromIds(sectors, SECTORS_TREE) : [];
-      const regionNames = regions.size > 0 ? getNamesFromIds(regions, REGIONS_TREE) : [];
+      // Get hierarchical values for sectors and regions
+      const sectorHierarchy = sectors.size > 0 ? getHierarchicalValuesFromIds(sectors, SECTORS_TREE, false) : null;
+      const regionHierarchy = regions.size > 0 ? getHierarchicalValuesFromIds(regions, REGIONS_TREE, true) : null;
 
-      // Prepare request body matching backend format (per curl-filter-tests.md)
-      const requestBody = {
+      // Prepare request body with hierarchical filters
+      // Backend expects sector_level1, sector_level2, sector_level3, region_level1, etc.
+      const requestBody: Record<string, any> = {
         names: names.length > 0 ? names : [''],
-        sectors: sectorNames.length > 0 ? sectorNames : [],
-        regions: regionNames.length > 0 ? regionNames : [],
         experience_years: experienceYears.length > 0 ? experienceYears : [],
         top_k: topK,
       };
+
+      // Add hierarchical sector filters
+      if (sectorHierarchy) {
+        if (sectorHierarchy.level1.length > 0) {
+          requestBody.sector_level1 = sectorHierarchy.level1;
+        }
+        if (sectorHierarchy.level2.length > 0) {
+          requestBody.sector_level2 = sectorHierarchy.level2;
+        }
+        if (sectorHierarchy.level3.length > 0) {
+          requestBody.sector_level3 = sectorHierarchy.level3;
+        }
+      }
+
+      // Add hierarchical region filters
+      if (regionHierarchy) {
+        if (regionHierarchy.level1.length > 0) {
+          requestBody.region_level1 = regionHierarchy.level1;
+        }
+        if (regionHierarchy.level2.length > 0) {
+          requestBody.region_level2 = regionHierarchy.level2;
+        }
+        if (regionHierarchy.level3.length > 0) {
+          requestBody.region_level3 = regionHierarchy.level3;
+        }
+        if (regionHierarchy.level4 && regionHierarchy.level4.length > 0) {
+          requestBody.region_level4 = regionHierarchy.level4;
+        }
+      }
 
       // Debug: Log what we're sending to backend
       console.log('[Frontend] Sending request to /api/lookalikes/search:', {
@@ -263,7 +379,12 @@ export default function DashboardPage() {
   const confirmSave = async () => {
     setIsSaving(true);
     try {
-      const selectedItems = results.filter((r) => selectedIds.has(r.doc_id));
+      const selectedItems = results
+        .filter((r) => selectedIds.has(r.doc_id))
+        .map((item) => ({
+          ...item,
+          similarity: item.similarity ?? 0, // Ensure similarity is always present, default to 0
+        }));
       const experienceYears = buildExperienceYears();
       const sectorNames = sectors.size > 0 ? getNamesFromIds(sectors, SECTORS_TREE) : [];
       const regionNames = regions.size > 0 ? getNamesFromIds(regions, REGIONS_TREE) : [];

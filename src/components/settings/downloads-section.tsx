@@ -1,7 +1,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { useEffect, useState } from 'react';
+import { useDownloadsQuery } from '@/libs/queries';
 
 interface Download {
   id: string;
@@ -20,34 +20,20 @@ interface DownloadsSectionProps {
 
 /**
  * Downloads section displaying available CSV exports ready for download
+ * Uses TanStack Query for optimized caching and data management
  */
 export function DownloadsSection({ initialDownloads = [] }: DownloadsSectionProps) {
-  const [downloads, setDownloads] = useState<Download[]>(initialDownloads);
-  const [isLoading, setIsLoading] = useState(false);
+  const {
+    data: downloadsData,
+    isLoading,
+    error,
+  } = useDownloadsQuery({
+    retry: 1,
+    // Use initial data if provided (from server-side fetch)
+    placeholderData: initialDownloads.length > 0 ? { downloads: initialDownloads } : undefined,
+  });
 
-  useEffect(() => {
-    // Fetch downloads on mount if not provided
-    const fetchDownloads = async () => {
-      setIsLoading(true);
-      try {
-        const response = await fetch('/api/downloads');
-        if (response.ok) {
-          const data = await response.json();
-          setDownloads(data.downloads || []);
-        }
-      } catch (error) {
-        console.error('Failed to fetch downloads:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    if (initialDownloads.length === 0) {
-      fetchDownloads();
-    } else {
-      setDownloads(initialDownloads);
-    }
-  }, [initialDownloads]);
+  const downloads = downloadsData?.downloads || [];
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString();
@@ -66,6 +52,14 @@ export function DownloadsSection({ initialDownloads = [] }: DownloadsSectionProp
     return (
       <div className='rounded-xl border border-gray-200 p-6'>
         <div className='text-sm text-gray-600'>Loading downloads...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className='rounded-xl border border-red-200 bg-red-50 p-6'>
+        <div className='text-sm text-red-600'>Failed to load downloads. Please try refreshing the page.</div>
       </div>
     );
   }

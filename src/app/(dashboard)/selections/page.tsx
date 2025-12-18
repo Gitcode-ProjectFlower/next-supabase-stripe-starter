@@ -39,33 +39,23 @@ export default function SelectionsPage() {
   const router = useRouter();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [selections, setSelections] = useState<Selection[]>([]);
   const { data, isLoading, error, refetch } = useSelectionsQuery();
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+
+  // Use query data directly instead of redundant state
+  const selections = data?.selections || [];
+  const isAuthenticated = error && (error as ApiError).status === 401 ? false : data ? true : null;
 
   useEffect(() => {
-    if (error) {
-      if ((error as ApiError).status === 401) {
-        setIsAuthenticated(false);
-      } else {
-        toast({
-          title: 'Error',
-          description: error.message || 'Failed to load selections',
-          variant: 'destructive',
-        });
-      }
-    } else if (data) {
-      setIsAuthenticated(true);
+    if (error && (error as ApiError).status !== 401) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to load selections',
+        variant: 'destructive',
+      });
     }
-  }, [data, error, toast]);
-
-  useEffect(() => {
-    if (data?.selections) {
-      setSelections(data.selections);
-    }
-  }, [data]);
+  }, [error, toast]);
 
   const handleDelete = async () => {
     if (!deleteId) return;
@@ -87,7 +77,6 @@ export default function SelectionsPage() {
         variant: 'success',
       });
 
-      setSelections(selections.filter((s) => s.id !== deleteId));
       queryClient.setQueryData<{ selections: Selection[] }>(QUERY_KEYS.selections.all, (prev) =>
         prev ? { selections: prev.selections.filter((s) => s.id !== deleteId) } : prev
       );
