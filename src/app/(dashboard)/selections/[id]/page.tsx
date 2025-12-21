@@ -25,6 +25,7 @@ import { cn } from '@/utils/cn';
 type ColumnKey = 'name' | 'email' | 'phone' | 'city' | 'street' | 'sectors' | 'experience_years' | 'similarity';
 
 interface SelectionItem {
+  id?: string; // Database UUID (if available)
   doc_id: string;
   name: string;
   email?: string;
@@ -272,7 +273,28 @@ export default function SelectionDetailPage() {
 
     if (!params.id) {
       console.error('[handleQA] Missing params.id');
+      toast({
+        title: 'Error',
+        description: 'Invalid selection ID',
+        variant: 'destructive',
+      });
       return;
+    }
+
+    // Client-side verification: Check usage limits before making request
+    if (usageStats) {
+      const itemCount = selection?.item_count || 1;
+      const requiredCalls = itemCount;
+      const remainingCalls = usageStats.aiCallsLimit - usageStats.ai_calls;
+
+      if (remainingCalls < requiredCalls) {
+        toast({
+          title: 'AI Limit Reached',
+          description: `You need ${requiredCalls} AI calls but only have ${remainingCalls} remaining. Upgrade your plan to continue.`,
+          variant: 'destructive',
+        });
+        return;
+      }
     }
 
     console.log('[handleQA] Starting request for selection:', params.id);
@@ -290,18 +312,64 @@ export default function SelectionDetailPage() {
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
 
-        if (response.status === 403 && errorData.error === 'CAP_REACHED') {
+        // Handle different error cases
+        if (response.status === 401) {
           toast({
-            title: 'Limit Reached',
-            description: errorData.message || 'You have reached your AI usage limit.',
+            title: 'Authentication Required',
+            description: 'Please sign in to use Q&A features',
             variant: 'destructive',
           });
-          // Optional: You could redirect to pricing here
-          // router.push('/pricing');
-          throw new Error('Limit reached');
+          router.push('/login');
+          return;
         }
 
-        throw new Error(errorData.error || 'Failed to start Q&A job');
+        if (response.status === 403) {
+          if (errorData.error === 'CAP_REACHED') {
+            const message =
+              errorData.type === 'ai_limit'
+                ? `You've reached your AI question limit (${errorData.current}/${errorData.limit}). Upgrade your plan to continue.`
+                : errorData.message || 'You have reached your usage limit.';
+            toast({
+              title: 'Limit Reached',
+              description: message,
+              variant: 'destructive',
+            });
+          } else {
+            toast({
+              title: 'Access Denied',
+              description: errorData.message || 'You do not have permission to perform this action',
+              variant: 'destructive',
+            });
+          }
+          return;
+        }
+
+        if (response.status === 404) {
+          toast({
+            title: 'Selection Not Found',
+            description: 'The selection you are trying to access no longer exists',
+            variant: 'destructive',
+          });
+          router.push('/selections');
+          return;
+        }
+
+        if (response.status === 400) {
+          toast({
+            title: 'Invalid Request',
+            description: errorData.error || errorData.message || 'Please check your input and try again',
+            variant: 'destructive',
+          });
+          return;
+        }
+
+        // Generic error for 500 or other status codes
+        toast({
+          title: 'Error',
+          description: errorData.error || errorData.message || 'Failed to start Q&A job. Please try again later.',
+          variant: 'destructive',
+        });
+        return;
       }
 
       const data = await response.json();
@@ -327,19 +395,41 @@ export default function SelectionDetailPage() {
       }
     } catch (error: any) {
       console.error('Error processing Q&A:', error);
-      if (error.message !== 'Limit reached') {
-        toast({
-          title: 'Error',
-          description: error.message || 'Failed to process Q&A',
-          variant: 'destructive',
-        });
-      }
+      toast({
+        title: 'Network Error',
+        description: error.message || 'Failed to connect to server. Please check your connection and try again.',
+        variant: 'destructive',
+      });
       setIsProcessingQA(false);
       setQaProgress(0);
     }
   };
 
   const handleExport = async () => {
+    if (!params.id) {
+      toast({
+        title: 'Error',
+        description: 'Invalid selection ID',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Client-side verification: Check usage limits before making request
+    if (usageStats && selection) {
+      const itemCount = selection.item_count || 0;
+      const remainingDownloads = usageStats.downloadsLimit - usageStats.downloads;
+
+      if (remainingDownloads < itemCount) {
+        toast({
+          title: 'Download Limit Reached',
+          description: `You need to download ${itemCount} records but only have ${remainingDownloads} remaining. Upgrade your plan to continue.`,
+          variant: 'destructive',
+        });
+        return;
+      }
+    }
+
     setIsExporting(true);
     try {
       const response = await fetch(`/api/selections/${params.id}/export`, {
@@ -347,18 +437,70 @@ export default function SelectionDetailPage() {
       });
 
       if (!response.ok) {
-        throw new Error('Export failed');
+        const errorData = await response.json().catch(() => ({}));
+
+        // Handle different error cases
+        if (response.status === 401) {
+          toast({
+            title: 'Authentication Required',
+            description: 'Please sign in to export selections',
+            variant: 'destructive',
+          });
+          router.push('/login');
+          return;
+        }
+
+        if (response.status === 403) {
+          if (errorData.error === 'CAP_REACHED') {
+            const message =
+              errorData.type === 'download_limit'
+                ? `You've reached your download limit (${errorData.current}/${errorData.limit}). Upgrade your plan to continue.`
+                : errorData.message || 'You have reached your usage limit.';
+            toast({
+              title: 'Limit Reached',
+              description: message,
+              variant: 'destructive',
+            });
+          } else {
+            toast({
+              title: 'Access Denied',
+              description: errorData.message || 'You do not have permission to export this selection',
+              variant: 'destructive',
+            });
+          }
+          return;
+        }
+
+        if (response.status === 404) {
+          toast({
+            title: 'Selection Not Found',
+            description: 'The selection you are trying to export no longer exists',
+            variant: 'destructive',
+          });
+          router.push('/selections');
+          return;
+        }
+
+        // Generic error for 500 or other status codes
+        toast({
+          title: 'Export Failed',
+          description: errorData.error || errorData.message || 'Failed to start export. Please try again later.',
+          variant: 'destructive',
+        });
+        return;
       }
 
+      const data = await response.json();
+
       toast({
-        title: 'Export started',
+        title: 'Export Started',
         description: 'You will receive an email when your export is ready',
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Export error:', error);
       toast({
-        title: 'Export failed',
-        description: 'Please try again later',
+        title: 'Network Error',
+        description: error.message || 'Failed to connect to server. Please check your connection and try again.',
         variant: 'destructive',
       });
     } finally {
@@ -469,8 +611,8 @@ export default function SelectionDetailPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {selection.items?.map((item) => (
-                  <TableRow key={item.doc_id} className='hover:bg-gray-50'>
+                {selection.items?.map((item, index) => (
+                  <TableRow key={item.id || `${item.doc_id}-${index}`} className='hover:bg-gray-50'>
                     {visibleColumns.map((key) => (
                       <TableCell
                         key={key}

@@ -462,6 +462,13 @@ export type Database = {
           name: string;
         }[];
       };
+      update_selection_items: {
+        Args: {
+          p_selection_id: string;
+          p_items: Json;
+        };
+        Returns: undefined;
+      };
     };
     Enums: {
       pricing_plan_interval: 'day' | 'week' | 'month' | 'year';

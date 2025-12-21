@@ -16,6 +16,7 @@ import { trackEvent } from '@/libs/analytics/posthog';
 import { getTopKLimit, type UserPlan } from '@/libs/plan-config';
 import { useUsageStatsQuery } from '@/libs/queries';
 import { requiresUpgrade } from '@/libs/soft-gating';
+import { createSupabaseBrowserClient } from '@/libs/supabase/supabase-browser-client';
 
 import type { LookalikeResult } from '@/types/selection';
 import type { TreeNode } from '@/types/tree';
@@ -40,6 +41,9 @@ export default function DashboardPage() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isSaving, setIsSaving] = useState(false);
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const [isNewSelectionModalOpen, setIsNewSelectionModalOpen] = useState(false);
+  const [savedSelectionId, setSavedSelectionId] = useState<string | null>(null);
 
   // State for user plan and preview mode
   const [userPlan, setUserPlan] = useState<UserPlan | null>(null);
@@ -69,6 +73,20 @@ export default function DashboardPage() {
     if (selectedIds.size === 0) return 'Save a selection first to view its history.';
     return null;
   }, [selectedIds.size, userPlan]);
+
+  // Detect unsaved changes
+  const hasUnsavedChanges = useMemo(() => {
+    // Check if user has selected candidates
+    if (selectedIds.size > 0) return true;
+    // Check if user has modified filters
+    if (names.length > 0) return true;
+    if (sectors.size > 0) return true;
+    if (regions.size > 0) return true;
+    if (experience.length > 0) return true;
+    // Check if user has search results
+    if (results.length > 0) return true;
+    return false;
+  }, [selectedIds.size, names.length, sectors.size, regions.size, experience.length, results.length]);
 
   useEffect(() => {
     if (usageStats?.plan) {
@@ -388,65 +406,126 @@ export default function DashboardPage() {
       const experienceYears = buildExperienceYears();
       const sectorNames = sectors.size > 0 ? getNamesFromIds(sectors, SECTORS_TREE) : [];
       const regionNames = regions.size > 0 ? getNamesFromIds(regions, REGIONS_TREE) : [];
-      const requestPayload = {
-        name: selectionName,
-        criteria: {
-          names,
-          sectors: sectorNames,
-          regions: regionNames,
-          experience_years: experienceYears,
-        },
-        top_k: topK, // This should ideally match what was searched
-        items: selectedItems,
+      const criteria = {
+        names,
+        sectors: sectorNames,
+        regions: regionNames,
+        experience_years: experienceYears,
       };
 
-      const response = await fetch('/api/selections', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestPayload),
-      });
+      const supabase = createSupabaseBrowserClient();
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser();
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => null);
-        let errorMessage = 'Failed to save selection';
-
-        if (errorData?.error === 'Validation error' && Array.isArray(errorData.details)) {
-          errorMessage = errorData.details
-            .map((detail: any) => {
-              const path = Array.isArray(detail.path) ? detail.path.join('.') : 'field';
-              return `${path}: ${detail.message || detail.code || 'is invalid'}`;
-            })
-            .join('; ');
-        } else if (errorData?.error === 'Top-K exceeds your plan limit' && errorData?.planCap) {
-          errorMessage = `Top-K ${errorData.requested} exceeds your plan limit (${errorData.planCap}).`;
-        } else if (errorData?.error === 'Number of items exceeds your plan limit' && errorData?.planCap) {
-          errorMessage = `You can save up to ${errorData.planCap} items on your current plan.`;
-        } else if (errorData?.error) {
-          errorMessage = errorData.error;
-        }
-
-        throw new Error(errorMessage);
+      if (authError || !user) {
+        throw new Error('Unauthorized. Please sign in to save selections.');
       }
 
-      const data = await response.json();
+      let selectionId: string;
+      const isUpdate = savedSelectionId !== null;
 
-      // Track selection created event
-      trackEvent.selectionCreated({
-        selectionId: data.selection_id,
-        itemCount: selectedItems.length,
-        hasFilters: sectors.size > 0 || regions.size > 0 || experience.length > 0,
-      });
+      if (isUpdate) {
+        // UPDATE: Verify ownership and update existing selection
+        const { data: existingSelection, error: checkError } = await supabase
+          .from('selections')
+          .select('id, user_id, expires_at')
+          .eq('id', savedSelectionId)
+          .eq('user_id', user.id)
+          .single();
+
+        if (checkError || !existingSelection) {
+          setSavedSelectionId(null); // Clear invalid ID
+          throw new Error('Selection not found or access denied');
+        }
+
+        // Deduplicate items by doc_id before processing (prevent duplicate keys)
+        const uniqueItems = Array.from(new Map(selectedItems.map((item) => [item.doc_id, item])).values());
+
+        // Update selection metadata
+        const { error: updateError } = await supabase
+          .from('selections')
+          .update({
+            name: selectionName,
+            criteria_json: criteria,
+            item_count: uniqueItems.length,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', savedSelectionId);
+
+        if (updateError) {
+          throw new Error(`Failed to update selection: ${updateError.message}`);
+        }
+
+        // Use RPC function to atomically replace all items (delete + insert in transaction)
+        const { error: rpcError } = await supabase.rpc('update_selection_items', {
+          p_selection_id: savedSelectionId,
+          p_items: uniqueItems.map((item) => ({
+            doc_id: item.doc_id,
+            name: item.name,
+            email: item.email,
+            phone: item.phone,
+            city: item.city,
+            street: item.street,
+            sectors: item.sectors,
+            experience_years: item.experience_years,
+            similarity: item.similarity,
+          })),
+        });
+
+        if (rpcError) {
+          throw new Error(`Failed to update selection items: ${rpcError.message}`);
+        }
+
+        selectionId = savedSelectionId;
+      } else {
+        // CREATE: Call create_selection RPC
+        const { data: newSelectionId, error: rpcError } = await supabase.rpc('create_selection', {
+          p_name: selectionName,
+          p_criteria_json: criteria,
+          p_items: selectedItems,
+        });
+
+        if (rpcError) {
+          throw new Error(`Failed to create selection: ${rpcError.message}`);
+        }
+
+        selectionId = newSelectionId;
+        setSavedSelectionId(selectionId);
+
+        // Log usage (only on create)
+        try {
+          const { error: logError } = await supabase.from('usage_log').insert({
+            user_id: user.id,
+            action: 'selection_created',
+            count: 1,
+          });
+          if (logError) {
+            console.error('[Save] Failed to log usage:', logError);
+          }
+        } catch (logErr) {
+          console.error('[Save] Failed to log usage:', logErr);
+        }
+
+        // Track analytics (only on create)
+        trackEvent.selectionCreated({
+          selectionId,
+          itemCount: selectedItems.length,
+          hasFilters: sectors.size > 0 || regions.size > 0 || experience.length > 0,
+        });
+      }
 
       toast({
-        title: 'Selection saved',
-        description: `Successfully saved ${selectedItems.length} candidates.`,
+        title: 'Saved',
+        description: isUpdate
+          ? `Selection updated with ${selectedItems.length} candidates.`
+          : `Successfully saved ${selectedItems.length} candidates.`,
         variant: 'success',
       });
 
-      // Redirect to the new selection page
-      router.push(`/selections/${data.selection_id}`);
+      setIsSaveModalOpen(false);
+      setIsSaving(false);
     } catch (error) {
       console.error('Save error:', error);
       toast({
@@ -454,11 +533,11 @@ export default function DashboardPage() {
         description: error instanceof Error ? error.message : 'Please try again later',
         variant: 'destructive',
       });
-      setIsSaving(false); // Only reset if failed, otherwise we redirect
+      setIsSaving(false);
     }
   };
 
-  const handleExportClick = (unavailableReason?: string | null) => {
+  const handleExportClick = async (unavailableReason?: string | null) => {
     if (unavailableReason) {
       toast({
         title: 'Export unavailable',
@@ -468,11 +547,237 @@ export default function DashboardPage() {
       return;
     }
 
-    toast({
-      title: 'Export from saved selections',
-      description: 'Please save this selection first, then export CSV from the selection detail page.',
-      variant: 'destructive',
-    });
+    // Client-side verification: Check usage limits before making request
+    if (usageStats) {
+      const itemCount = selectedIds.size || 0;
+      const remainingDownloads = usageStats.downloadsLimit - usageStats.downloads;
+
+      if (remainingDownloads < itemCount) {
+        toast({
+          title: 'Download Limit Reached',
+          description: `You need to download ${itemCount} records but only have ${remainingDownloads} remaining. Upgrade your plan to continue.`,
+          variant: 'destructive',
+        });
+        return;
+      }
+    }
+
+    setIsExporting(true);
+
+    try {
+      // Step 1: Save the selection first
+      const selectedItems = results
+        .filter((r) => selectedIds.has(r.doc_id))
+        .map((item) => ({
+          ...item,
+          similarity: item.similarity ?? 0,
+        }));
+
+      if (selectedItems.length === 0) {
+        toast({
+          title: 'No candidates selected',
+          description: 'Please select at least one candidate to export',
+          variant: 'destructive',
+        });
+        setIsExporting(false);
+        return;
+      }
+
+      const supabase = createSupabaseBrowserClient();
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser();
+
+      if (authError || !user) {
+        throw new Error('Unauthorized. Please sign in to export.');
+      }
+
+      const experienceYears = buildExperienceYears();
+      const sectorNames = sectors.size > 0 ? getNamesFromIds(sectors, SECTORS_TREE) : [];
+      const regionNames = regions.size > 0 ? getNamesFromIds(regions, REGIONS_TREE) : [];
+      const criteria = {
+        names,
+        sectors: sectorNames,
+        regions: regionNames,
+        experience_years: experienceYears,
+      };
+
+      let selectionId: string;
+      const isUpdate = savedSelectionId !== null;
+
+      if (isUpdate) {
+        // UPDATE: Verify ownership and update existing selection
+        const { data: existingSelection, error: checkError } = await supabase
+          .from('selections')
+          .select('id, user_id')
+          .eq('id', savedSelectionId)
+          .eq('user_id', user.id)
+          .single();
+
+        if (checkError || !existingSelection) {
+          setSavedSelectionId(null);
+          throw new Error('Selection not found or access denied');
+        }
+
+        // Deduplicate items by doc_id before processing (prevent duplicate keys)
+        const uniqueItems = Array.from(new Map(selectedItems.map((item) => [item.doc_id, item])).values());
+
+        // Update selection metadata
+        const { error: updateError } = await supabase
+          .from('selections')
+          .update({
+            name: selectionName,
+            criteria_json: criteria,
+            item_count: uniqueItems.length,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', savedSelectionId);
+
+        if (updateError) {
+          throw new Error(`Failed to update selection: ${updateError.message}`);
+        }
+
+        // Use RPC function to atomically replace all items (delete + insert in transaction)
+        const { error: rpcError } = await supabase.rpc('update_selection_items', {
+          p_selection_id: savedSelectionId,
+          p_items: uniqueItems.map((item) => ({
+            doc_id: item.doc_id,
+            name: item.name,
+            email: item.email,
+            phone: item.phone,
+            city: item.city,
+            street: item.street,
+            sectors: item.sectors,
+            experience_years: item.experience_years,
+            similarity: item.similarity,
+          })),
+        });
+
+        if (rpcError) {
+          throw new Error(`Failed to update selection items: ${rpcError.message}`);
+        }
+
+        selectionId = savedSelectionId;
+      } else {
+        // CREATE: Call create_selection RPC
+        const { data: newSelectionId, error: rpcError } = await supabase.rpc('create_selection', {
+          p_name: selectionName,
+          p_criteria_json: criteria,
+          p_items: selectedItems,
+        });
+
+        if (rpcError) {
+          throw new Error(`Failed to create selection: ${rpcError.message}`);
+        }
+
+        selectionId = newSelectionId;
+        setSavedSelectionId(selectionId);
+
+        // Log usage (only on create)
+        try {
+          const { error: logError } = await supabase.from('usage_log').insert({
+            user_id: user.id,
+            action: 'selection_created',
+            count: 1,
+          });
+          if (logError) {
+            console.error('[Export] Failed to log usage:', logError);
+          }
+        } catch (logErr) {
+          console.error('[Export] Failed to log usage:', logErr);
+        }
+      }
+
+      // Store the selection ID for future updates
+      if (selectionId) {
+        setSavedSelectionId(selectionId);
+      }
+
+      // Step 2: Immediately trigger export
+      const exportResponse = await fetch(`/api/selections/${selectionId}/export`, {
+        method: 'POST',
+      });
+
+      if (!exportResponse.ok) {
+        const errorData = await exportResponse.json().catch(() => ({}));
+
+        // Handle different error cases
+        if (exportResponse.status === 401) {
+          toast({
+            title: 'Authentication Required',
+            description: 'Please sign in to export selections',
+            variant: 'destructive',
+          });
+          router.push('/login');
+          return;
+        }
+
+        if (exportResponse.status === 403) {
+          if (errorData.error === 'CAP_REACHED') {
+            const message =
+              errorData.type === 'download_limit'
+                ? `You've reached your download limit (${errorData.current}/${errorData.limit}). Upgrade your plan to continue.`
+                : errorData.message || 'You have reached your usage limit.';
+            toast({
+              title: 'Limit Reached',
+              description: message,
+              variant: 'destructive',
+            });
+          } else {
+            toast({
+              title: 'Access Denied',
+              description: errorData.message || 'You do not have permission to export this selection',
+              variant: 'destructive',
+            });
+          }
+          return;
+        }
+
+        if (exportResponse.status === 404) {
+          toast({
+            title: 'Selection Not Found',
+            description: 'The selection was saved but could not be found for export',
+            variant: 'destructive',
+          });
+          return;
+        }
+
+        // Generic error
+        toast({
+          title: 'Export Failed',
+          description: errorData.error || errorData.message || 'Failed to start export. Please try again later.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // Success: Selection saved and export started
+      toast({
+        title: 'Export Started',
+        description:
+          'Your selection has been saved and the export has been started. You will receive an email when your CSV is ready.',
+      });
+
+      // Track selection created event
+      trackEvent.selectionCreated({
+        selectionId,
+        itemCount: selectedItems.length,
+        hasFilters: sectors.size > 0 || regions.size > 0 || experience.length > 0,
+      });
+
+      // Optionally redirect to the selection detail page
+      router.push(`/selections/${selectionId}`);
+    } catch (error: any) {
+      console.error('Export error:', error);
+      toast({
+        title: 'Export Failed',
+        description: error.message || 'Failed to save and export selection. Please try again later.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   const handleHistoryClick = (unavailableReason?: string | null) => {
@@ -492,12 +797,62 @@ export default function DashboardPage() {
     });
   };
 
+  // Reset all state to initial values
+  const resetSelection = () => {
+    // Clear names input
+    setNames([]);
+    // Clear sector filters
+    setSectors(new Set());
+    // Clear region filters
+    setRegions(new Set());
+    // Clear experience years filters
+    setExperience([]);
+    // Clear selected candidates list
+    setSelectedIds(new Set());
+    // Clear results list
+    setResults([]);
+    // Reset selection name to default
+    setSelectionName('New selection');
+    // Clear saved selection ID
+    setSavedSelectionId(null);
+    // Keep country/cluster context unchanged (not implemented yet, so nothing to reset)
+  };
+
+  // Handle New Selection button click
+  const handleNewSelectionClick = () => {
+    if (hasUnsavedChanges) {
+      // Show confirmation modal
+      setIsNewSelectionModalOpen(true);
+    } else {
+      // No unsaved changes, reset immediately
+      resetSelection();
+    }
+  };
+
+  // Handle confirmation to discard changes
+  const handleConfirmDiscard = () => {
+    resetSelection();
+    setIsNewSelectionModalOpen(false);
+    toast({
+      title: 'Selection reset',
+      description: 'All filters and selections have been cleared.',
+    });
+  };
+
   return (
     <div className='min-h-screen bg-gray-50 text-gray-900'>
       {/* Header */}
       <header className='sticky top-0 z-40 border-b bg-white/90 backdrop-blur'>
         <div className='mx-auto flex max-w-7xl items-center gap-3 px-4 py-3'>
           <div className='ml-auto flex items-center gap-2'>
+            <Button
+              variant='outline'
+              className='rounded-lg border bg-white px-3 py-2 text-sm transition-colors hover:bg-gray-100'
+              onClick={handleNewSelectionClick}
+            >
+              New Selection
+            </Button>
+            <div className='h-6 w-px bg-gray-200' />
             <Input
               value={selectionName}
               onChange={(e) => setSelectionName(e.target.value)}
@@ -518,14 +873,15 @@ export default function DashboardPage() {
               variant='outline'
               className={cn(
                 'rounded-lg border bg-white px-3 py-2 text-sm transition-colors hover:bg-gray-100',
-                exportUnavailableReason && 'cursor-not-allowed opacity-60'
+                (exportUnavailableReason || isExporting) && 'cursor-not-allowed opacity-60'
               )}
-              aria-disabled={!!exportUnavailableReason}
+              aria-disabled={!!exportUnavailableReason || isExporting}
               onClick={() => handleExportClick(exportUnavailableReason)}
+              disabled={isExporting}
             >
-              Export CSV
+              {isExporting ? 'Exporting...' : 'Export CSV'}
             </Button>
-            <Button
+            {/* <Button
               variant='outline'
               className={cn(
                 'rounded-lg border bg-white px-3 py-2 text-sm transition-colors hover:bg-gray-100',
@@ -535,7 +891,7 @@ export default function DashboardPage() {
               onClick={() => handleHistoryClick(historyUnavailableReason)}
             >
               History
-            </Button>
+            </Button> */}
             <div className='h-6 w-px bg-gray-200' />
             <div className='text-sm text-gray-600'>Profile</div>
           </div>
@@ -632,7 +988,30 @@ export default function DashboardPage() {
               Cancel
             </Button>
             <Button className='bg-blue-600 hover:bg-blue-700' onClick={confirmSave} disabled={isSaving}>
-              {isSaving ? 'Saving...' : 'Confirm Save'}
+              {isSaving ? 'Saving...' : savedSelectionId ? 'Confirm Update' : 'Confirm Save'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* New Selection Confirmation Modal */}
+      <Dialog open={isNewSelectionModalOpen} onOpenChange={setIsNewSelectionModalOpen}>
+        <DialogContent className='bg-white sm:max-w-[500px]'>
+          <DialogHeader>
+            <DialogTitle>Discard current selection?</DialogTitle>
+          </DialogHeader>
+          <div className='py-4'>
+            <p className='text-sm text-gray-600'>
+              You have unsaved changes. If you proceed, all filters, selected candidates, and search results will be
+              cleared.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant='outline' onClick={() => setIsNewSelectionModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button className='bg-red-600 hover:bg-red-700' onClick={handleConfirmDiscard}>
+              Discard
             </Button>
           </DialogFooter>
         </DialogContent>
