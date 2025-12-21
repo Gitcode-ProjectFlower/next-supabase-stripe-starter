@@ -443,13 +443,12 @@ export default function DashboardPage() {
         // Deduplicate items by doc_id before processing (prevent duplicate keys)
         const uniqueItems = Array.from(new Map(selectedItems.map((item) => [item.doc_id, item])).values());
 
-        // Update selection metadata
+        // Update selection metadata (name and criteria only - item_count will be updated by RPC)
         const { error: updateError } = await supabase
           .from('selections')
           .update({
             name: selectionName,
             criteria_json: criteria,
-            item_count: uniqueItems.length,
             updated_at: new Date().toISOString(),
           })
           .eq('id', savedSelectionId);
@@ -459,6 +458,7 @@ export default function DashboardPage() {
         }
 
         // Use RPC function to atomically replace all items (delete + insert in transaction)
+        // The RPC function will also update item_count to match the actual number of items
         const { error: rpcError } = await supabase.rpc('update_selection_items', {
           p_selection_id: savedSelectionId,
           p_items: uniqueItems.map((item) => ({
@@ -623,13 +623,12 @@ export default function DashboardPage() {
         // Deduplicate items by doc_id before processing (prevent duplicate keys)
         const uniqueItems = Array.from(new Map(selectedItems.map((item) => [item.doc_id, item])).values());
 
-        // Update selection metadata
+        // Update selection metadata (name and criteria only - item_count will be updated by RPC)
         const { error: updateError } = await supabase
           .from('selections')
           .update({
             name: selectionName,
             criteria_json: criteria,
-            item_count: uniqueItems.length,
             updated_at: new Date().toISOString(),
           })
           .eq('id', savedSelectionId);
@@ -639,6 +638,7 @@ export default function DashboardPage() {
         }
 
         // Use RPC function to atomically replace all items (delete + insert in transaction)
+        // The RPC function will also update item_count to match the actual number of items
         const { error: rpcError } = await supabase.rpc('update_selection_items', {
           p_selection_id: savedSelectionId,
           p_items: uniqueItems.map((item) => ({
