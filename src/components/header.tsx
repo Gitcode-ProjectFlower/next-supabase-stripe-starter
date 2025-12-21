@@ -11,6 +11,7 @@ import { createSupabaseBrowserClient } from '@/libs/supabase/supabase-browser-cl
 const navigation = [
   { name: 'Dashboard', href: '/', requiresAuth: false },
   { name: 'Selections', href: '/selections', requiresAuth: false },
+  { name: 'Recent Activity', href: '/activity', requiresAuth: true },
   { name: 'Pricing', href: '/pricing', requiresAuth: false },
   { name: 'Settings', href: '/settings', requiresAuth: true },
 ];

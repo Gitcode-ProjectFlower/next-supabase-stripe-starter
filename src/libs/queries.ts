@@ -187,6 +187,7 @@ type QAResultResponse = {
   completed_at?: string;
   csv_url?: string;
   answers: Array<{
+    id?: string;
     doc_id: string;
     name: string;
     email: string;
@@ -212,6 +213,219 @@ export function useQAResultQuery(
       return data?.status === 'processing' ? 2000 : false;
     },
     staleTime: 0, // Always consider stale for polling
+    gcTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnWindowFocus: false,
+    ...options,
+  });
+}
+
+type ActivityItem = {
+  id: string;
+  type: 'search' | 'qa' | 'export';
+  status: 'queued' | 'running' | 'done' | 'failed';
+  timestamp: string;
+  label: string;
+  link?: string;
+  metadata?: {
+    selectionId?: string;
+    qaSessionId?: string;
+    downloadId?: string;
+    count?: number;
+  };
+};
+
+type RecentActivityResponse = {
+  activities: ActivityItem[];
+};
+
+export function useRecentActivityQuery(
+  options?: Omit<UseQueryOptions<RecentActivityResponse, ApiError>, 'queryKey' | 'queryFn'>
+) {
+  return useQuery<RecentActivityResponse, ApiError>({
+    queryKey: QUERY_KEYS.activity.recent,
+    queryFn: async () => {
+      const supabase = createSupabaseBrowserClient();
+
+      // Get authenticated user
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser();
+
+      if (authError || !user) {
+        throw new ApiError('Unauthorized', 401);
+      }
+
+      // Fetch recent usage_log entries (last 20)
+      const { data: usageLogs, error: usageError } = await supabase
+        .from('usage_log')
+        .select('id, action, count, created_at')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(20);
+
+      if (usageError) {
+        console.error('[useRecentActivityQuery] Error fetching usage_log:', usageError);
+        throw new ApiError('Failed to fetch recent activity', 500, usageError);
+      }
+
+      if (!usageLogs || usageLogs.length === 0) {
+        return { activities: [] };
+      }
+
+      // Fetch related records to get metadata
+      const activitiesResults = await Promise.all(
+        usageLogs.map(async (log): Promise<ActivityItem | null> => {
+          const logTime = new Date(log.created_at || Date.now());
+          const timeWindow = 5 * 60 * 1000; // 5 minutes window
+
+          if (log.action === 'ai_question') {
+            // Find related QA session
+            const { data: qaSessions } = await supabase
+              .from('qa_sessions')
+              .select('id, selection_id, prompt, status, created_at')
+              .eq('user_id', user.id)
+              .gte('created_at', new Date(logTime.getTime() - timeWindow).toISOString())
+              .lte('created_at', new Date(logTime.getTime() + timeWindow).toISOString())
+              .order('created_at', { ascending: false })
+              .limit(1)
+              .single();
+
+            if (qaSessions) {
+              // Get selection name
+              let selectionName = 'Unknown Selection';
+              if (qaSessions.selection_id) {
+                const { data: selection } = await supabase
+                  .from('selections')
+                  .select('name')
+                  .eq('id', qaSessions.selection_id)
+                  .single();
+                selectionName = selection?.name || selectionName;
+              }
+
+              const statusMap: Record<string, 'queued' | 'running' | 'done' | 'failed'> = {
+                processing: 'running',
+                completed: 'done',
+                failed: 'failed',
+              };
+
+              return {
+                id: log.id,
+                type: 'qa',
+                status: statusMap[qaSessions.status] || 'queued',
+                timestamp: log.created_at || new Date().toISOString(),
+                label: `${selectionName} - ${qaSessions.prompt.substring(0, 50)}${
+                  qaSessions.prompt.length > 50 ? '...' : ''
+                }`,
+                link: `/selections/${qaSessions.selection_id}/qa/${qaSessions.id}`,
+                metadata: {
+                  selectionId: qaSessions.selection_id,
+                  qaSessionId: qaSessions.id,
+                  count: log.count,
+                },
+              };
+            }
+          } else if (log.action === 'selection_created') {
+            // Find related selection
+            const { data: selections } = await supabase
+              .from('selections')
+              .select('id, name, item_count, created_at')
+              .eq('user_id', user.id)
+              .gte('created_at', new Date(logTime.getTime() - timeWindow).toISOString())
+              .lte('created_at', new Date(logTime.getTime() + timeWindow).toISOString())
+              .order('created_at', { ascending: false })
+              .limit(1)
+              .single();
+
+            if (selections) {
+              return {
+                id: log.id,
+                type: 'search',
+                status: 'done',
+                timestamp: log.created_at || new Date().toISOString(),
+                label: `${selections.name} - ${selections.item_count} candidates`,
+                link: `/selections/${selections.id}`,
+                metadata: {
+                  selectionId: selections.id,
+                  count: selections.item_count,
+                },
+              };
+            }
+          } else if (log.action === 'record_download') {
+            // Find related download
+            const { data: downloads } = await supabase
+              .from('downloads')
+              .select('id, selection_id, type, created_at, expires_at')
+              .eq('user_id', user.id)
+              .gte('created_at', new Date(logTime.getTime() - timeWindow).toISOString())
+              .lte('created_at', new Date(logTime.getTime() + timeWindow).toISOString())
+              .order('created_at', { ascending: false })
+              .limit(1)
+              .single();
+
+            if (downloads) {
+              // Get selection name
+              let selectionName = 'Unknown Selection';
+              if (downloads.selection_id) {
+                const { data: selection } = await supabase
+                  .from('selections')
+                  .select('name')
+                  .eq('id', downloads.selection_id)
+                  .single();
+                selectionName = selection?.name || selectionName;
+              }
+
+              const isExpired = downloads.expires_at ? new Date(downloads.expires_at) < new Date() : false;
+              const typeLabel = downloads.type === 'lookalike' ? 'Lookalike CSV' : 'Q&A CSV';
+
+              return {
+                id: log.id,
+                type: 'export',
+                status: isExpired ? 'failed' : 'done',
+                timestamp: log.created_at || new Date().toISOString(),
+                label: `${typeLabel} - ${selectionName}`,
+                link: isExpired ? undefined : downloads.id, // Will be used to get download URL
+                metadata: {
+                  selectionId: downloads.selection_id || undefined,
+                  downloadId: downloads.id,
+                  count: log.count,
+                },
+              };
+            }
+          }
+
+          // If no related record found, return basic activity
+          let activityType: 'search' | 'qa' | 'export' = 'export';
+          let activityLabel = `Export CSV - ${log.count} records`;
+
+          if (log.action === 'ai_question') {
+            activityType = 'qa';
+            activityLabel = `Q&A run - ${log.count} profiles`;
+          } else if (log.action === 'selection_created') {
+            activityType = 'search';
+            activityLabel = `Lookalike search - ${log.count} selection${log.count > 1 ? 's' : ''}`;
+          }
+
+          return {
+            id: log.id,
+            type: activityType,
+            status: 'done',
+            timestamp: log.created_at || new Date().toISOString(),
+            label: activityLabel,
+            metadata: {
+              count: log.count,
+            },
+          };
+        })
+      );
+
+      // Filter out null entries and sort by timestamp
+      const validActivities: ActivityItem[] = activitiesResults.filter((a): a is ActivityItem => a !== null);
+      validActivities.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
+      return { activities: validActivities.slice(0, 20) };
+    },
+    staleTime: 1 * 60 * 1000, // 1 minute - activity can change frequently
     gcTime: 5 * 60 * 1000, // 5 minutes
     refetchOnWindowFocus: false,
     ...options,

@@ -15,4 +15,7 @@ export const QUERY_KEYS = {
   downloads: {
     all: ['downloads'] as const,
   },
+  activity: {
+    recent: ['activity', 'recent'] as const,
+  },
 } as const;

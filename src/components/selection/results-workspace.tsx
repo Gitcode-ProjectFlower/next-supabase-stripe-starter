@@ -372,7 +372,7 @@ export function ResultsWorkspace({
 
       {/* Prompt bar */}
       <div className='sticky bottom-2 z-10 mt-4'>
-        <div className='rounded-2xl border bg-white p-3 shadow-lg'>
+        <div className='rounded-2xl border bg-white p-3 shadow-sm'>
           <div className='flex items-start gap-3'>
             <Textarea
               className='min-h-[72px] flex-1 resize-none rounded-lg border px-3 py-2 text-sm focus-visible:ring-1 focus-visible:ring-gray-900'
