@@ -27,11 +27,11 @@ export function getAllowedFilterKeys(): string[] {
 
 /**
  * Get Top-K limit for a plan
- * Now derived from PLAN_CONFIGS.maxDownloadsPer30Days instead of hardcoded values
+ * Now derived from PLAN_CONFIGS.topKLimit instead of maxDownloadsPer30Days
  */
 export function getTopKLimit(plan: UserPlan): number {
   const effectivePlan = plan || 'anonymous';
-  return PLAN_CONFIGS[effectivePlan]?.maxDownloadsPer30Days || 3;
+  return PLAN_CONFIGS[effectivePlan]?.topKLimit || 3;
 }
 
 export function validateFilterKeys(filters: Record<string, any>): boolean {

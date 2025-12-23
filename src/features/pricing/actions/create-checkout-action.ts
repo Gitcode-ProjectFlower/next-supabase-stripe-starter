@@ -33,49 +33,58 @@ export async function createCheckoutAction(formData: FormData) {
     email: session.user.email,
   });
 
-  // 3. Check for existing active subscription
+  // 3. Fetch price from database to determine type
   const supabase = await createSupabaseServerClient();
-
-  const { data: existingSubscription } = await supabase
-    .from('subscriptions')
-    .select('id, status, price_id, prices(*, products(*))')
-    .eq('user_id', session.user.id)
-    .in('status', ['active', 'trialing'])
-    .order('created', { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  // 4. Fetch price from database to determine type
-  const { data: price } = await supabase
-    .from('prices')
-    .select('*')
-    .eq('id', priceId)
-    .single();
+  const { data: price } = await supabase.from('prices').select('*').eq('id', priceId).single();
 
   if (!price) {
     throw new Error('Price not found');
   }
 
-  // If user has active subscription, check if it's the same plan
-  if (existingSubscription) {
-    // If trying to subscribe to the same price, redirect to settings
-    if (existingSubscription.price_id === priceId) {
-      return redirect(`${getURL()}/settings?error=same-plan&tab=plan`);
-    }
+  // 4. Check for existing active subscription (excluding canceled ones)
+  const { data: existingSubscription } = await supabase
+    .from('subscriptions')
+    .select('id, status, price_id, prices(*, products(*))')
+    .eq('user_id', session.user.id)
+    .in('status', ['active', 'trialing'])
+    .or('cancel_at_period_end.is.null,cancel_at_period_end.eq.false') // Exclude subscriptions scheduled to cancel
+    .order('created', { ascending: false })
+    .limit(1)
+    .maybeSingle();
 
-    // For plan changes (upgrade/downgrade), redirect to Customer Portal
-    // User should use Stripe Customer Portal to manage plan changes
-    return redirect(`${getURL()}/settings?error=use-portal&tab=plan`);
+  // If user has active subscription and trying to subscribe to the same plan
+  if (existingSubscription && existingSubscription.price_id === priceId) {
+    return redirect(`${getURL()}/settings?error=same-plan&tab=plan`);
+  }
+
+  // If user has an existing subscription and selects a different plan,
+  // cancel the old subscription immediately before creating new checkout
+  if (existingSubscription) {
+    try {
+      // Cancel the existing subscription immediately (not at period end)
+      await stripeAdmin.subscriptions.cancel(existingSubscription.id);
+      console.log(`[Checkout] Canceled existing subscription ${existingSubscription.id} before creating new checkout`);
+
+      // Update database immediately (webhook will also update, but this ensures immediate consistency)
+      await supabase
+        .from('subscriptions')
+        .update({
+          status: 'canceled',
+          ended_at: new Date().toISOString(),
+        })
+        .eq('id', existingSubscription.id);
+
+      console.log(`[Checkout] Updated subscription ${existingSubscription.id} status to 'canceled' in database`);
+    } catch (cancelError) {
+      console.error('[Checkout] Error canceling existing subscription:', cancelError);
+      // Continue anyway - the new subscription will be created
+    }
   }
 
   // Get product info for tracking
   let product = null;
   if (price.product_id) {
-    const { data } = await supabase
-      .from('products')
-      .select('name')
-      .eq('id', price.product_id)
-      .single();
+    const { data } = await supabase.from('products').select('name').eq('id', price.product_id).single();
     product = data;
   }
 
@@ -95,11 +104,14 @@ export async function createCheckoutAction(formData: FormData) {
     ],
     mode: price.type === 'recurring' ? 'subscription' : 'payment',
     allow_promotion_codes: true,
-    subscription_data: price.type === 'recurring' ? {
-      metadata: {
-        userId: session.user.id,
-      },
-    } : undefined,
+    subscription_data:
+      price.type === 'recurring'
+        ? {
+            metadata: {
+              userId: session.user.id,
+            },
+          }
+        : undefined,
     success_url: `${getURL()}/settings?success=true&tab=plan`,
     cancel_url: `${getURL()}/pricing?canceled=true`,
   });

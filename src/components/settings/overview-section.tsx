@@ -75,6 +75,8 @@ export function OverviewSection({
       ? 'Free Tier'
       : userPlan === 'promo_medium'
       ? 'Promo Medium'
+      : userPlan === 'anonymous'
+      ? 'Anonymous'
       : userPlan.charAt(0).toUpperCase() + userPlan.slice(1)
     : 'Anonymous';
 

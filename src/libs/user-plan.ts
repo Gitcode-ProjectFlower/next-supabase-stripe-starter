@@ -1,69 +1,149 @@
+import { stripeAdmin } from '@/libs/stripe/stripe-admin';
+import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
 import { PLAN_CONFIGS, UserPlan } from './plan-config';
 
 export { PLAN_CONFIGS };
 export type { UserPlan };
 
-export async function getUserPlan(userId: string): Promise<UserPlan> {
+export async function getUserPlan(userId: string, checkStripeFallback = false): Promise<UserPlan> {
   try {
     const supabase = await createSupabaseServerClient();
 
-    const { data: subscription, error } = await supabase
+    console.log('[getUserPlan] Fetching plan for user:', userId);
+
+    // First, check for active or trialing subscriptions
+    // Exclude subscriptions that are scheduled to cancel (cancel_at_period_end = true)
+    // These should be treated as canceled even though status is still 'active'
+    // We use .or() to include both null and false values (only exclude when explicitly true)
+    let { data: subscription, error } = await supabase
       .from('subscriptions')
       .select('*, prices(*, products(*))')
       .eq('user_id', userId)
       .in('status', ['trialing', 'active'])
+      .or('cancel_at_period_end.is.null,cancel_at_period_end.eq.false') // Exclude subscriptions scheduled to cancel
       .order('created', { ascending: false })
       .limit(1)
       .maybeSingle();
 
     if (error) {
-      console.error('[getUserPlan] DB Error:', error);
+      console.error('[getUserPlan] DB Error fetching subscription:', {
+        error: error.message,
+        code: error.code,
+        details: error.details,
+        userId,
+      });
       return 'free_tier';
     }
 
     if (!subscription) {
-      console.log('[getUserPlan] No subscription found');
-      return 'free_tier';
+      // If fallback is enabled, check Stripe directly
+      if (checkStripeFallback) {
+        try {
+          // Get customer ID from mapping table
+          const { data: customerData } = await supabaseAdminClient
+            .from('customers')
+            .select('stripe_customer_id')
+            .eq('id', userId)
+            .single();
+
+          if (customerData?.stripe_customer_id) {
+            // List subscriptions for this customer
+            const subscriptions = await stripeAdmin.subscriptions.list({
+              customer: customerData.stripe_customer_id,
+              status: 'all',
+              limit: 10,
+            });
+
+            // Find active or trialing subscription that is NOT scheduled to cancel
+            const activeSubscription = subscriptions.data.find(
+              (sub) => (sub.status === 'active' || sub.status === 'trialing') && !sub.cancel_at_period_end
+            );
+
+            if (activeSubscription) {
+              const { upsertUserSubscription } = await import(
+                '@/features/account/controllers/upsert-user-subscription'
+              );
+              await upsertUserSubscription({
+                subscriptionId: activeSubscription.id,
+                customerId: customerData.stripe_customer_id,
+                isCreateAction: false,
+              });
+
+              // Retry fetching from database after sync
+              const { data: retrySubscription } = await supabase
+                .from('subscriptions')
+                .select('*, prices(*, products(*))')
+                .eq('user_id', userId)
+                .in('status', ['trialing', 'active'])
+                .order('created', { ascending: false })
+                .limit(1)
+                .maybeSingle();
+
+              if (retrySubscription) {
+                subscription = retrySubscription;
+              }
+            }
+          }
+        } catch (stripeError) {
+          console.error('[getUserPlan] Error checking Stripe fallback:', stripeError);
+        }
+      }
+
+      // If still no subscription after fallback, check for canceled subscriptions (for logging)
+      if (!subscription) {
+        const { data: canceledSubs } = await supabase
+          .from('subscriptions')
+          .select('id, status')
+          .eq('user_id', userId)
+          .in('status', ['canceled', 'past_due', 'unpaid'])
+          .limit(1);
+        return 'free_tier';
+      }
     }
 
-    // Safe access with logging
     const price = subscription.prices;
-    if (!price) {
-      console.log('[getUserPlan] No price found in subscription');
-      return 'free_tier';
-    }
-
     // Handle array or object for price
     const priceData = Array.isArray(price) ? price[0] : price;
 
+    if (!priceData) {
+      return 'free_tier';
+    }
+
     const product = priceData?.products;
     if (!product) {
-      console.log('[getUserPlan] No product found in price');
       return 'free_tier';
     }
 
     // Handle array or object for product
     const productData = Array.isArray(product) ? product[0] : product;
 
-    const metadata = productData?.metadata;
-    if (!metadata) {
-      console.log('[getUserPlan] No metadata found in product');
+    if (!productData) {
       return 'free_tier';
     }
 
-    const planName = metadata.plan_name;
-    console.log('[getUserPlan] Found plan name:', planName);
+    const metadata = productData?.metadata;
+    if (!metadata) {
+      return 'free_tier';
+    }
+
+    const rawPlanName = metadata.plan_name;
+    // Normalize plan name: convert to lowercase and replace spaces/hyphens with underscores
+    const planName = rawPlanName
+      ? rawPlanName
+          .toString()
+          .toLowerCase()
+          .trim()
+          .replace(/[\s-]+/g, '_')
+      : null;
 
     // Validate plan name against known plans
     if (planName && ['free_tier', 'small', 'medium', 'large', 'promo_medium'].includes(planName)) {
       return planName as UserPlan;
     }
 
-    console.log('[getUserPlan] Unknown or missing plan name, defaulting to free_tier');
     return 'free_tier';
   } catch (error) {
-    console.error('[getUserPlan] CRITICAL ERROR:', error);
     return 'free_tier';
   }
 }

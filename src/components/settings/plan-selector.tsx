@@ -1,10 +1,10 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react'
 
-import { Button } from '@/components/ui/button';
-import type { Price, ProductWithPrices } from '@/features/pricing/types';
-import { PLAN_CONFIGS, type UserPlan } from '@/libs/plan-config';
+import { Button } from '@/components/ui/button'
+import type { Price, ProductWithPrices } from '@/features/pricing/types'
+import { PLAN_CONFIGS, type UserPlan } from '@/libs/plan-config'
 
 type PlanChoice = {
   productId: string;
@@ -36,7 +36,7 @@ export function PlanSelector({ products, currentPriceId }: PlanSelectorProps) {
           (product.metadata as Record<string, any> | null | undefined)?.plan_name || product.name
         ) as UserPlan | undefined;
 
-        const topKCap = planKey && planKey in PLAN_CONFIGS ? PLAN_CONFIGS[planKey].maxDownloadsPer30Days : undefined;
+        const topKCap = planKey && planKey in PLAN_CONFIGS ? PLAN_CONFIGS[planKey].topKLimit : undefined;
 
         items.push({
           productId: product.id,
@@ -58,13 +58,31 @@ export function PlanSelector({ products, currentPriceId }: PlanSelectorProps) {
     });
   }, [products]);
 
+  // Initialize with current price ID if available
   const [selectedPriceId, setSelectedPriceId] = useState<string | null>(currentPriceId || null);
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // Update selected price when currentPriceId changes
+  useEffect(() => {
+    if (currentPriceId) {
+      setSelectedPriceId(currentPriceId);
+    }
+  }, [currentPriceId]);
+
   const handleSave = async () => {
-    if (!selectedPriceId) return;
+    if (!selectedPriceId) {
+      setError('Please select a plan');
+      return;
+    }
+
+    // Don't allow saving if it's the same as current plan
+    if (selectedPriceId === currentPriceId) {
+      setError('This is already your current plan');
+      return;
+    }
+
     setIsSaving(true);
     setMessage(null);
     setError(null);
@@ -91,9 +109,11 @@ export function PlanSelector({ products, currentPriceId }: PlanSelectorProps) {
         return;
       }
 
-      setMessage('Plan updated. Reloading...');
+      setMessage('Plan updated successfully! Reloading...');
       // Refresh page to show updated subscription/plan
-      window.location.reload();
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
     } catch (err: any) {
       setError(err.message || 'Failed to change plan');
     } finally {
@@ -107,33 +127,49 @@ export function PlanSelector({ products, currentPriceId }: PlanSelectorProps) {
       <p className='mb-3 text-sm text-gray-600'>Choose your plan. Changes apply immediately to caps and limits.</p>
 
       <div className='grid grid-cols-1 gap-3 md:grid-cols-3'>
-        {choices.map((choice) => (
-          <label
-            key={choice.priceId}
-            className={`cursor-pointer rounded-xl border p-4 hover:shadow-sm ${
-              selectedPriceId === choice.priceId ? 'border-gray-900' : ''
-            }`}
-          >
-            <div className='flex items-start gap-3'>
-              <input
-                type='radio'
-                name='plan'
-                className='mt-1'
-                checked={selectedPriceId === choice.priceId}
-                onChange={() => setSelectedPriceId(choice.priceId)}
-              />
-              <div>
-                <div className='font-semibold text-gray-900'>{choice.displayName}</div>
-                {choice.description ? <div className='text-sm text-gray-600'>{choice.description}</div> : null}
-                <div className='mt-1 text-sm text-gray-700'>
-                  {choice.amount}
-                  {choice.interval ? ` / ${choice.interval}` : ''}
+        {choices.map((choice) => {
+          const isCurrentPlan = currentPriceId === choice.priceId;
+          const isSelected = selectedPriceId === choice.priceId;
+
+          return (
+            <label
+              key={choice.priceId}
+              className={`cursor-pointer rounded-xl border p-4 transition-all ${
+                isCurrentPlan
+                  ? 'border-blue-600 bg-blue-50 shadow-md'
+                  : isSelected
+                  ? 'border-gray-900 bg-gray-50'
+                  : 'border-gray-200 hover:border-gray-300 hover:shadow-sm'
+              }`}
+            >
+              <div className='flex items-start gap-3'>
+                <input
+                  type='radio'
+                  name='plan'
+                  className='mt-1'
+                  checked={isSelected}
+                  onChange={() => setSelectedPriceId(choice.priceId)}
+                />
+                <div className='flex-1'>
+                  <div className='flex items-center gap-2'>
+                    <div className='font-semibold text-gray-900'>{choice.displayName}</div>
+                    {isCurrentPlan && (
+                      <span className='rounded-full bg-blue-600 px-2 py-0.5 text-xs font-medium text-white'>
+                        Current
+                      </span>
+                    )}
+                  </div>
+                  {choice.description ? <div className='text-sm text-gray-600'>{choice.description}</div> : null}
+                  <div className='mt-1 text-sm text-gray-700'>
+                    {choice.amount}
+                    {choice.interval ? ` / ${choice.interval}` : ''}
+                  </div>
+                  {choice.topKCap ? <div className='text-xs text-gray-500'>Top‑K up to {choice.topKCap}</div> : null}
                 </div>
-                {choice.topKCap ? <div className='text-xs text-gray-500'>Top‑K up to {choice.topKCap}</div> : null}
               </div>
-            </div>
-          </label>
-        ))}
+            </label>
+          );
+        })}
       </div>
 
       <div className='mt-4 flex items-center gap-2'>

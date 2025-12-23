@@ -24,32 +24,50 @@ interface SettingsPageProps {
  */
 export default async function SettingsPage({ searchParams }: SettingsPageProps) {
   const params = await searchParams;
-  const [session, subscription, products] = await Promise.all([getSession(), getSubscription(), getProducts()]);
+  // If success=true, check Stripe as fallback in case webhook hasn't processed yet
+  const shouldCheckStripe = params?.success === 'true';
+  const [session, subscription, products] = await Promise.all([
+    getSession(),
+    getSubscription(shouldCheckStripe),
+    getProducts(),
+  ]);
 
   if (!session) {
     redirect('/login');
   }
 
   // Get user plan and notification preference
-  const [userPlan, emailNotificationsEnabled] = await Promise.all([
-    getUserPlan(session.user.id),
-    getNotificationPreference(session.user.id),
-  ]);
+  let userPlan: Awaited<ReturnType<typeof getUserPlan>> = 'free_tier';
+  let emailNotificationsEnabled = false;
+
+  try {
+    [userPlan, emailNotificationsEnabled] = await Promise.all([
+      getUserPlan(session.user.id, shouldCheckStripe),
+      getNotificationPreference(session.user.id),
+    ]);
+  } catch (error) {
+    console.error('[Settings Page] Error fetching user plan or preferences:', error);
+    // userPlan defaults to 'free_tier' if getUserPlan fails
+  }
 
   // Find user's product and price
   let userProduct: ProductWithPrices | undefined;
   let userPrice: Price | undefined;
 
-  if (subscription) {
+  if (subscription && subscription.price_id) {
     for (const product of products) {
       for (const price of product.prices) {
         if (price.id === subscription.price_id) {
           userProduct = product;
           userPrice = price;
+          break;
         }
       }
+      if (userProduct) break;
     }
   }
+
+  console.log('userPlan', userPlan);
 
   const defaultTab = params?.tab || 'general';
 

@@ -97,16 +97,27 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ error: 'Failed to create QA session' }, { status: 500 });
     }
 
-    await inngest.send({
-      name: 'qa/process',
-      data: {
-        selectionId,
-        userId: user.id,
-        prompt: cleanedPrompt, // Use cleaned prompt
-        resumeIds: resume_ids,
-        qaSessionId: qaSession.id,
-      },
-    });
+    try {
+      await inngest.send({
+        name: 'qa/process',
+        data: {
+          selectionId,
+          userId: user.id,
+          prompt: cleanedPrompt,
+          resumeIds: resume_ids,
+          qaSessionId: qaSession.id,
+        },
+      });
+    } catch (inngestError) {
+      console.error('Failed to send Inngest event:', inngestError);
+      // Update session status to failed
+      await supabase
+        .from('qa_sessions')
+        .update({ status: 'failed', error_message: 'Failed to queue Q&A job' })
+        .eq('id', qaSession.id);
+
+      return NextResponse.json({ error: 'Failed to queue Q&A job. Please try again.' }, { status: 500 });
+    }
 
     return NextResponse.json({
       message: 'Q&A job started',
@@ -121,6 +132,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     });
   } catch (error) {
     console.error('Q&A trigger error:', error);
-    return NextResponse.json({ error: 'Failed to start Q&A job' }, { status: 500 });
+    const errorMessage = error instanceof Error ? error.message : 'Failed to start Q&A job';
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

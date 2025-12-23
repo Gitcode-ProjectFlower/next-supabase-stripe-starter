@@ -217,13 +217,16 @@ export async function POST(request: NextRequest) {
     const results = haystackData.results || [];
 
     const limitedResults = isAnonymous ? results.slice(0, 3) : results;
-    const maskedResults = maskFields(limitedResults, userPlan);
+    
+    // Don't mask here - return full data. Frontend will mask for display only.
+    // This ensures all data is available when saving selections.
+    // Masking should only happen in the UI for display purposes, not in the API response.
 
     return NextResponse.json({
       success: true,
       data: {
-        preview: maskedResults,
-        total: isAnonymous ? limitedResults.length : maskedResults.length,
+        preview: limitedResults, // Return full data, not masked
+        total: isAnonymous ? limitedResults.length : limitedResults.length,
         plan: userPlan || 'anonymous',
         limit: planLimit,
         isAnonymous,

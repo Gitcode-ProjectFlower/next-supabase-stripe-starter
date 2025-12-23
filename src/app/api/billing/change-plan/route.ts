@@ -24,87 +24,85 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Fetch existing active/trialing subscription
+    if (!user.email) {
+      return NextResponse.json({ error: 'Email is required to start checkout' }, { status: 400 });
+    }
+
+    // Fetch existing active/trialing subscription (excluding canceled ones)
     const { data: subscription } = await supabase
       .from('subscriptions')
       .select('id, status, price_id')
       .eq('user_id', user.id)
       .in('status', ['active', 'trialing'])
+      .or('cancel_at_period_end.is.null,cancel_at_period_end.eq.false') // Exclude subscriptions scheduled to cancel
       .order('created', { ascending: false })
       .limit(1)
       .maybeSingle();
 
-    // If no active subscription, create checkout session for a new sub
-    if (!subscription) {
-      if (!user.email) {
-        return NextResponse.json({ error: 'Email is required to start checkout' }, { status: 400 });
-      }
-
-      const customer = await getOrCreateCustomer({
-        userId: user.id,
-        email: user.email,
-      });
-
-      const checkoutSession = await stripeAdmin.checkout.sessions.create({
-        payment_method_types: ['card'],
-        billing_address_collection: 'required',
-        customer,
-        customer_update: {
-          address: 'auto',
-        },
-        line_items: [
-          {
-            price: priceId,
-            quantity: 1,
-          },
-        ],
-        mode: 'subscription',
-        allow_promotion_codes: true,
-        subscription_data: {
-          metadata: {
-            userId: user.id,
-          },
-        },
-        success_url: `${getURL()}/settings?success=true&tab=plan`,
-        cancel_url: `${getURL()}/pricing?canceled=true`,
-      });
-
-      if (!checkoutSession?.url) {
-        return NextResponse.json({ error: 'Failed to create checkout session' }, { status: 500 });
-      }
-
-      return NextResponse.json({ checkoutUrl: checkoutSession.url });
+    // If user has active subscription and trying to subscribe to the same plan
+    if (subscription && subscription.price_id === priceId) {
+      return NextResponse.json({ error: 'You are already subscribed to this plan' }, { status: 400 });
     }
 
-    // If already subscribed, update the subscription to the new price
-    const stripeSub = await stripeAdmin.subscriptions.retrieve(subscription.id, {
-      expand: ['items.data.price'],
+    // If user has an existing subscription and selects a different plan,
+    // cancel the old subscription immediately before creating new checkout
+    if (subscription) {
+      try {
+        // Cancel the existing subscription immediately (not at period end)
+        await stripeAdmin.subscriptions.cancel(subscription.id);
+        console.log(`[Change Plan] Canceled existing subscription ${subscription.id} before creating new checkout`);
+
+        // Update database immediately (webhook will also update, but this ensures immediate consistency)
+        await supabase
+          .from('subscriptions')
+          .update({
+            status: 'canceled',
+            ended_at: new Date().toISOString(),
+          })
+          .eq('id', subscription.id);
+
+        console.log(`[Change Plan] Updated subscription ${subscription.id} status to 'canceled' in database`);
+      } catch (cancelError) {
+        console.error('[Change Plan] Error canceling existing subscription:', cancelError);
+        // Continue anyway - the new subscription will be created
+      }
+    }
+
+    // Always create a checkout session (for both new subscriptions and plan changes)
+    const customer = await getOrCreateCustomer({
+      userId: user.id,
+      email: user.email,
     });
 
-    if (!stripeSub?.items?.data?.length) {
-      return NextResponse.json({ error: 'No subscription items found' }, { status: 400 });
-    }
-
-    const currentItem = stripeSub.items.data[0];
-
-    if (currentItem.price?.id === priceId) {
-      return NextResponse.json({ success: true, message: 'Already on this plan' });
-    }
-
-    await stripeAdmin.subscriptions.update(subscription.id, {
-      items: [
+    const checkoutSession = await stripeAdmin.checkout.sessions.create({
+      payment_method_types: ['card'],
+      billing_address_collection: 'required',
+      customer,
+      customer_update: {
+        address: 'auto',
+      },
+      line_items: [
         {
-          id: currentItem.id,
           price: priceId,
+          quantity: 1,
         },
       ],
-      proration_behavior: 'create_prorations',
+      mode: 'subscription',
+      allow_promotion_codes: true,
+      subscription_data: {
+        metadata: {
+          userId: user.id,
+        },
+      },
+      success_url: `${getURL()}/settings?success=true&tab=plan`,
+      cancel_url: `${getURL()}/settings?canceled=true&tab=plan`,
     });
 
-    // Optimistically update Supabase subscription price_id (webhooks will keep it in sync)
-    await supabase.from('subscriptions').update({ price_id: priceId }).eq('id', subscription.id);
+    if (!checkoutSession?.url) {
+      return NextResponse.json({ error: 'Failed to create checkout session' }, { status: 500 });
+    }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ checkoutUrl: checkoutSession.url });
   } catch (error: any) {
     console.error('[change-plan] Error:', error);
     return NextResponse.json({ error: error?.message || 'Internal server error' }, { status: 500 });
