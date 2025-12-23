@@ -12,11 +12,37 @@ export const processQAJob = inngest.createFunction(
   },
   { event: 'qa/process' },
   async ({ event, step }) => {
+    console.log('[Inngest processQAJob] ===== FUNCTION STARTED =====');
+    console.log('[Inngest processQAJob] Event received:', {
+      eventName: event.name,
+      eventData: event.data,
+    });
+
     const { selectionId, prompt, userId, qaSessionId } = event.data;
 
-    console.log(`Starting Q&A job for selection ${selectionId}`);
+    if (!selectionId || !prompt || !userId || !qaSessionId) {
+      const error = new Error('Missing required parameters');
+      console.error('[Inngest processQAJob] Missing parameters:', {
+        selectionId: !!selectionId,
+        prompt: !!prompt,
+        userId: !!userId,
+        qaSessionId: !!qaSessionId,
+      });
+      throw error;
+    }
 
+    console.log('[Inngest processQAJob] Starting Q&A job:', {
+      selectionId,
+      qaSessionId,
+      userId,
+      promptLength: prompt?.length || 0,
+      promptPreview: prompt?.substring(0, 100) || '',
+    });
+
+    // Step 1: Fetch selection items from Supabase
     const items = await step.run('fetch-selection-items', async () => {
+      console.log('[Inngest processQAJob] Fetching selection items from Supabase...');
+
       const { data, error } = await supabaseAdminClient
         .from('selection_items')
         .select('*')
@@ -24,15 +50,40 @@ export const processQAJob = inngest.createFunction(
         .order('similarity', { ascending: false });
 
       if (error) {
+        console.error('[Inngest processQAJob] Error fetching selection items:', error);
         throw new Error(`Failed to fetch selection items: ${error.message}`);
       }
+
+      console.log('[Inngest processQAJob] Fetched selection items:', {
+        count: data?.length || 0,
+        items: data?.map((item: any) => ({
+          doc_id: item.doc_id,
+          name: item.name,
+          email: item.email,
+          hasEmail: !!item.email,
+        })),
+      });
 
       return data || [];
     });
 
-    console.log(`Found ${items.length} items to process`);
+    if (!items || items.length === 0) {
+      console.warn('[Inngest processQAJob] No items found for selection');
+      // Update session to failed
+      await supabaseAdminClient
+        .from('qa_sessions')
+        .update({
+          status: 'failed',
+          error_message: 'No selection items found',
+        })
+        .eq('id', qaSessionId);
+      return { selectionId, processed: 0, total: 0 };
+    }
 
+    // Step 2: Determine max profiles based on plan
     const maxProfiles = await step.run('determine-max-profiles', async () => {
+      console.log('[Inngest processQAJob] Determining max profiles based on plan...');
+
       const { data: subscription } = await supabaseAdminClient
         .from('subscriptions')
         .select('metadata, prices(products(metadata))')
@@ -47,173 +98,288 @@ export const processQAJob = inngest.createFunction(
         small: 100,
         medium: 500,
         large: 5000,
+        free_tier: 20,
+        promo_medium: 500,
       };
 
-      const planCap = planName ? planCaps[planName] : 100;
+      const planCap = planName ? planCaps[planName.toLowerCase()] || 100 : 100;
+      const maxProfiles = Math.min(1000, planCap, items.length);
 
-      return Math.min(1000, planCap, items.length);
+      console.log('[Inngest processQAJob] Max profiles determined:', {
+        planName,
+        planCap,
+        itemsCount: items.length,
+        maxProfiles,
+      });
+
+      return maxProfiles;
     });
-
-    console.log(`Processing up to ${maxProfiles} profiles`);
 
     const batchSize = 10;
     const itemsToProcess = items.slice(0, maxProfiles);
     const results: any[] = [];
 
+    console.log('[Inngest processQAJob] Starting batch processing:', {
+      totalItems: items.length,
+      itemsToProcess: itemsToProcess.length,
+      maxProfiles,
+      batchSize,
+      numberOfBatches: Math.ceil(itemsToProcess.length / batchSize),
+    });
+
+    // Step 3: Process items in batches
     for (let i = 0; i < itemsToProcess.length; i += batchSize) {
       const batch = itemsToProcess.slice(i, i + batchSize);
+      const batchNumber = Math.floor(i / batchSize) + 1;
+      const totalBatches = Math.ceil(itemsToProcess.length / batchSize);
+
+      console.log(
+        `[Inngest processQAJob] Processing batch ${batchNumber}/${totalBatches} (items ${i} to ${i + batchSize - 1})`
+      );
 
       const batchResults = await step.run(`process-batch-${i}`, async () => {
+        // Import HaystackClient dynamically
         const { HaystackClient } = await import('@/libs/haystack/client');
 
-        const haystackClient = new HaystackClient(
-          process.env.HAYSTACK_BASE_URL || 'http://207.180.237.68:8000',
-          process.env.HAYSTACK_API_KEY
-        );
+        const haystackUrl = process.env.HAYSTACK_BASE_URL || 'http://207.180.237.68:8000';
+        const haystackApiKey = process.env.HAYSTACK_API_KEY;
 
-        // Format items for Haystack - backend expects QACandidate model:
-        // - doc_id: str (required)
-        // - name: str (required)
-        // - email: str (required) - backend uses email to find resume chunks via pipeline.ask()
-        // - city: Optional[str] = None
+        console.log('[Inngest processQAJob] Creating Haystack client:', {
+          haystackUrl,
+          hasApiKey: !!haystackApiKey,
+        });
+
+        const haystackClient = new HaystackClient(haystackUrl, haystackApiKey);
+
+        // Filter and format items for Haystack API
         const batchItems = batch
-          .filter((item) => {
-            // Filter out items without names
+          .filter((item: any) => {
             if (!item.name || item.name.trim() === '') {
-              console.warn(`Skipping item with doc_id ${item.doc_id} - missing name`);
+              console.warn(`[Inngest processQAJob] Skipping item ${item.doc_id} - missing name`);
               return false;
             }
-            // Filter out items without emails - backend requires email to find resume chunks
             if (!item.email || item.email.trim() === '') {
-              console.warn(
-                `Skipping item with doc_id ${item.doc_id} - missing email (backend requires email to find resume)`
-              );
+              console.warn(`[Inngest processQAJob] Skipping item ${item.doc_id} - missing email`);
               return false;
             }
             return true;
           })
-          .map((item) => ({
+          .map((item: any) => ({
             doc_id: item.doc_id,
-            name: item.name!.trim(),
-            email: item.email!.trim(), // Required: backend uses email to find resume chunks
-            city: item.city?.trim() || undefined, // Optional field - send undefined if not available
+            name: item.name.trim(),
+            email: item.email.trim(),
+            city: item.city?.trim() || undefined,
           }));
 
+        if (batchItems.length === 0) {
+          console.warn(`[Inngest processQAJob] No valid items in batch ${batchNumber} after filtering`);
+          return [];
+        }
+
+        // Validate and clean prompt
+        const cleanedPrompt = prompt.trim();
+        if (!cleanedPrompt || cleanedPrompt.length === 0) {
+          throw new Error('Prompt is empty or contains only whitespace');
+        }
+
+        console.log(`[Inngest processQAJob] ===== BATCH ${batchNumber} - CALLING HAYSTACK API =====`);
+        console.log('[Inngest processQAJob] Request details:', {
+          batchNumber,
+          batchSize: batchItems.length,
+          haystackUrl: `${haystackUrl}/qa`,
+          items: batchItems.map((i) => ({
+            doc_id: i.doc_id,
+            name: i.name,
+            email: i.email,
+            city: i.city,
+          })),
+          promptLength: cleanedPrompt.length,
+          promptPreview: cleanedPrompt.substring(0, 100),
+        });
+
+        // Call Haystack API
+        let qaResponses: any[];
         try {
-          // Validate prompt before processing
-          const cleanedPrompt = prompt.trim();
-          if (!cleanedPrompt || cleanedPrompt.length === 0) {
-            throw new Error('Prompt is empty or contains only whitespace');
-          }
-
-          console.log(
-            `Processing batch with ${batchItems.length} items:`,
-            batchItems.map((i) => ({ doc_id: i.doc_id, name: i.name })),
-            `Prompt length: ${cleanedPrompt.length}, Preview: ${cleanedPrompt.substring(0, 100)}`
-          );
-
-          const qaResponses = await haystackClient.askBatch(batchItems, cleanedPrompt);
-
-          console.log(`Received ${qaResponses.length} responses from Haystack`);
-
-          // Map responses back to the full item structure
-          return qaResponses.map((response, index) => {
-            // Try to find by doc_id first, then fall back to index
-            const originalItem =
-              batch.find((i) => i.doc_id === response.doc_id) || batchItems[index]
-                ? batch.find((i) => i.doc_id === batchItems[index]?.doc_id)
-                : null;
-
-            if (!originalItem) {
-              console.error(`Original item not found for response:`, {
-                responseDocId: response.doc_id,
-                index,
-                batchItemDocId: batchItems[index]?.doc_id,
-              });
-              return {
-                doc_id: response.doc_id || batchItems[index]?.doc_id || 'unknown',
-                name: batchItems[index]?.name || 'Unknown',
-                email: '',
-                city: '',
-                street: '',
-                sectors: [],
-                experience_years: 0,
-                similarity: 0,
-                answer: null,
-                status: 'ERROR',
-                error_message: response.error_message || 'Original item lost in batch processing',
-              };
-            }
-
-            return {
-              doc_id: originalItem.doc_id,
-              name: originalItem.name,
-              email: originalItem.email,
-              city: originalItem.city,
-              street: originalItem.street,
-              sectors: originalItem.sectors,
-              experience_years: originalItem.experience_years,
-              similarity: originalItem.similarity,
-              answer: response.answer,
-              status: response.status === 'success' || response.status === 'OK' ? 'success' : 'failed',
-              error_message: response.error_message,
-            };
+          qaResponses = await haystackClient.askBatch(batchItems, cleanedPrompt);
+          console.log(`[Inngest processQAJob] ===== BATCH ${batchNumber} - HAYSTACK RESPONSE RECEIVED =====`);
+          console.log('[Inngest processQAJob] Response details:', {
+            batchNumber,
+            responseCount: qaResponses.length,
+            responses: qaResponses.map((r: any) => ({
+              doc_id: r.doc_id,
+              name: r.name,
+              email: r.email,
+              status: r.status,
+              hasAnswer: !!r.answer,
+              answerLength: r.answer?.length || 0,
+              errorMessage: r.error_message,
+            })),
           });
-        } catch (error) {
-          console.error('Batch processing failed:', error);
-          // Fallback for entire batch failure
-          return batch.map((item) => ({
+        } catch (haystackError) {
+          console.error(`[Inngest processQAJob] Haystack API error for batch ${batchNumber}:`, haystackError);
+          // Return error responses for all items in batch
+          return batch.map((item: any) => ({
             doc_id: item.doc_id,
-            name: item.name,
-            email: item.email,
-            city: item.city,
-            street: item.street,
-            sectors: item.sectors,
-            experience_years: item.experience_years,
-            similarity: item.similarity,
+            name: item.name || '',
+            email: item.email || '',
+            city: item.city || null,
+            street: item.street || '',
+            sectors: item.sectors || [],
+            experience_years: item.experience_years || 0,
+            similarity: item.similarity || 0,
             answer: null,
-            status: 'ERROR',
-            error_message: error instanceof Error ? error.message : 'Batch processing failed',
+            status: 'failed',
+            error_message: haystackError instanceof Error ? haystackError.message : 'Haystack API call failed',
           }));
         }
+
+        // Map Haystack responses to our format
+        const mappedResults = qaResponses.map((response: any, index: number) => {
+          const haystackResponse = response as any;
+
+          // Find original item by doc_id
+          let originalItem = batch.find((item: any) => item.doc_id === haystackResponse.doc_id);
+
+          // If not found, try by index
+          if (!originalItem && batchItems[index]) {
+            originalItem = batch.find((item: any) => item.doc_id === batchItems[index]?.doc_id);
+          }
+
+          const responseName = haystackResponse.name || '';
+          const responseEmail = haystackResponse.email || '';
+          const responseCity = haystackResponse.city || null;
+          const answerText = haystackResponse.answer || null;
+          const isSuccess = haystackResponse.status === 'success' || haystackResponse.status === 'OK';
+
+          if (originalItem) {
+            return {
+              doc_id: originalItem.doc_id,
+              name: originalItem.name || responseName,
+              email: originalItem.email || responseEmail,
+              city: originalItem.city || responseCity,
+              street: originalItem.street || '',
+              sectors: originalItem.sectors || [],
+              experience_years: originalItem.experience_years || 0,
+              similarity: originalItem.similarity || 0,
+              answer: answerText,
+              status: isSuccess ? 'success' : 'failed',
+              error_message: haystackResponse.error_message || (isSuccess ? null : 'Failed to generate answer'),
+            };
+          }
+
+          // Fallback: use response data
+          console.warn(`[Inngest processQAJob] Original item not found for response, using response data:`, {
+            responseDocId: haystackResponse.doc_id,
+            index,
+          });
+
+          return {
+            doc_id: haystackResponse.doc_id || batchItems[index]?.doc_id || 'unknown',
+            name: responseName || batchItems[index]?.name || 'Unknown',
+            email: responseEmail || batchItems[index]?.email || '',
+            city: responseCity || batchItems[index]?.city || null,
+            street: '',
+            sectors: [],
+            experience_years: 0,
+            similarity: 0,
+            answer: answerText,
+            status: isSuccess ? 'success' : 'failed',
+            error_message: haystackResponse.error_message || null,
+          };
+        });
+
+        console.log(`[Inngest processQAJob] Batch ${batchNumber} mapped results:`, {
+          count: mappedResults.length,
+          successCount: mappedResults.filter((r) => r.status === 'success').length,
+          failedCount: mappedResults.filter((r) => r.status === 'failed').length,
+        });
+
+        return mappedResults;
       });
 
-      // Insert answers into DB
-      if (qaSessionId) {
+      // Step 4: Save answers to database
+      if (qaSessionId && batchResults.length > 0) {
         await step.run(`save-answers-${i}`, async () => {
-          const answersToInsert = batchResults.map((r) => ({
-            session_id: qaSessionId,
-            doc_id: r.doc_id,
-            name: r.name,
-            email: r.email,
-            city: r.city,
-            answer: r.answer,
-            status: r.status === 'success' ? 'success' : 'failed',
-            error_message: r.error_message,
-          }));
+          console.log(`[Inngest processQAJob] Saving answers for batch ${batchNumber}...`);
 
-          const { error: insertError } = await supabaseAdminClient.from('qa_answers').insert(answersToInsert);
+          const answersToInsert = batchResults
+            .filter((r) => r.doc_id)
+            .map((r) => ({
+              session_id: qaSessionId,
+              doc_id: String(r.doc_id),
+              name: String(r.name || ''),
+              email: String(r.email || ''),
+              city: r.city ? String(r.city) : null,
+              answer: r.answer ? String(r.answer) : null,
+              status: r.status === 'success' ? 'success' : 'failed',
+              error_message: r.error_message ? String(r.error_message) : null,
+            }));
+
+          if (answersToInsert.length === 0) {
+            console.warn(`[Inngest processQAJob] No answers to insert for batch ${batchNumber}`);
+            return [];
+          }
+
+          console.log(`[Inngest processQAJob] Inserting ${answersToInsert.length} answers for batch ${batchNumber}:`, {
+            firstAnswer: {
+              doc_id: answersToInsert[0].doc_id,
+              name: answersToInsert[0].name,
+              hasAnswer: !!answersToInsert[0].answer,
+              answerLength: answersToInsert[0].answer?.length || 0,
+              status: answersToInsert[0].status,
+            },
+          });
+
+          const { error: insertError, data: insertedData } = await supabaseAdminClient
+            .from('qa_answers')
+            .insert(answersToInsert)
+            .select();
 
           if (insertError) {
-            console.error('Failed to insert QA answers:', insertError);
+            console.error(`[Inngest processQAJob] Failed to insert answers for batch ${batchNumber}:`, {
+              error: insertError,
+              batchSize: answersToInsert.length,
+              errorDetails: {
+                message: insertError.message,
+                code: insertError.code,
+                details: insertError.details,
+                hint: insertError.hint,
+              },
+            });
             throw new Error(`Failed to insert answers: ${insertError.message}`);
           }
 
+          console.log(
+            `[Inngest processQAJob] Successfully inserted ${insertedData?.length || 0} answers for batch ${batchNumber}`
+          );
+
           // Update progress
           const progress = Math.round(((i + batchSize) / itemsToProcess.length) * 100);
-          await supabaseAdminClient
+          const { error: progressError } = await supabaseAdminClient
             .from('qa_sessions')
             .update({ progress: Math.min(progress, 99) })
             .eq('id', qaSessionId);
+
+          if (progressError) {
+            console.error(`[Inngest processQAJob] Failed to update progress:`, progressError);
+          } else {
+            console.log(`[Inngest processQAJob] Progress updated to ${Math.min(progress, 99)}%`);
+          }
+
+          return insertedData || [];
         });
+      } else if (batchResults.length === 0) {
+        console.warn(`[Inngest processQAJob] No batch results to save for batch ${batchNumber}`);
       }
 
       results.push(...batchResults);
-
-      console.log(`Processed batch ${i / batchSize + 1}, total: ${results.length}`);
+      console.log(`[Inngest processQAJob] Batch ${batchNumber} completed. Total results so far: ${results.length}`);
     }
 
+    // Step 5: Generate CSV and update session
     const downloadUrl = await step.run('generate-csv', async () => {
+      console.log('[Inngest processQAJob] Generating CSV...');
+
       const headers = [
         'Name',
         'Email',
@@ -241,7 +407,6 @@ export const processQAJob = inngest.createFunction(
       ]);
 
       const csvContent = [headers.join(','), ...rows.map((row) => row.map((cell) => `"${cell}"`).join(','))].join('\n');
-
       const csvWithBOM = '\uFEFF' + csvContent;
 
       const fileName = `qa_${selectionId}_${Date.now()}.csv`;
@@ -253,6 +418,7 @@ export const processQAJob = inngest.createFunction(
       });
 
       if (uploadError) {
+        console.error('[Inngest processQAJob] Failed to upload CSV:', uploadError);
         throw new Error(`Failed to upload CSV: ${uploadError.message}`);
       }
 
@@ -276,12 +442,20 @@ export const processQAJob = inngest.createFunction(
         expires_at: expiresAt.toISOString(),
       });
 
+      console.log('[Inngest processQAJob] CSV generated and uploaded:', {
+        fileName,
+        filePath,
+        downloadUrl: urlData.signedUrl,
+      });
+
       return urlData.signedUrl;
     });
 
-    // Update session as completed
-    if (qaSessionId) {
-      await supabaseAdminClient
+    // Step 6: Update session as completed
+    await step.run('update-session-completed', async () => {
+      console.log('[Inngest processQAJob] Updating session to completed...');
+
+      const { error: updateError } = await supabaseAdminClient
         .from('qa_sessions')
         .update({
           status: 'completed',
@@ -290,9 +464,22 @@ export const processQAJob = inngest.createFunction(
           csv_url: downloadUrl,
         })
         .eq('id', qaSessionId);
-    }
 
-    console.log(`Q&A job completed. Download URL: ${downloadUrl}`);
+      if (updateError) {
+        console.error('[Inngest processQAJob] Failed to update session status:', updateError);
+        throw new Error(`Failed to update session: ${updateError.message}`);
+      }
+
+      console.log('[Inngest processQAJob] Session updated to completed');
+    });
+
+    console.log('[Inngest processQAJob] ===== FUNCTION COMPLETED SUCCESSFULLY =====');
+    console.log('[Inngest processQAJob] Final summary:', {
+      selectionId,
+      processed: results.length,
+      total: items.length,
+      downloadUrl,
+    });
 
     return {
       selectionId,

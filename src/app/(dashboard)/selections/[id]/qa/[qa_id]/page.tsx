@@ -2,9 +2,10 @@
 
 import { ArrowLeft, Download } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
-import { useQAResultQuery } from '@/libs/queries';
+import { getVisibleColumns, type UserPlan } from '@/libs/plan-config';
+import { useQAResultQuery, useUsageStatsQuery } from '@/libs/queries';
 import { createSupabaseBrowserClient } from '@/libs/supabase/supabase-browser-client';
 
 import { Button } from '@/components/ui/button';
@@ -42,45 +43,66 @@ export default function QAResultsPage() {
   const { toast } = useToast();
   const supabase = createSupabaseBrowserClient();
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [userPlan, setUserPlan] = useState<UserPlan>('anonymous');
   const selectionId = params.id as string;
   const qaId = params.qa_id as string;
 
-  // Skip auth check for demo
-  const isDemo = selectionId === 'demo' && qaId === 'demo-qa-1';
+  // Get user plan from usage stats
+  const { data: usageStats, error: usageError } = useUsageStatsQuery({
+    enabled: !isCheckingAuth,
+    retry: 0,
+  });
 
   // Use TanStack Query with automatic polling for processing status
-  // Skip query for demo (will use mock data below)
   const {
     data: qaResult,
     isLoading,
     error,
+    isError,
+    refetch,
   } = useQAResultQuery(selectionId, qaId, {
-    enabled: !isCheckingAuth && !!selectionId && !!qaId && !isDemo,
+    enabled: !isCheckingAuth && !!selectionId && !!qaId,
     retry: 1,
   });
 
-  // Demo data
-  const demoResult: QAResult | null = isDemo
-    ? {
-        id: 'demo-qa-1',
-        selection_id: 'demo',
-        selection_name: 'Demo Selection',
-        prompt: 'What is your experience with React and TypeScript?',
-        status: 'completed',
-        progress: 100,
-        created_at: new Date(Date.now() - 3600000).toISOString(),
-        completed_at: new Date().toISOString(),
-        csv_url: '#',
-        answers: [],
-      }
-    : null;
-
+  // Update user plan when usage stats change
   useEffect(() => {
-    if (isDemo) {
-      setIsCheckingAuth(false);
-      return;
+    if (usageStats?.plan) {
+      setUserPlan((usageStats.plan as UserPlan) || 'free_tier');
+    } else if (usageError) {
+      setUserPlan('free_tier');
+    }
+  }, [usageStats, usageError]);
+
+  // Auto-refetch when completed but no answers (in case answers were just saved)
+  useEffect(() => {
+    if (qaResult && qaResult.status === 'completed' && qaResult.answers && qaResult.answers.length === 0) {
+      setTimeout(() => {
+        refetch();
+      }, 2000);
+    }
+  }, [qaResult, refetch]);
+
+  // Get visible columns based on user plan
+  const visibleColumns = useMemo(() => {
+    const allowedColumns = getVisibleColumns(userPlan);
+    // For Q&A Results, we always show: name, email (if allowed), city (if allowed), answer, status
+    // But we filter based on plan
+    const columns: string[] = ['name']; // Always show name
+
+    if (allowedColumns.includes('email')) {
+      columns.push('email');
+    }
+    if (allowedColumns.includes('city')) {
+      columns.push('city');
     }
 
+    columns.push('answer', 'status'); // Always show answer and status
+
+    return columns;
+  }, [userPlan]);
+
+  useEffect(() => {
     const checkAuth = async () => {
       const {
         data: { user },
@@ -92,19 +114,18 @@ export default function QAResultsPage() {
       setIsCheckingAuth(false);
     };
     checkAuth();
-  }, [router, supabase, isDemo]);
+  }, [router, supabase]);
 
   // Handle errors
   useEffect(() => {
     if (error && !isCheckingAuth) {
       toast({
-        title: 'Error',
-        description: error.message || 'Failed to load Q&A results',
+        title: 'Error Loading Q&A Results',
+        description: `${error.message || 'Failed to load Q&A results'}`,
         variant: 'destructive',
       });
-      router.push(`/selections/${selectionId}`);
     }
-  }, [error, isCheckingAuth, toast, router, selectionId]);
+  }, [error, isCheckingAuth, toast]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-GB', {
@@ -140,10 +161,9 @@ export default function QAResultsPage() {
     }
   };
 
-  // Use demo result if available, otherwise use query result
-  const result = demoResult || qaResult;
+  const result = qaResult;
 
-  if (isCheckingAuth || (isLoading && !isDemo)) {
+  if (isCheckingAuth || isLoading) {
     return (
       <div className='flex min-h-screen items-center justify-center'>
         <div className='text-center'>
@@ -222,47 +242,110 @@ export default function QAResultsPage() {
           )}
         </div>
 
+        {/* Error Display */}
+        {error && (
+          <div className='mb-6 rounded-2xl border border-red-200 bg-red-50 p-6'>
+            <h3 className='mb-2 text-lg font-semibold text-red-900'>Error Loading Q&A Results</h3>
+            <div className='space-y-2 text-sm text-red-800'>
+              <p>
+                <strong>Status:</strong> {(error as any).status || 'Unknown'}
+              </p>
+              <p>
+                <strong>Message:</strong> {error.message || 'Unknown error'}
+              </p>
+              {(error as any).data && (
+                <details className='mt-4'>
+                  <summary className='cursor-pointer font-medium'>Full Error Details (Click to expand)</summary>
+                  <pre className='mt-2 overflow-auto rounded bg-red-100 p-3 text-xs'>
+                    {JSON.stringify((error as any).data, null, 2)}
+                  </pre>
+                </details>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Results Table */}
-        {result.answers.length > 0 && (
+        {result.answers && Array.isArray(result.answers) && result.answers.length > 0 ? (
           <div className='overflow-hidden rounded-2xl border bg-white'>
+            <div className='p-4 text-sm text-gray-600'>
+              Showing {result.answers.length} answer{result.answers.length !== 1 ? 's' : ''}
+            </div>
             <Table>
               <TableHeader className='bg-gray-50'>
                 <TableRow className='hover:bg-transparent'>
                   <TableHead className='px-4 py-3 font-semibold text-gray-700'>Name</TableHead>
-                  <TableHead className='px-4 py-3 font-semibold text-gray-700'>Email</TableHead>
-                  <TableHead className='px-4 py-3 font-semibold text-gray-700'>City</TableHead>
+                  {visibleColumns.includes('email') && (
+                    <TableHead className='px-4 py-3 font-semibold text-gray-700'>Email</TableHead>
+                  )}
+                  {visibleColumns.includes('city') && (
+                    <TableHead className='px-4 py-3 font-semibold text-gray-700'>City</TableHead>
+                  )}
                   <TableHead className='px-4 py-3 font-semibold text-gray-700'>Answer</TableHead>
                   <TableHead className='px-4 py-3 font-semibold text-gray-700'>Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {result.answers.map((answer, index) => (
-                  <TableRow key={answer.doc_id || `${answer.doc_id}-${index}`} className='hover:bg-gray-50'>
-                    <TableCell className='px-4 py-3 font-medium'>{answer.name}</TableCell>
-                    <TableCell className='px-4 py-3 text-sm text-gray-600'>{answer.email}</TableCell>
-                    <TableCell className='px-4 py-3 text-sm text-gray-600'>{answer.city}</TableCell>
-                    <TableCell className='px-4 py-3 text-sm text-gray-700'>
-                      {answer.status === 'success' ? (
-                        <div className='max-w-md'>{answer.answer}</div>
-                      ) : (
-                        <div className='text-red-600'>{answer.error_message || 'Failed to generate answer'}</div>
+                {result.answers.map((answer, index) => {
+                  const hasAnswer = answer.answer && answer.answer.trim().length > 0;
+                  const isSuccess = answer.status === 'success' && hasAnswer;
+
+                  return (
+                    <TableRow key={answer.id || answer.doc_id || `answer-${index}`} className='hover:bg-gray-50'>
+                      <TableCell className='px-4 py-3 font-medium'>{answer.name || 'N/A'}</TableCell>
+                      {visibleColumns.includes('email') && (
+                        <TableCell className='px-4 py-3 text-sm text-gray-600'>{answer.email || 'N/A'}</TableCell>
                       )}
-                    </TableCell>
-                    <TableCell className='px-4 py-3'>
-                      <span
-                        className={`rounded-full px-2 py-1 text-xs font-medium ${
-                          answer.status === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                        }`}
-                      >
-                        {answer.status}
-                      </span>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                      {visibleColumns.includes('city') && (
+                        <TableCell className='px-4 py-3 text-sm text-gray-600'>{answer.city || 'N/A'}</TableCell>
+                      )}
+                      <TableCell className='px-4 py-3 text-sm text-gray-700'>
+                        {isSuccess ? (
+                          <div className='max-w-md whitespace-pre-wrap'>{answer.answer}</div>
+                        ) : (
+                          <div className='text-red-600'>{answer.error_message || 'Failed to generate answer'}</div>
+                        )}
+                      </TableCell>
+                      <TableCell className='px-4 py-3'>
+                        <span
+                          className={`rounded-full px-2 py-1 text-xs font-medium ${
+                            isSuccess ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                          }`}
+                        >
+                          {answer.status || 'unknown'}
+                        </span>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </div>
-        )}
+        ) : result.status === 'completed' ? (
+          <div className='rounded-2xl border border-yellow-200 bg-yellow-50 p-6'>
+            <h3 className='mb-2 text-lg font-semibold text-yellow-900'>No Answers Available</h3>
+            <div className='space-y-2 text-sm text-yellow-800'>
+              <p>The Q&A session completed but no answers were returned.</p>
+              <details className='mt-4'>
+                <summary className='cursor-pointer font-medium'>Debug Info (Click to expand)</summary>
+                <pre className='mt-2 overflow-auto rounded bg-yellow-100 p-3 text-xs'>
+                  {JSON.stringify(
+                    {
+                      resultId: result.id,
+                      status: result.status,
+                      answersLength: result.answers?.length || 0,
+                      answers: result.answers,
+                      hasError: !!error,
+                      errorMessage: error?.message,
+                    },
+                    null,
+                    2
+                  )}
+                </pre>
+              </details>
+            </div>
+          </div>
+        ) : null}
       </div>
     </div>
   );

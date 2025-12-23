@@ -169,6 +169,20 @@ export class HaystackClient {
         prompt: cleanedPrompt,
       };
 
+      // Log the exact request being sent (matches curl format)
+      console.log('[Haystack askBatch] Sending request to Haystack API:', {
+        url: `${this.baseUrl}/qa`,
+        method: 'POST',
+        headers,
+        body: JSON.stringify(requestBody, null, 2),
+        formattedItems: formattedItems.map((item) => ({
+          doc_id: item.doc_id,
+          name: item.name,
+          email: item.email,
+          city: item.city,
+        })),
+      });
+
       const response = await fetch(`${this.baseUrl}/qa`, {
         method: 'POST',
         headers,

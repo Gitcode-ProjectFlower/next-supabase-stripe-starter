@@ -77,9 +77,10 @@ export default function SelectionsPage() {
         variant: 'success',
       });
 
-      queryClient.setQueryData<{ selections: Selection[] }>(QUERY_KEYS.selections.all, (prev) =>
-        prev ? { selections: prev.selections.filter((s) => s.id !== deleteId) } : prev
-      );
+      // Invalidate queries to refresh data
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.selections.all });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.usage.stats });
+
       setDeleteId(null);
     } catch (error) {
       console.error('Error deleting selection:', error);

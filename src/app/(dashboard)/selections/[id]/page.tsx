@@ -1,11 +1,13 @@
 'use client';
 
+import { useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Download, MessageSquare } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { getVisibleColumns, type UserPlan } from '@/libs/plan-config';
 import { useSelectionDetailQuery, useUsageStatsQuery } from '@/libs/queries';
+import { QUERY_KEYS } from '@/libs/query-keys';
 import { createSupabaseBrowserClient } from '@/libs/supabase/supabase-browser-client';
 
 import { Button } from '@/components/ui/button';
@@ -93,13 +95,16 @@ export default function SelectionDetailPage() {
   const params = useParams();
   const router = useRouter();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const supabase = createSupabaseBrowserClient();
-  const isDemo = params.id === 'demo';
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [isQAModalOpen, setIsQAModalOpen] = useState(false);
   const [qaPrompt, setQaPrompt] = useState('');
   const [isProcessingQA, setIsProcessingQA] = useState(false);
   const [qaProgress, setQaProgress] = useState(0);
+  const [qaSessionId, setQaSessionId] = useState<string | null>(null);
+  const [qaStatus, setQaStatus] = useState<'processing' | 'completed' | 'failed' | null>(null);
+  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const [isExporting, setIsExporting] = useState(false);
   const [userPlan, setUserPlan] = useState<UserPlan>('anonymous');
   const { data: usageStats, error: usageError } = useUsageStatsQuery({ retry: 0 });
@@ -108,7 +113,7 @@ export default function SelectionDetailPage() {
     isLoading: isSelectionLoading,
     error: selectionError,
   } = useSelectionDetailQuery(params.id as string, {
-    enabled: !isCheckingAuth && !!params.id && !isDemo,
+    enabled: !isCheckingAuth && !!params.id,
     retry: 0,
   });
 
@@ -118,15 +123,6 @@ export default function SelectionDetailPage() {
 
     // Filter to only include columns that exist in COLUMN_CONFIG
     const cols = allowedColumns.filter((c): c is ColumnKey => Object.prototype.hasOwnProperty.call(COLUMN_CONFIG, c));
-
-    // Debug: Log column visibility (remove in production if needed)
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[SelectionDetail] Column visibility:', {
-        userPlan,
-        allowedColumns,
-        filteredColumns: cols,
-      });
-    }
 
     // Always include 'name' as fallback, but ensure we only show what's allowed
     return cols.length > 0 ? cols : ['name'];
@@ -141,12 +137,6 @@ export default function SelectionDetailPage() {
   }, [usageError, usageStats]);
 
   useEffect(() => {
-    if (isDemo) {
-      // Allow demo selection without auth redirects to keep previews and tests stable.
-      setIsCheckingAuth(false);
-      return;
-    }
-
     const checkAuth = async () => {
       const {
         data: { user },
@@ -158,7 +148,7 @@ export default function SelectionDetailPage() {
       setIsCheckingAuth(false);
     };
     checkAuth();
-  }, [isDemo, router, supabase]);
+  }, [router, supabase]);
 
   useEffect(() => {
     if (selectionError) {
@@ -175,77 +165,25 @@ export default function SelectionDetailPage() {
     }
   }, [router, selectionError, toast]);
 
-  const demoSelection: SelectionDetail | null = useMemo(() => {
-    if (!isDemo) return null;
-    return {
-      id: 'demo',
-      name: 'Demo Selection',
-      item_count: 5,
-      created_at: new Date().toISOString(),
-      expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-      criteria: {
-        names: ['John', 'Jane'],
-        sectors: ['IT', 'Finance'],
-        regions: ['London'],
-        experience_years: [5, 10],
-        top_k: 100,
-      },
-      items: [
-        {
-          doc_id: '1',
-          name: 'John Doe',
-          email: 'john@example.com',
-          city: 'London',
-          street: 'Baker St',
-          sectors: ['IT'],
-          experience_years: 8,
-          similarity: 0.95,
-        },
-        {
-          doc_id: '2',
-          name: 'Jane Smith',
-          email: 'jane@example.com',
-          city: 'Manchester',
-          street: 'High St',
-          sectors: ['Finance'],
-          experience_years: 12,
-          similarity: 0.88,
-        },
-        {
-          doc_id: '3',
-          name: 'Bob Johnson',
-          email: 'bob@example.com',
-          city: 'London',
-          street: 'Oxford St',
-          sectors: ['IT'],
-          experience_years: 5,
-          similarity: 0.82,
-        },
-        {
-          doc_id: '4',
-          name: 'Alice Brown',
-          email: 'alice@example.com',
-          city: 'Leeds',
-          street: 'Main St',
-          sectors: ['Marketing'],
-          experience_years: 3,
-          similarity: 0.75,
-        },
-        {
-          doc_id: '5',
-          name: 'Charlie Wilson',
-          email: 'charlie@example.com',
-          city: 'Liverpool',
-          street: 'Dock Rd',
-          sectors: ['Sales'],
-          experience_years: 15,
-          similarity: 0.65,
-        },
-      ],
+  // Cleanup polling interval on unmount or modal close
+  useEffect(() => {
+    return () => {
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current);
+        pollIntervalRef.current = null;
+      }
     };
-  }, [isDemo]);
+  }, []);
 
-  const selection = demoSelection ?? (selectionData?.selection as SelectionDetail | null);
+  // Cleanup when modal closes
+  useEffect(() => {
+    if (!isQAModalOpen && pollIntervalRef.current) {
+      clearInterval(pollIntervalRef.current);
+      pollIntervalRef.current = null;
+    }
+  }, [isQAModalOpen]);
+
+  const selection = selectionData?.selection as SelectionDetail | null;
   const isLoading = isCheckingAuth || isSelectionLoading;
 
   const formatDate = (dateString: string) => {
@@ -259,10 +197,7 @@ export default function SelectionDetailPage() {
   };
 
   const handleQA = async () => {
-    console.log('[handleQA] Button clicked');
-
     if (!qaPrompt.trim()) {
-      console.log('[handleQA] Empty prompt');
       toast({
         title: 'Validation Error',
         description: 'Please enter a question',
@@ -272,7 +207,6 @@ export default function SelectionDetailPage() {
     }
 
     if (!params.id) {
-      console.error('[handleQA] Missing params.id');
       toast({
         title: 'Error',
         description: 'Invalid selection ID',
@@ -281,9 +215,18 @@ export default function SelectionDetailPage() {
       return;
     }
 
+    if (!selection || !selection.items || selection.items.length === 0) {
+      toast({
+        title: 'Error',
+        description: 'No candidates found in this selection',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     // Client-side verification: Check usage limits before making request
     if (usageStats) {
-      const itemCount = selection?.item_count || 1;
+      const itemCount = selection.item_count || selection.items.length || 1;
       const requiredCalls = itemCount;
       const remainingCalls = usageStats.aiCallsLimit - usageStats.ai_calls;
 
@@ -297,7 +240,6 @@ export default function SelectionDetailPage() {
       }
     }
 
-    console.log('[handleQA] Starting request for selection:', params.id);
     setIsProcessingQA(true);
     setQaProgress(0);
 
@@ -374,30 +316,99 @@ export default function SelectionDetailPage() {
 
       const data = await response.json();
 
-      toast({
-        title: 'Success',
-        description: 'Q&A job started! Processing in background...',
-      });
-
-      setIsProcessingQA(false);
-      setIsQAModalOpen(false);
-      setQaPrompt('');
-
-      // Redirect to QA results page
-      if (data.qaSessionId) {
-        router.push(`/selections/${params.id}/qa/${data.qaSessionId}`);
-      } else {
-        // Fallback for demo or error
-        console.warn('No QA Session ID returned, redirecting to demo');
-        setTimeout(() => {
-          router.push(`/selections/${params.id}/qa/demo-qa-1`);
-        }, 1000);
+      if (!data.qaSessionId) {
+        toast({
+          title: 'Error',
+          description: 'Q&A session was not created. Please try again.',
+          variant: 'destructive',
+        });
+        setIsProcessingQA(false);
+        return;
       }
+
+      // Store session ID and start polling for progress
+      setQaSessionId(data.qaSessionId);
+      setQaStatus('processing');
+      setQaProgress(0);
+
+      // Clear any existing interval
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current);
+      }
+
+      // Start polling for progress
+      pollIntervalRef.current = setInterval(async () => {
+        try {
+          const progressResponse = await fetch(`/api/selections/${params.id}/qa/${data.qaSessionId}`);
+          if (progressResponse.ok) {
+            const progressData = await progressResponse.json();
+            setQaProgress(progressData.progress || 0);
+            setQaStatus(progressData.status);
+
+            if (progressData.status === 'completed') {
+              if (pollIntervalRef.current) {
+                clearInterval(pollIntervalRef.current);
+                pollIntervalRef.current = null;
+              }
+
+              // Check if answers were actually saved to the database
+              const answersCount = progressData.answers?.length || 0;
+
+              if (answersCount === 0) {
+                // No answers were saved - show error and don't navigate
+                setIsProcessingQA(false);
+                setQaStatus('failed');
+                toast({
+                  title: 'Error',
+                  description: 'Q&A processing completed but no answers were generated. Please try again.',
+                  variant: 'destructive',
+                });
+                return;
+              }
+
+              // Answers exist - navigate to results page
+              setIsProcessingQA(false);
+
+              // Invalidate queries to refresh data
+              queryClient.invalidateQueries({ queryKey: QUERY_KEYS.qa.result(params.id as string, data.qaSessionId) });
+              queryClient.invalidateQueries({ queryKey: QUERY_KEYS.usage.stats });
+
+              toast({
+                title: 'Success',
+                description: `Q&A completed! Found ${answersCount} answer${
+                  answersCount !== 1 ? 's' : ''
+                }. Redirecting...`,
+              });
+              // Small delay before navigation to show completion
+              setTimeout(() => {
+                setIsQAModalOpen(false);
+                setQaPrompt('');
+                setQaSessionId(null);
+                setQaStatus(null);
+                router.push(`/selections/${params.id}/qa/${data.qaSessionId}`);
+              }, 1000);
+            } else if (progressData.status === 'failed') {
+              if (pollIntervalRef.current) {
+                clearInterval(pollIntervalRef.current);
+                pollIntervalRef.current = null;
+              }
+              setIsProcessingQA(false);
+              toast({
+                title: 'Error',
+                description: progressData.error_message || 'Q&A processing failed',
+                variant: 'destructive',
+              });
+              setQaStatus('failed');
+            }
+          }
+        } catch (error) {
+          console.error('Error polling Q&A progress:', error);
+        }
+      }, 2000); // Poll every 2 seconds
     } catch (error: any) {
-      console.error('Error processing Q&A:', error);
       toast({
-        title: 'Network Error',
-        description: error.message || 'Failed to connect to server. Please check your connection and try again.',
+        title: 'Error',
+        description: error.message || 'Failed to start Q&A. Please try again.',
         variant: 'destructive',
       });
       setIsProcessingQA(false);
@@ -491,6 +502,11 @@ export default function SelectionDetailPage() {
       }
 
       const data = await response.json();
+
+      // Invalidate queries to refresh data
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.downloads.all });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.usage.stats });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.selections.detail(params.id as string) });
 
       toast({
         title: 'Export Started',
@@ -667,15 +683,44 @@ export default function SelectionDetailPage() {
             {isProcessingQA && (
               <div className='space-y-2'>
                 <div className='flex items-center justify-between text-sm text-gray-600'>
-                  <span>Processing Q&A...</span>
+                  <span>
+                    {qaStatus === 'completed'
+                      ? 'Q&A Completed!'
+                      : qaStatus === 'failed'
+                      ? 'Q&A Failed'
+                      : 'Processing Q&A...'}
+                  </span>
                   <span>{qaProgress}%</span>
                 </div>
                 <div className='h-2 w-full overflow-hidden rounded-full bg-gray-200'>
-                  <div className='h-full bg-blue-600 transition-all duration-500' style={{ width: `${qaProgress}%` }} />
+                  <div
+                    className={`h-full transition-all duration-500 ${
+                      qaStatus === 'completed' ? 'bg-green-600' : qaStatus === 'failed' ? 'bg-red-600' : 'bg-blue-600'
+                    }`}
+                    style={{ width: `${qaProgress}%` }}
+                  />
                 </div>
                 <p className='text-xs text-gray-500'>
-                  This may take a few minutes depending on the number of candidates...
+                  {qaStatus === 'completed'
+                    ? 'Redirecting to results page...'
+                    : qaStatus === 'failed'
+                    ? 'An error occurred during processing. Please try again.'
+                    : 'This may take a few minutes depending on the number of candidates...'}
                 </p>
+                {qaStatus === 'completed' && qaSessionId && (
+                  <Button
+                    className='mt-2 w-full bg-blue-600 hover:bg-blue-700'
+                    onClick={() => {
+                      setIsQAModalOpen(false);
+                      setQaPrompt('');
+                      setQaSessionId(null);
+                      setQaStatus(null);
+                      router.push(`/selections/${params.id}/qa/${qaSessionId}`);
+                    }}
+                  >
+                    View Results
+                  </Button>
+                )}
               </div>
             )}
           </div>
@@ -684,12 +729,23 @@ export default function SelectionDetailPage() {
             <Button
               variant='outline'
               onClick={() => {
-                setIsQAModalOpen(false);
-                setQaPrompt('');
+                if (qaSessionId && qaStatus === 'processing') {
+                  // If processing, navigate to results page instead of canceling
+                  setIsQAModalOpen(false);
+                  setQaPrompt('');
+                  setQaSessionId(null);
+                  setQaStatus(null);
+                  router.push(`/selections/${params.id}/qa/${qaSessionId}`);
+                } else {
+                  setIsQAModalOpen(false);
+                  setQaPrompt('');
+                  setQaSessionId(null);
+                  setQaStatus(null);
+                }
               }}
-              disabled={isProcessingQA}
+              disabled={isProcessingQA && qaStatus === 'processing'}
             >
-              Cancel
+              {qaSessionId && qaStatus === 'processing' ? 'View Progress' : 'Cancel'}
             </Button>
             <Button
               onClick={handleQA}

@@ -79,13 +79,13 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     // Log usage
     await logUsage(user.id, 'ai_question', aiCallCount);
 
-    // Create QA session record
+    // Create QA session record in Supabase
     const { data: qaSession, error: sessionError } = await supabase
       .from('qa_sessions')
       .insert({
         user_id: user.id,
         selection_id: selectionId,
-        prompt: cleanedPrompt, // Store cleaned prompt
+        prompt: cleanedPrompt,
         status: 'processing',
         progress: 0,
       })
@@ -97,7 +97,19 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ error: 'Failed to create QA session' }, { status: 500 });
     }
 
+    // Trigger Inngest background job to:
+    // 1. Fetch selection items from Supabase
+    // 2. Make Haystack API calls to get Q&A answers
+    // 3. Save answers to qa_answers table in Supabase
+    // 4. Update qa_session status to 'completed' when done
     try {
+      console.log('[QA API] Sending Inngest event:', {
+        eventName: 'qa/process',
+        selectionId,
+        qaSessionId: qaSession.id,
+        promptLength: cleanedPrompt.length,
+      });
+
       await inngest.send({
         name: 'qa/process',
         data: {
@@ -108,9 +120,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           qaSessionId: qaSession.id,
         },
       });
+
+      console.log('[QA API] Inngest event sent successfully');
     } catch (inngestError) {
       console.error('Failed to send Inngest event:', inngestError);
-      // Update session status to failed
+      // Update session status to failed if we can't queue the job
       await supabase
         .from('qa_sessions')
         .update({ status: 'failed', error_message: 'Failed to queue Q&A job' })

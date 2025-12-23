@@ -2,10 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { getIdempotencyKey, getRequestId, IdempotencyHandler } from '@/libs/idempotency';
+import { getTopKLimit } from '@/libs/plan-config';
 import { searchRateLimiter } from '@/libs/ratelimit';
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
 import { logUsage } from '@/libs/usage-tracking';
-import { getPlanCap, getUserPlan } from '@/libs/user-plan';
+import { getUserPlan } from '@/libs/user-plan';
 
 const createSelectionSchema = z.object({
   name: z.string().min(1, 'Selection name is required').max(100),
@@ -79,26 +80,26 @@ export async function POST(request: NextRequest) {
     const validatedData = createSelectionSchema.parse(body);
 
     const plan = await getUserPlan(user.id);
-    const planCap = getPlanCap(plan);
+    const topKLimit = getTopKLimit(plan);
 
-    if (validatedData.top_k > planCap) {
+    if (validatedData.top_k > topKLimit) {
       return NextResponse.json(
         {
           error: 'Top-K exceeds your plan limit',
           plan,
-          planCap,
+          planCap: topKLimit,
           requested: validatedData.top_k,
         },
         { status: 400 }
       );
     }
 
-    if (validatedData.items.length > planCap) {
+    if (validatedData.items.length > topKLimit) {
       return NextResponse.json(
         {
           error: 'Number of items exceeds your plan limit',
           plan,
-          planCap,
+          planCap: topKLimit,
           itemCount: validatedData.items.length,
         },
         { status: 400 }

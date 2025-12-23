@@ -1,5 +1,6 @@
 'use client';
 
+import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 
@@ -15,6 +16,7 @@ import { SECTORS_TREE } from '@/data/sectors-tree';
 import { trackEvent } from '@/libs/analytics/posthog';
 import { getTopKLimit, type UserPlan } from '@/libs/plan-config';
 import { useUsageStatsQuery } from '@/libs/queries';
+import { QUERY_KEYS } from '@/libs/query-keys';
 import { requiresUpgrade } from '@/libs/soft-gating';
 import { createSupabaseBrowserClient } from '@/libs/supabase/supabase-browser-client';
 
@@ -25,6 +27,7 @@ import { cn } from '@/utils/cn';
 export default function DashboardPage() {
   const { toast } = useToast();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { data: usageStats, error: usageError } = useUsageStatsQuery({
     retry: 0,
   });
@@ -481,10 +484,23 @@ export default function DashboardPage() {
         selectionId = savedSelectionId;
       } else {
         // CREATE: Call create_selection RPC
+        // Ensure all fields are explicitly mapped to guarantee full data is saved
+        const uniqueItems = Array.from(new Map(selectedItems.map((item) => [item.doc_id, item])).values());
+
         const { data: newSelectionId, error: rpcError } = await supabase.rpc('create_selection', {
           p_name: selectionName,
           p_criteria_json: criteria,
-          p_items: selectedItems,
+          p_items: uniqueItems.map((item) => ({
+            doc_id: item.doc_id,
+            name: item.name,
+            email: item.email,
+            phone: item.phone,
+            city: item.city,
+            street: item.street,
+            sectors: item.sectors,
+            experience_years: item.experience_years,
+            similarity: item.similarity,
+          })),
         });
 
         if (rpcError) {
@@ -515,6 +531,14 @@ export default function DashboardPage() {
           hasFilters: sectors.size > 0 || regions.size > 0 || experience.length > 0,
         });
       }
+
+      // Invalidate queries to refresh data
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.selections.all });
+      if (selectionId) {
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.selections.detail(selectionId) });
+      }
+      // Also invalidate usage stats since selection creation affects it
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.usage.stats });
 
       toast({
         title: 'Saved',
@@ -661,10 +685,23 @@ export default function DashboardPage() {
         selectionId = savedSelectionId;
       } else {
         // CREATE: Call create_selection RPC
+        // Ensure all fields are explicitly mapped to guarantee full data is saved
+        const uniqueItems = Array.from(new Map(selectedItems.map((item) => [item.doc_id, item])).values());
+
         const { data: newSelectionId, error: rpcError } = await supabase.rpc('create_selection', {
           p_name: selectionName,
           p_criteria_json: criteria,
-          p_items: selectedItems,
+          p_items: uniqueItems.map((item) => ({
+            doc_id: item.doc_id,
+            name: item.name,
+            email: item.email,
+            phone: item.phone,
+            city: item.city,
+            street: item.street,
+            sectors: item.sectors,
+            experience_years: item.experience_years,
+            similarity: item.similarity,
+          })),
         });
 
         if (rpcError) {
@@ -751,6 +788,12 @@ export default function DashboardPage() {
         });
         return;
       }
+
+      // Invalidate queries to refresh data
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.selections.all });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.selections.detail(selectionId) });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.downloads.all });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.usage.stats });
 
       // Success: Selection saved and export started
       toast({

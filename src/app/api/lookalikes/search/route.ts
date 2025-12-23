@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { getTopKLimit, validateFilterKeys } from '@/libs/facet-config';
 import { checkRateLimit, searchRateLimiter } from '@/libs/ratelimit';
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
-import { getAnonymousPlan, getUserPlan, maskFields } from '@/libs/user-plan';
+import { getAnonymousPlan, getUserPlan } from '@/libs/user-plan';
 
 const searchSchema = z.object({
   names: z.array(z.string()).min(0).max(4).optional(),
@@ -217,15 +217,11 @@ export async function POST(request: NextRequest) {
     const results = haystackData.results || [];
 
     const limitedResults = isAnonymous ? results.slice(0, 3) : results;
-    
-    // Don't mask here - return full data. Frontend will mask for display only.
-    // This ensures all data is available when saving selections.
-    // Masking should only happen in the UI for display purposes, not in the API response.
 
     return NextResponse.json({
       success: true,
       data: {
-        preview: limitedResults, // Return full data, not masked
+        preview: limitedResults,
         total: isAnonymous ? limitedResults.length : limitedResults.length,
         plan: userPlan || 'anonymous',
         limit: planLimit,

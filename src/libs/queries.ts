@@ -67,9 +67,9 @@ export function useUsageStatsQuery(
   return useQuery<UsageStatsResponse, ApiError>({
     queryKey: QUERY_KEYS.usage.stats,
     queryFn: () => apiFetch<UsageStatsResponse>('/api/usage/stats'),
-    staleTime: 5 * 60 * 1000,
+    staleTime: 30 * 1000, // 30 seconds - shorter stale time for better UX
     gcTime: 24 * 60 * 60 * 1000,
-    refetchOnWindowFocus: false,
+    refetchOnWindowFocus: true, // Refetch when user returns to tab
     ...options,
   });
 }
@@ -80,9 +80,9 @@ export function useSelectionsQuery(
   return useQuery<SelectionsListResponse, ApiError>({
     queryKey: QUERY_KEYS.selections.all,
     queryFn: () => apiFetch<SelectionsListResponse>('/api/selections'),
-    staleTime: 5 * 60 * 1000,
+    staleTime: 30 * 1000, // 30 seconds - shorter stale time for better UX
     gcTime: 24 * 60 * 60 * 1000,
-    refetchOnWindowFocus: false,
+    refetchOnWindowFocus: true, // Refetch when user returns to tab
     ...options,
   });
 }
@@ -169,9 +169,9 @@ export function useDownloadsQuery(
 
       return { downloads: formattedDownloads };
     },
-    staleTime: 2 * 60 * 1000, // 2 minutes - downloads can change more frequently
+    staleTime: 30 * 1000, // 30 seconds - shorter stale time for better UX
     gcTime: 10 * 60 * 1000, // 10 minutes - keep in cache for 10 minutes
-    refetchOnWindowFocus: false,
+    refetchOnWindowFocus: true, // Refetch when user returns to tab
     ...options,
   });
 }
