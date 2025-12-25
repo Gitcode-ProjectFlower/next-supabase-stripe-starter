@@ -108,6 +108,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         selectionId,
         qaSessionId: qaSession.id,
         promptLength: cleanedPrompt.length,
+        hasEventKey: !!process.env.INNGEST_EVENT_KEY,
       });
 
       await inngest.send({
@@ -123,14 +124,35 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
       console.log('[QA API] Inngest event sent successfully');
     } catch (inngestError) {
-      console.error('Failed to send Inngest event:', inngestError);
+      const errorMessage =
+        inngestError instanceof Error
+          ? inngestError.message
+          : 'Failed to queue Q&A job. Please check Inngest configuration.';
+
+      console.error('[QA API] Failed to send Inngest event:', {
+        error: errorMessage,
+        stack: inngestError instanceof Error ? inngestError.stack : undefined,
+        hasEventKey: !!process.env.INNGEST_EVENT_KEY,
+        selectionId,
+        qaSessionId: qaSession.id,
+      });
+
       // Update session status to failed if we can't queue the job
       await supabase
         .from('qa_sessions')
-        .update({ status: 'failed', error_message: 'Failed to queue Q&A job' })
+        .update({
+          status: 'failed',
+          error_message: errorMessage,
+        })
         .eq('id', qaSession.id);
 
-      return NextResponse.json({ error: 'Failed to queue Q&A job. Please try again.' }, { status: 500 });
+      return NextResponse.json(
+        {
+          error: 'Failed to queue Q&A job',
+          details: process.env.NODE_ENV === 'development' ? errorMessage : undefined,
+        },
+        { status: 500 }
+      );
     }
 
     return NextResponse.json({
