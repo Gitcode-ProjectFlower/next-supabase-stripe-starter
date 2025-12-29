@@ -7,7 +7,7 @@ export const processQAJob = inngest.createFunction(
     name: 'Process Q&A Job',
     retries: 1,
     concurrency: {
-      limit: 10,
+      limit: 5,
     },
   },
   { event: 'qa/process' },
