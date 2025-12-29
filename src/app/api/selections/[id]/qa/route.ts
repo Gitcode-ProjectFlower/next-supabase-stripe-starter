@@ -103,15 +103,22 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     // 3. Save answers to qa_answers table in Supabase
     // 4. Update qa_session status to 'completed' when done
     try {
+      const hasEventKey = !!process.env.INNGEST_EVENT_KEY;
+      const hasSigningKey = !!process.env.INNGEST_SIGNING_KEY;
+      const nodeEnv = process.env.NODE_ENV;
+
       console.log('[QA API] Sending Inngest event:', {
         eventName: 'qa/process',
         selectionId,
         qaSessionId: qaSession.id,
         promptLength: cleanedPrompt.length,
-        hasEventKey: !!process.env.INNGEST_EVENT_KEY,
+        hasEventKey,
+        hasSigningKey,
+        nodeEnv,
+        inngestId: inngest.id,
       });
 
-      await inngest.send({
+      const result = await inngest.send({
         name: 'qa/process',
         data: {
           selectionId,
@@ -122,7 +129,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         },
       });
 
-      console.log('[QA API] Inngest event sent successfully');
+      console.log('[QA API] Inngest event sent successfully:', {
+        ids: result?.ids,
+        result,
+      });
     } catch (inngestError) {
       const errorMessage =
         inngestError instanceof Error

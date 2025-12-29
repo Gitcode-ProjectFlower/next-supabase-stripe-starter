@@ -58,13 +58,21 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     // Trigger Inngest background job to generate and upload CSV
     try {
+      const hasEventKey = !!process.env.INNGEST_EVENT_KEY;
+      const hasSigningKey = !!process.env.INNGEST_SIGNING_KEY;
+      const nodeEnv = process.env.NODE_ENV;
+
       console.log('[Export API] Sending Inngest event:', {
         eventName: 'lookalikes/export',
         selectionId,
         userId: user.id,
+        hasEventKey,
+        hasSigningKey,
+        nodeEnv,
+        inngestId: inngest.id,
       });
 
-      await inngest.send({
+      const result = await inngest.send({
         name: 'lookalikes/export',
         data: {
           selectionId,
@@ -72,7 +80,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         },
       });
 
-      console.log('[Export API] Inngest event sent successfully');
+      console.log('[Export API] Inngest event sent successfully:', {
+        ids: result?.ids,
+        result,
+      });
     } catch (inngestError) {
       console.error('[Export API] Failed to send Inngest event:', {
         error: inngestError instanceof Error ? inngestError.message : String(inngestError),
