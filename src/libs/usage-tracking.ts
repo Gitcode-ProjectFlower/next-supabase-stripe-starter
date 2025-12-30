@@ -26,16 +26,41 @@ export interface UsageStats {
 export async function logUsage(userId: string, action: UsageAction, count: number): Promise<void> {
   const supabase = await createSupabaseServerClient();
 
-  const { error } = await supabase.from('usage_log').insert({
-    user_id: userId,
+  console.log('[Usage Tracking] Logging usage:', {
+    userId,
     action,
     count,
   });
 
+  const { data, error } = await supabase
+    .from('usage_log')
+    .insert({
+      user_id: userId,
+      action,
+      count,
+    })
+    .select('id')
+    .single();
+
   if (error) {
-    console.error('[Usage Tracking] Failed to log usage:', error);
-    throw new Error('Failed to log usage');
+    console.error('[Usage Tracking] Failed to log usage:', {
+      error: error.message,
+      code: error.code,
+      details: error.details,
+      hint: error.hint,
+      userId,
+      action,
+      count,
+    });
+    throw new Error(`Failed to log usage: ${error.message}`);
   }
+
+  console.log('[Usage Tracking] Usage logged successfully:', {
+    logId: data?.id,
+    userId,
+    action,
+    count,
+  });
 }
 
 /**

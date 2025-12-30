@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { inngest } from '@/libs/inngest/client';
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
-import { checkUsageLimit, logUsage } from '@/libs/usage-tracking';
+import { checkUsageLimit } from '@/libs/usage-tracking';
 import { getUserPlan } from '@/libs/user-plan';
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -64,8 +64,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       );
     }
 
-    // Log usage (will be counted when export completes)
-    await logUsage(user.id, 'record_download', itemCount);
+    // DO NOT log usage here - it will be logged in the Inngest function only when the export completes successfully
+    // This ensures failed exports don't count against the user's limit
 
     // Trigger Inngest background job to generate and upload CSV
     try {
@@ -122,9 +122,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       message: 'Export job started',
       selectionId,
       usage: {
-        current: usageCheck.current + itemCount,
+        current: usageCheck.current,
         limit: usageCheck.limit,
-        remaining: usageCheck.remaining - itemCount,
+        remaining: usageCheck.remaining,
       },
     });
   } catch (error) {

@@ -249,7 +249,28 @@ export const processQAJob = inngest.createFunction(
           const responseEmail = haystackResponse.email || '';
           const responseCity = haystackResponse.city || null;
           const answerText = haystackResponse.answer || null;
-          const isSuccess = haystackResponse.status === 'success' || haystackResponse.status === 'OK';
+
+          // Check response status - handle TIMEOUT, ERROR, and other failure statuses
+          const responseStatus = haystackResponse.status?.toUpperCase() || '';
+          const isSuccess =
+            (responseStatus === 'SUCCESS' || responseStatus === 'OK') && answerText && answerText.trim().length > 0;
+
+          // Get error message - handle "operation was aborted" specifically
+          let errorMessage = haystackResponse.error_message || null;
+          if (!isSuccess && !errorMessage) {
+            if (responseStatus === 'TIMEOUT' || responseStatus === 'ABORTED') {
+              errorMessage = 'Request timed out. Please try again.';
+            } else if (responseStatus === 'ERROR' || responseStatus === 'NO_INFO') {
+              errorMessage = 'Failed to generate answer from resume data.';
+            } else {
+              errorMessage = 'Failed to generate answer';
+            }
+          }
+
+          // Clean up error messages that mention "aborted"
+          if (errorMessage && (errorMessage.includes('aborted') || errorMessage.includes('AbortError'))) {
+            errorMessage = 'Request timed out. Please try again.';
+          }
 
           if (originalItem) {
             return {
@@ -263,7 +284,7 @@ export const processQAJob = inngest.createFunction(
               similarity: originalItem.similarity || 0,
               answer: answerText,
               status: isSuccess ? 'success' : 'failed',
-              error_message: haystackResponse.error_message || (isSuccess ? null : 'Failed to generate answer'),
+              error_message: errorMessage,
             };
           }
 
@@ -451,10 +472,64 @@ export const processQAJob = inngest.createFunction(
       return urlData.signedUrl;
     });
 
-    // Step 6: Update session as completed
-    await step.run('update-session-completed', async () => {
-      console.log('[Inngest processQAJob] Updating session to completed...');
+    // Step 6: Log usage only after successful completion (moved before status update to check success rate)
+    // This will be called only if session is marked as completed (not failed)
+    // We'll move this after status check
 
+    // Step 7: Check success rate and update session status accordingly
+    await step.run('update-session-status', async () => {
+      console.log('[Inngest processQAJob] Checking success rate and updating session status...');
+
+      // Calculate success rate
+      const successfulAnswers = results.filter((r) => r.status === 'success' && r.answer && r.answer.trim().length > 0);
+      const successCount = successfulAnswers.length;
+      const totalCount = results.length;
+      const successRate = totalCount > 0 ? successCount / totalCount : 0;
+
+      console.log('[Inngest processQAJob] Success rate analysis:', {
+        successCount,
+        totalCount,
+        successRate: `${(successRate * 100).toFixed(1)}%`,
+        failedCount: totalCount - successCount,
+      });
+
+      // Mark as failed if success rate is too low (< 10% or all failed)
+      const shouldMarkAsFailed = successRate < 0.1 || successCount === 0;
+
+      if (shouldMarkAsFailed) {
+        const errorMessage =
+          successCount === 0
+            ? 'All Q&A requests failed. Please check your question and try again.'
+            : `Only ${successCount} out of ${totalCount} answers were generated successfully. The session is marked as failed.`;
+
+        console.warn('[Inngest processQAJob] Marking session as failed due to low success rate:', {
+          successCount,
+          totalCount,
+          successRate,
+        });
+
+        const { error: updateError } = await supabaseAdminClient
+          .from('qa_sessions')
+          .update({
+            status: 'failed',
+            progress: 100,
+            completed_at: new Date().toISOString(),
+            error_message: errorMessage,
+            csv_url: downloadUrl, // Still save CSV even if failed
+          })
+          .eq('id', qaSessionId);
+
+        if (updateError) {
+          console.error('[Inngest processQAJob] Failed to update session status:', updateError);
+          throw new Error(`Failed to update session: ${updateError.message}`);
+        }
+
+        console.log('[Inngest processQAJob] Session marked as failed due to low success rate');
+        // Don't log usage if session failed
+        return;
+      }
+
+      // Mark as completed if success rate is acceptable
       const { error: updateError } = await supabaseAdminClient
         .from('qa_sessions')
         .update({
@@ -471,6 +546,18 @@ export const processQAJob = inngest.createFunction(
       }
 
       console.log('[Inngest processQAJob] Session updated to completed');
+
+      // Log usage only if session was marked as completed (not failed)
+      console.log('[Inngest processQAJob] Logging usage for successful Q&A job...');
+      const { logUsage } = await import('@/libs/usage-tracking');
+
+      try {
+        await logUsage(userId, 'ai_question', successCount); // Only count successful answers
+        console.log(`[Inngest processQAJob] Usage logged: ${successCount} AI calls (only successful answers)`);
+      } catch (usageError) {
+        console.error('[Inngest processQAJob] Failed to log usage:', usageError);
+        // Don't fail the job if usage logging fails - it's not critical
+      }
     });
 
     console.log('[Inngest processQAJob] ===== FUNCTION COMPLETED SUCCESSFULLY =====');

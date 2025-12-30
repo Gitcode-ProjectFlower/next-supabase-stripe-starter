@@ -1,11 +1,11 @@
 'use client';
 
-import { useQuery, type UseQueryOptions } from '@tanstack/react-query';
+import { useQuery, type UseQueryOptions } from '@tanstack/react-query'
 
-import { ApiError, apiFetch } from './api-client';
-import type { UserPlan } from './plan-config';
-import { QUERY_KEYS } from './query-keys';
-import { createSupabaseBrowserClient } from './supabase/supabase-browser-client';
+import { ApiError, apiFetch } from './api-client'
+import type { UserPlan } from './plan-config'
+import { QUERY_KEYS } from './query-keys'
+import { createSupabaseBrowserClient } from './supabase/supabase-browser-client'
 
 type UsageStatsResponse = {
   downloads: number;
@@ -425,9 +425,10 @@ export function useRecentActivityQuery(
 
       return { activities: validActivities.slice(0, 20) };
     },
-    staleTime: 1 * 60 * 1000, // 1 minute - activity can change frequently
+    staleTime: 30 * 1000, // 30 seconds - activity can change frequently
     gcTime: 5 * 60 * 1000, // 5 minutes
-    refetchOnWindowFocus: false,
+    refetchOnWindowFocus: true, // Refetch when user returns to tab
+    refetchInterval: 30 * 1000, // Poll every 30 seconds for new activity
     ...options,
   });
 }

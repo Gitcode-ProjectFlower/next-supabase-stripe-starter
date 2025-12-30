@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 import { inngest } from '@/libs/inngest/client';
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
-import { checkUsageLimit, logUsage } from '@/libs/usage-tracking';
+import { checkUsageLimit } from '@/libs/usage-tracking';
 import { getUserPlan } from '@/libs/user-plan';
 
 const qaRequestSchema = z.object({
@@ -76,25 +76,72 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       );
     }
 
-    // Log usage
-    await logUsage(user.id, 'ai_question', aiCallCount);
+    // DO NOT log usage here - it will be logged in the Inngest function only when the job completes successfully
+    // This ensures failed jobs don't count against the user's limit
 
-    // Create QA session record in Supabase
-    const { data: qaSession, error: sessionError } = await supabase
+    // Check if there's an existing failed QA session for this selection and prompt (for regeneration)
+    const { data: existingFailedSession } = await supabase
       .from('qa_sessions')
-      .insert({
-        user_id: user.id,
-        selection_id: selectionId,
-        prompt: cleanedPrompt,
-        status: 'processing',
-        progress: 0,
-      })
       .select('id')
-      .single();
+      .eq('user_id', user.id)
+      .eq('selection_id', selectionId)
+      .eq('prompt', cleanedPrompt)
+      .eq('status', 'failed')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
-    if (sessionError || !qaSession) {
-      console.error('Failed to create QA session:', sessionError);
-      return NextResponse.json({ error: 'Failed to create QA session' }, { status: 500 });
+    let qaSessionId: string | null = null;
+
+    if (existingFailedSession?.id) {
+      // Update existing failed session instead of creating new one
+      console.log('[QA API] Updating existing failed QA session for regeneration:', existingFailedSession.id);
+
+      // Delete old answers from previous failed attempt
+      await supabase.from('qa_answers').delete().eq('session_id', existingFailedSession.id);
+
+      const { data: updatedSession, error: updateError } = await supabase
+        .from('qa_sessions')
+        .update({
+          status: 'processing',
+          progress: 0,
+          error_message: null,
+          completed_at: null,
+          csv_url: null,
+          created_at: new Date().toISOString(), // Update created_at to reflect regeneration
+        })
+        .eq('id', existingFailedSession.id)
+        .select('id')
+        .single();
+
+      if (updateError || !updatedSession) {
+        console.error('[QA API] Failed to update existing QA session:', updateError);
+        // Fall through to create new session
+      } else {
+        qaSessionId = updatedSession.id;
+      }
+    }
+
+    // Create new QA session if we didn't update an existing one
+    if (!qaSessionId) {
+      const { data: qaSession, error: sessionError } = await supabase
+        .from('qa_sessions')
+        .insert({
+          user_id: user.id,
+          selection_id: selectionId,
+          prompt: cleanedPrompt,
+          status: 'processing',
+          progress: 0,
+        })
+        .select('id')
+        .single();
+
+      if (sessionError || !qaSession) {
+        console.error('Failed to create QA session:', sessionError);
+        return NextResponse.json({ error: 'Failed to create QA session' }, { status: 500 });
+      }
+
+      qaSessionId = qaSession.id;
     }
 
     // Trigger Inngest background job to:
@@ -110,7 +157,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       console.log('[QA API] Sending Inngest event:', {
         eventName: 'qa/process',
         selectionId,
-        qaSessionId: qaSession.id,
+        qaSessionId,
         promptLength: cleanedPrompt.length,
         hasEventKey,
         hasSigningKey,
@@ -125,7 +172,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           userId: user.id,
           prompt: cleanedPrompt,
           resumeIds: resume_ids,
-          qaSessionId: qaSession.id,
+          qaSessionId,
         },
       });
 
@@ -144,17 +191,18 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         stack: inngestError instanceof Error ? inngestError.stack : undefined,
         hasEventKey: !!process.env.INNGEST_EVENT_KEY,
         selectionId,
-        qaSessionId: qaSession.id,
+        qaSessionId,
       });
 
       // Update session status to failed if we can't queue the job
+      // No usage was logged, so nothing to reverse
       await supabase
         .from('qa_sessions')
         .update({
           status: 'failed',
           error_message: errorMessage,
         })
-        .eq('id', qaSession.id);
+        .eq('id', qaSessionId);
 
       return NextResponse.json(
         {
@@ -168,12 +216,12 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return NextResponse.json({
       message: 'Q&A job started',
       selectionId,
-      qaSessionId: qaSession.id,
+      qaSessionId,
       aiCallsUsed: aiCallCount,
       usage: {
-        current: usageCheck.current + aiCallCount,
+        current: usageCheck.current,
         limit: usageCheck.limit,
-        remaining: usageCheck.remaining - aiCallCount,
+        remaining: usageCheck.remaining,
       },
     });
   } catch (error) {

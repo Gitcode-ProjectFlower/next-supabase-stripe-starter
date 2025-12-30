@@ -217,6 +217,14 @@ export default function QAResultsPage() {
                   Download CSV
                 </Button>
               )}
+              {result.status === 'failed' && (
+                <Button
+                  className='rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700'
+                  onClick={() => router.push(`/selections/${params.id}`)}
+                >
+                  Generate Answers Again
+                </Button>
+              )}
             </div>
           </div>
         </div>

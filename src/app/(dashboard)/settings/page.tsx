@@ -8,6 +8,7 @@ import { getSession } from '@/features/account/controllers/get-session';
 import { getSubscription } from '@/features/account/controllers/get-subscription';
 import { getProducts } from '@/features/pricing/controllers/get-products';
 import { Price, ProductWithPrices } from '@/features/pricing/types';
+import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
 import { getUserPlan } from '@/libs/user-plan';
 import { DownloadsSection } from '../../../components/settings/downloads-section';
 import { GeneralSection } from '../../../components/settings/general-section';
@@ -36,15 +37,31 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
     redirect('/login');
   }
 
-  // Get user plan and notification preference
+  // Get user plan, notification preference, and downloads count
   let userPlan: Awaited<ReturnType<typeof getUserPlan>> = 'free_tier';
   let emailNotificationsEnabled = false;
+  let downloadsCount = 0;
 
   try {
+    const supabase = await createSupabaseServerClient();
+
     [userPlan, emailNotificationsEnabled] = await Promise.all([
       getUserPlan(session.user.id, shouldCheckStripe),
       getNotificationPreference(session.user.id),
     ]);
+
+    // Fetch count of non-expired downloads
+    const { count, error: downloadsError } = await supabase
+      .from('downloads')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', session.user.id)
+      .gt('expires_at', new Date().toISOString());
+
+    if (downloadsError) {
+      console.error('[Settings Page] Error fetching downloads count:', downloadsError);
+    } else {
+      downloadsCount = count || 0;
+    }
   } catch (error) {
     console.error('[Settings Page] Error fetching user plan or preferences:', error);
     // userPlan defaults to 'free_tier' if getUserPlan fails
@@ -112,7 +129,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
                 userEmail={session.user.email!}
                 userId={session.user.id}
                 userPlan={userPlan}
-                downloadsCount={0} // TODO: Fetch actual downloads count
+                downloadsCount={downloadsCount}
                 emailNotificationsEnabled={emailNotificationsEnabled}
               />
             </TabsContent>

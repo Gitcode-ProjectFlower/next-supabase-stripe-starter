@@ -101,11 +101,58 @@ export const exportLookalikesJob = inngest.createFunction(
         await supabase.from('downloads').insert({
           user_id: userId,
           selection_id: selectionId,
-          type: 'lookalikes',
+          type: 'lookalike',
           url: urlData.signedUrl,
           row_count: items.length,
           expires_at: expiresAt.toISOString(),
         });
+
+        // Log usage immediately after creating download record
+        // Use admin client directly because Inngest functions don't have user cookies
+        console.log('[Inngest exportLookalikesJob] Logging usage for successful export...', {
+          userId,
+          itemCount: items.length,
+        });
+
+        try {
+          const { data: usageLog, error: usageError } = await supabase
+            .from('usage_log')
+            .insert({
+              user_id: userId,
+              action: 'record_download',
+              count: items.length,
+            })
+            .select('id')
+            .single();
+
+          if (usageError) {
+            console.error('[Inngest exportLookalikesJob] Failed to log usage:', {
+              error: usageError.message,
+              code: usageError.code,
+              details: usageError.details,
+              hint: usageError.hint,
+              userId,
+              action: 'record_download',
+              count: items.length,
+            });
+            throw usageError;
+          }
+
+          console.log(`[Inngest exportLookalikesJob] Usage logged successfully:`, {
+            logId: usageLog?.id,
+            userId,
+            action: 'record_download',
+            count: items.length,
+          });
+        } catch (usageError) {
+          console.error('[Inngest exportLookalikesJob] Failed to log usage (non-critical):', {
+            error: usageError instanceof Error ? usageError.message : String(usageError),
+            userId,
+            action: 'record_download',
+            count: items.length,
+          });
+          // Don't fail the job if usage logging fails - it's not critical
+        }
 
         return urlData.signedUrl;
       });

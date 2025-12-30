@@ -62,12 +62,22 @@ export class HaystackClient {
       return result as QAResponse;
     } catch (error) {
       if (error instanceof Error) {
-        if (error.name === 'AbortError') {
+        if (error.name === 'AbortError' || error.message.includes('aborted')) {
           return {
             status: 'TIMEOUT',
             answer: null,
             sources: [],
-            error_message: `Request timeout after ${this.timeout}ms`,
+            error_message: `Request timeout after ${this.timeout}ms. The operation was aborted due to timeout.`,
+          };
+        }
+
+        // Handle "This operation was aborted" message specifically
+        if (error.message.includes('aborted') || error.message.includes('AbortError')) {
+          return {
+            status: 'TIMEOUT',
+            answer: null,
+            sources: [],
+            error_message: `Request timeout after ${this.timeout}ms. Please try again.`,
           };
         }
 
@@ -239,13 +249,24 @@ export class HaystackClient {
       return results;
     } catch (error) {
       console.error('Batch QA Error:', error);
+
+      // Handle "operation was aborted" / timeout errors specifically
+      let errorMessage = 'Unknown error';
+      if (error instanceof Error) {
+        if (error.name === 'AbortError' || error.message.includes('aborted')) {
+          errorMessage = `Request timeout after ${this.timeout}ms. Please try again.`;
+        } else {
+          errorMessage = error.message;
+        }
+      }
+
       // Fallback: return error responses for all items with doc_id attached
       return items.map((item) => ({
         doc_id: item.doc_id,
         status: 'ERROR' as const,
         answer: null,
         sources: [],
-        error_message: error instanceof Error ? error.message : 'Unknown error',
+        error_message: errorMessage,
       }));
     }
   }
