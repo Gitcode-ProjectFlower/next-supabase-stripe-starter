@@ -36,6 +36,17 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const userPlan = await getUserPlan(user.id);
     const itemCount = selection.item_count || 0;
 
+    // Validate that selection has items before allowing export
+    if (itemCount === 0) {
+      return NextResponse.json(
+        {
+          error: 'Cannot export empty selection',
+          message: 'This selection has no candidates. Please add candidates to the selection before exporting.',
+        },
+        { status: 400 }
+      );
+    }
+
     // Check usage limit before allowing export
     const usageCheck = await checkUsageLimit(user.id, 'record_download', itemCount, userPlan);
 

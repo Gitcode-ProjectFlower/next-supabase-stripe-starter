@@ -48,6 +48,13 @@ export const exportLookalikesJob = inngest.createFunction(
 
       console.log(`[Inngest exportLookalikesJob] Found ${items.length} items to export`);
 
+      // Validate that there are items to export
+      if (!items || items.length === 0) {
+        const error = new Error('Cannot export: Selection has no items');
+        console.error('[Inngest exportLookalikesJob] No items found for selection:', selectionId);
+        throw error;
+      }
+
       const downloadUrl = await step.run('generate-and-upload-csv', async () => {
         const supabase = supabaseAdminClient;
 

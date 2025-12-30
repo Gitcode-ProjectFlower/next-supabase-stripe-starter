@@ -376,10 +376,14 @@ export function ResultsWorkspace({
           <div className='flex items-start gap-3'>
             <Textarea
               className='min-h-[72px] flex-1 resize-none rounded-lg border px-3 py-2 text-sm focus-visible:ring-1 focus-visible:ring-gray-900'
-              placeholder='Ask your question here (multiple questions allowed) — each resume gives an answer...'
+              placeholder={
+                selectedIds.size === 0
+                  ? 'Select at least one candidate to ask questions...'
+                  : 'Ask your question here (multiple questions allowed) — each resume gives an answer...'
+              }
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
-              disabled={isProcessingQA}
+              disabled={isProcessingQA || selectedIds.size === 0}
             />
             <div className='w-56 space-y-2'>
               <TooltipProvider>
@@ -390,7 +394,12 @@ export function ResultsWorkspace({
                         className='w-full rounded-lg bg-blue-600 px-3 py-2 text-sm text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50'
                         onClick={() => onGenerateAnswers?.(prompt)}
                         disabled={
-                          isProcessingQA || !prompt.trim() || needsUpgradeForQA || userPlan === 'anonymous' || !userPlan
+                          isProcessingQA ||
+                          !prompt.trim() ||
+                          selectedIds.size === 0 ||
+                          needsUpgradeForQA ||
+                          userPlan === 'anonymous' ||
+                          !userPlan
                         }
                       >
                         {isProcessingQA ? 'Processing...' : 'Generate answers'}

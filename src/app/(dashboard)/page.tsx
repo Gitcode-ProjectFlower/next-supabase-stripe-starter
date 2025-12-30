@@ -56,6 +56,11 @@ export default function DashboardPage() {
   const [results, setResults] = useState<LookalikeResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
+  // State for Q&A processing
+  const [isProcessingQA, setIsProcessingQA] = useState(false);
+  const [qaSessionId, setQaSessionId] = useState<string | null>(null);
+  const [qaSelectionId, setQaSelectionId] = useState<string | null>(null);
+
   const saveUnavailableReason = useMemo(() => {
     if (selectedIds.size === 0) return 'Select at least one candidate before saving.';
     if (!userPlan || userPlan === 'anonymous') return 'Sign in to save your selections.';
@@ -840,6 +845,305 @@ export default function DashboardPage() {
     });
   };
 
+  const handleGenerateAnswers = async (prompt: string) => {
+    if (!prompt.trim()) {
+      toast({
+        title: 'Validation Error',
+        description: 'Please enter a question',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (selectedIds.size === 0) {
+      toast({
+        title: 'No candidates selected',
+        description: 'Please select at least one candidate before asking questions.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Check usage limits before starting Q&A
+    if (usageStats) {
+      const itemCount = selectedIds.size;
+      const requiredCalls = itemCount;
+      const remainingCalls = usageStats.aiCallsLimit - usageStats.ai_calls;
+
+      if (remainingCalls < requiredCalls) {
+        toast({
+          title: 'AI Limit Reached',
+          description: `You need ${requiredCalls} AI calls but only have ${remainingCalls} remaining. Upgrade your plan to continue.`,
+          variant: 'destructive',
+        });
+        return;
+      }
+    }
+
+    setIsProcessingQA(true);
+
+    try {
+      // Create or use existing selection
+      const selectedItems = results
+        .filter((r) => selectedIds.has(r.doc_id))
+        .map((item) => ({
+          ...item,
+          similarity: item.similarity ?? 0,
+        }));
+
+      if (selectedItems.length === 0) {
+        toast({
+          title: 'No candidates selected',
+          description: 'Please select at least one candidate to ask questions',
+          variant: 'destructive',
+        });
+        setIsProcessingQA(false);
+        return;
+      }
+
+      const supabase = createSupabaseBrowserClient();
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser();
+
+      if (authError || !user) {
+        throw new Error('Unauthorized. Please sign in to use Q&A features.');
+      }
+
+      const experienceYears = buildExperienceYears();
+      const sectorNames = sectors.size > 0 ? getNamesFromIds(sectors, SECTORS_TREE) : [];
+      const regionNames = regions.size > 0 ? getNamesFromIds(regions, REGIONS_TREE) : [];
+      const criteria = {
+        names,
+        sectors: sectorNames,
+        regions: regionNames,
+        experience_years: experienceYears,
+      };
+
+      let selectionId: string | null = null;
+      const isUpdate = savedSelectionId !== null;
+
+      if (isUpdate) {
+        // UPDATE: Verify ownership and update existing selection
+        const { data: existingSelection, error: checkError } = await supabase
+          .from('selections')
+          .select('id, user_id')
+          .eq('id', savedSelectionId)
+          .eq('user_id', user.id)
+          .single();
+
+        if (checkError || !existingSelection) {
+          setSavedSelectionId(null);
+          // Fall through to create new selection
+        } else {
+          // Deduplicate items by doc_id before processing
+          const uniqueItems = Array.from(new Map(selectedItems.map((item) => [item.doc_id, item])).values());
+
+          // Update selection metadata
+          const { error: updateError } = await supabase
+            .from('selections')
+            .update({
+              name: selectionName,
+              criteria_json: criteria,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', savedSelectionId);
+
+          if (updateError) {
+            throw new Error(`Failed to update selection: ${updateError.message}`);
+          }
+
+          // Use RPC function to atomically replace all items
+          const { error: rpcError } = await supabase.rpc('update_selection_items', {
+            p_selection_id: savedSelectionId,
+            p_items: uniqueItems.map((item) => ({
+              doc_id: item.doc_id,
+              name: item.name,
+              email: item.email,
+              phone: item.phone,
+              city: item.city,
+              street: item.street,
+              sectors: item.sectors,
+              experience_years: item.experience_years,
+              similarity: item.similarity,
+            })),
+          });
+
+          if (rpcError) {
+            throw new Error(`Failed to update selection items: ${rpcError.message}`);
+          }
+
+          selectionId = savedSelectionId;
+        }
+      }
+
+      // CREATE: If not updating or update failed, create new selection
+      if (!selectionId) {
+        const uniqueItems = Array.from(new Map(selectedItems.map((item) => [item.doc_id, item])).values());
+
+        const { data: newSelectionId, error: rpcError } = await supabase.rpc('create_selection', {
+          p_name: selectionName,
+          p_criteria_json: criteria,
+          p_items: uniqueItems.map((item) => ({
+            doc_id: item.doc_id,
+            name: item.name,
+            email: item.email,
+            phone: item.phone,
+            city: item.city,
+            street: item.street,
+            sectors: item.sectors,
+            experience_years: item.experience_years,
+            similarity: item.similarity,
+          })),
+        });
+
+        if (rpcError) {
+          throw new Error(`Failed to create selection: ${rpcError.message}`);
+        }
+
+        if (!newSelectionId) {
+          throw new Error('Failed to create selection: No ID returned');
+        }
+
+        selectionId = newSelectionId;
+        setSavedSelectionId(selectionId);
+
+        // Log usage (only on create)
+        try {
+          const { error: logError } = await supabase.from('usage_log').insert({
+            user_id: user.id,
+            action: 'selection_created',
+            count: 1,
+          });
+          if (logError) {
+            console.error('[QA] Failed to log usage:', logError);
+          }
+        } catch (logErr) {
+          console.error('[QA] Failed to log usage:', logErr);
+        }
+      }
+
+      // Ensure we have a selection ID before proceeding
+      if (!selectionId) {
+        throw new Error('Failed to create or update selection');
+      }
+
+      // Store the selection ID for future updates
+      setSavedSelectionId(selectionId);
+      setQaSelectionId(selectionId);
+
+      // Step 2: Start Q&A job
+      const response = await fetch(`/api/selections/${selectionId}/qa`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: prompt.trim() }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+
+        // Handle different error cases
+        if (response.status === 401) {
+          toast({
+            title: 'Authentication Required',
+            description: 'Please sign in to use Q&A features',
+            variant: 'destructive',
+          });
+          router.push('/login');
+          return;
+        }
+
+        if (response.status === 403) {
+          if (errorData.error === 'CAP_REACHED') {
+            const message =
+              errorData.type === 'ai_limit'
+                ? `You've reached your AI question limit (${errorData.current}/${errorData.limit}). Upgrade your plan to continue.`
+                : errorData.message || 'You have reached your usage limit.';
+            toast({
+              title: 'Limit Reached',
+              description: message,
+              variant: 'destructive',
+            });
+          } else {
+            toast({
+              title: 'Access Denied',
+              description: errorData.message || 'You do not have permission to perform this action',
+              variant: 'destructive',
+            });
+          }
+          setIsProcessingQA(false);
+          return;
+        }
+
+        if (response.status === 404) {
+          toast({
+            title: 'Selection Not Found',
+            description: 'The selection you are trying to access no longer exists',
+            variant: 'destructive',
+          });
+          setIsProcessingQA(false);
+          return;
+        }
+
+        if (response.status === 400) {
+          toast({
+            title: 'Invalid Request',
+            description: errorData.error || errorData.message || 'Please check your input and try again',
+            variant: 'destructive',
+          });
+          setIsProcessingQA(false);
+          return;
+        }
+
+        // Generic error for 500 or other status codes
+        toast({
+          title: 'Error',
+          description: errorData.error || errorData.message || 'Failed to start Q&A job. Please try again later.',
+          variant: 'destructive',
+        });
+        setIsProcessingQA(false);
+        return;
+      }
+
+      const data = await response.json();
+
+      if (!data.qaSessionId) {
+        toast({
+          title: 'Error',
+          description: 'Q&A session was not created. Please try again.',
+          variant: 'destructive',
+        });
+        setIsProcessingQA(false);
+        return;
+      }
+
+      // Store session ID and navigate to Q&A page
+      setQaSessionId(data.qaSessionId);
+
+      // Invalidate queries to refresh data
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.selections.all });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.selections.detail(selectionId) });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.usage.stats });
+
+      toast({
+        title: 'Q&A Started',
+        description: 'Your question is being processed. Redirecting to results...',
+      });
+
+      // Navigate to Q&A page
+      router.push(`/selections/${selectionId}/qa/${data.qaSessionId}`);
+    } catch (error: any) {
+      console.error('Q&A error:', error);
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to start Q&A. Please try again.',
+        variant: 'destructive',
+      });
+      setIsProcessingQA(false);
+    }
+  };
+
   // Reset all state to initial values
   const resetSelection = () => {
     // Clear names input
@@ -970,6 +1274,8 @@ export default function DashboardPage() {
             isLoading={isLoading}
             selectedIds={selectedIds}
             onSelectionChange={setSelectedIds}
+            onGenerateAnswers={handleGenerateAnswers}
+            isProcessingQA={isProcessingQA}
             isPreviewMode={isPreviewMode}
             userPlan={userPlan}
             topK={topK}

@@ -298,8 +298,8 @@ export default function SelectionDetailPage() {
 
         if (response.status === 400) {
           toast({
-            title: 'Invalid Request',
-            description: errorData.error || errorData.message || 'Please check your input and try again',
+            title: errorData.error === 'Cannot export empty selection' ? 'Cannot Export' : 'Invalid Request',
+            description: errorData.message || errorData.error || 'Please check your input and try again',
             variant: 'destructive',
           });
           return;
@@ -421,6 +421,16 @@ export default function SelectionDetailPage() {
       toast({
         title: 'Error',
         description: 'Invalid selection ID',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Client-side verification: Check if selection has items
+    if (selection && (selection.item_count === 0 || !selection.items || selection.items.length === 0)) {
+      toast({
+        title: 'Cannot Export',
+        description: 'This selection has no candidates. Please add candidates to the selection before exporting.',
         variant: 'destructive',
       });
       return;

@@ -2,6 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import { useDownloadsQuery } from '@/libs/queries';
+import { RefreshCw } from 'lucide-react';
 
 interface Download {
   id: string;
@@ -27,10 +28,16 @@ export function DownloadsSection({ initialDownloads = [] }: DownloadsSectionProp
     data: downloadsData,
     isLoading,
     error,
+    refetch,
+    isRefetching,
   } = useDownloadsQuery({
     retry: 1,
     // Use initial data if provided (from server-side fetch)
     placeholderData: initialDownloads.length > 0 ? { downloads: initialDownloads } : undefined,
+    // Poll for new downloads every 15 seconds when component is mounted
+    refetchInterval: 15000,
+    // Also refetch when window regains focus
+    refetchOnWindowFocus: true,
   });
 
   const downloads = downloadsData?.downloads || [];
@@ -81,6 +88,19 @@ export function DownloadsSection({ initialDownloads = [] }: DownloadsSectionProp
 
   return (
     <>
+      <div className='mb-4 flex items-center justify-between'>
+        <h3 className='text-sm font-medium text-gray-900'>Available Downloads</h3>
+        <Button
+          variant='outline'
+          size='sm'
+          onClick={() => refetch()}
+          disabled={isRefetching}
+          className='flex items-center gap-2'
+        >
+          <RefreshCw className={`h-4 w-4 ${isRefetching ? 'animate-spin' : ''}`} />
+          {isRefetching ? 'Refreshing...' : 'Refresh'}
+        </Button>
+      </div>
       <div className='overflow-auto rounded-xl border border-gray-200'>
         <table className='min-w-full divide-y divide-gray-200'>
           <thead className='bg-gray-50'>
