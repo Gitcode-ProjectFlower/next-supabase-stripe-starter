@@ -29,6 +29,7 @@ export class HaystackClient {
   constructor(baseUrl: string, apiKey?: string, timeout: number = 20000) {
     this.baseUrl = baseUrl;
     this.apiKey = apiKey;
+    // Default timeout: 20 seconds for single requests, but can be overridden for batch operations
     this.timeout = timeout;
   }
 
@@ -100,11 +101,27 @@ export class HaystackClient {
 
   async askBatch(
     items: Array<{ doc_id: string; name?: string; email?: string; city?: string; [key: string]: any }>,
-    prompt: string
+    prompt: string,
+    customTimeout?: number
   ): Promise<QAResponse[]> {
     try {
+      // For batch operations, use a longer timeout (default: 10 minutes)
+      // Allow ~30 seconds per candidate, with minimum of 2 minutes and maximum of 15 minutes
+      const batchTimeout =
+        customTimeout ||
+        (() => {
+          const itemCount = items.length;
+          const calculatedTimeout = Math.max(120000, Math.min(900000, itemCount * 30000)); // 2min to 15min, ~30s per item
+          console.log(
+            `[Haystack askBatch] Using timeout: ${calculatedTimeout}ms (${
+              calculatedTimeout / 1000
+            }s) for ${itemCount} items`
+          );
+          return calculatedTimeout;
+        })();
+
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), this.timeout);
+      const timeoutId = setTimeout(() => controller.abort(), batchTimeout);
 
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
@@ -254,7 +271,10 @@ export class HaystackClient {
       let errorMessage = 'Unknown error';
       if (error instanceof Error) {
         if (error.name === 'AbortError' || error.message.includes('aborted')) {
-          errorMessage = `Request timeout after ${this.timeout}ms. Please try again.`;
+          const batchTimeout = customTimeout || Math.max(120000, Math.min(900000, items.length * 30000));
+          errorMessage = `Request timeout after ${Math.round(
+            batchTimeout / 1000
+          )}s. The Q&A processing is taking longer than expected. Please try again or reduce the number of candidates.`;
         } else {
           errorMessage = error.message;
         }
