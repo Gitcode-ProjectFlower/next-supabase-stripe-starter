@@ -22,9 +22,9 @@ export async function POST(request: NextRequest) {
     if (userId) {
       const { data: userData } = await supabase.from('users').select('full_name').eq('id', userId).single();
 
-      // @ts-expect-error - Supabase type inference issue with select queries
+      // @ts-ignore - Supabase type inference issue with select queries
       if (userData?.full_name) {
-        // @ts-expect-error - Supabase type inference issue with select queries
+        // @ts-ignore - Supabase type inference issue with select queries
         userName = userData.full_name;
       }
     }

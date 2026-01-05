@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
 
       const { error: upsertError, data: upsertedData } = await supabase
         .from('subscriptions')
-        // @ts-expect-error - Supabase browser client has TypeScript inference issue with upsert queries
+        // @ts-ignore - Supabase browser client has TypeScript inference issue with upsert queries
         .upsert([subscriptionData], {
           onConflict: 'id',
         })

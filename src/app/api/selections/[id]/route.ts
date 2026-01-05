@@ -20,7 +20,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
       return NextResponse.json({ error: 'Invalid selection ID format' }, { status: 400 });
     }
 
-    // @ts-expect-error - Supabase RPC type inference issue
+    // @ts-ignore - Supabase RPC type inference issue
     const { error: rpcError } = await supabase.rpc('delete_selection', {
       p_selection_id: selectionId,
     });

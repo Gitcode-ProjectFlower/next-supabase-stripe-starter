@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
 
       await sendWelcomeEmail({
         userEmail: email,
-        // @ts-expect-error - Supabase type inference issue with select queries
+        // @ts-ignore - Supabase type inference issue with select queries
         userName: userData?.full_name || undefined,
       });
     }

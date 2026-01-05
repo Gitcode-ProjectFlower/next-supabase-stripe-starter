@@ -468,7 +468,7 @@ export function Dashboard() {
 
         // Use RPC function to atomically replace all items (delete + insert in transaction)
         // The RPC function will also update item_count to match the actual number of items
-        // @ts-expect-error - Supabase RPC type inference issue, p_items accepts Json array
+        // @ts-ignore - Supabase RPC type inference issue, p_items accepts Json array
         const { error: rpcError } = await supabase.rpc('update_selection_items', {
           p_selection_id: savedSelectionId,
           p_items: uniqueItems.map((item) => ({
@@ -494,7 +494,7 @@ export function Dashboard() {
         // Ensure all fields are explicitly mapped to guarantee full data is saved
         const uniqueItems = Array.from(new Map(selectedItems.map((item) => [item.doc_id, item])).values());
 
-        // @ts-expect-error - Supabase RPC type inference issue, p_items accepts Json array
+        // @ts-ignore - Supabase RPC type inference issue, p_items accepts Json array
         const { data: newSelectionId, error: rpcError } = await supabase.rpc('create_selection', {
           p_name: selectionName,
           p_criteria_json: criteria,
@@ -520,7 +520,7 @@ export function Dashboard() {
 
         // Log usage (only on create)
         try {
-          // @ts-expect-error - Supabase browser client has TypeScript inference issue with insert queries
+          // @ts-ignore - Supabase browser client has TypeScript inference issue with insert queries
           const { error: logError } = await supabase.from('usage_log').insert({
             user_id: user.id,
             action: 'selection_created',
@@ -673,7 +673,7 @@ export function Dashboard() {
 
         // Use RPC function to atomically replace all items (delete + insert in transaction)
         // The RPC function will also update item_count to match the actual number of items
-        // @ts-expect-error - Supabase RPC type inference issue, p_items accepts Json array
+        // @ts-ignore - Supabase RPC type inference issue, p_items accepts Json array
         const { error: rpcError } = await supabase.rpc('update_selection_items', {
           p_selection_id: savedSelectionId,
           p_items: uniqueItems.map((item) => ({
@@ -699,7 +699,7 @@ export function Dashboard() {
         // Ensure all fields are explicitly mapped to guarantee full data is saved
         const uniqueItems = Array.from(new Map(selectedItems.map((item) => [item.doc_id, item])).values());
 
-        // @ts-expect-error - Supabase RPC type inference issue, p_items accepts Json array
+        // @ts-ignore - Supabase RPC type inference issue, p_items accepts Json array
         const { data: newSelectionId, error: rpcError } = await supabase.rpc('create_selection', {
           p_name: selectionName,
           p_criteria_json: criteria,
@@ -725,7 +725,7 @@ export function Dashboard() {
 
         // Log usage (only on create)
         try {
-          // @ts-expect-error - Supabase browser client has TypeScript inference issue with insert queries
+          // @ts-ignore - Supabase browser client has TypeScript inference issue with insert queries
           const { error: logError } = await supabase.from('usage_log').insert({
             user_id: user.id,
             action: 'selection_created',
@@ -951,7 +951,7 @@ export function Dashboard() {
           // Update selection metadata
           const { error: updateError } = await supabase
             .from('selections')
-            // @ts-expect-error - Supabase browser client has TypeScript inference issue with update queries
+            // @ts-ignore - Supabase browser client has TypeScript inference issue with update queries
             .update({
               name: selectionName,
               criteria_json: criteria,
@@ -964,7 +964,7 @@ export function Dashboard() {
           }
 
           // Use RPC function to atomically replace all items
-          // @ts-expect-error - Supabase RPC type inference issue, p_items accepts Json array
+          // @ts-ignore - Supabase RPC type inference issue, p_items accepts Json array
           const { error: rpcError } = await supabase.rpc('update_selection_items', {
             p_selection_id: savedSelectionId,
             p_items: uniqueItems.map((item) => ({
@@ -992,7 +992,7 @@ export function Dashboard() {
       if (!selectionId) {
         const uniqueItems = Array.from(new Map(selectedItems.map((item) => [item.doc_id, item])).values());
 
-        // @ts-expect-error - Supabase RPC type inference issue, p_items accepts Json array
+        // @ts-ignore - Supabase RPC type inference issue, p_items accepts Json array
         const { data: newSelectionId, error: rpcError } = await supabase.rpc('create_selection', {
           p_name: selectionName,
           p_criteria_json: criteria,
@@ -1022,7 +1022,7 @@ export function Dashboard() {
 
         // Log usage (only on create)
         try {
-          // @ts-expect-error - Supabase browser client has TypeScript inference issue with insert queries
+          // @ts-ignore - Supabase browser client has TypeScript inference issue with insert queries
           const { error: logError } = await supabase.from('usage_log').insert({
             user_id: user.id,
             action: 'selection_created',

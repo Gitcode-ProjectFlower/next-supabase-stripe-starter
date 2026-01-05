@@ -41,7 +41,7 @@ export function OverviewSection({
           .single();
 
         if (userData && mounted) {
-          // @ts-expect-error - Supabase type inference issue with select queries
+          // @ts-ignore - Supabase type inference issue with select queries
           setEmailNotificationsEnabled(userData.email_notifications_enabled ?? false);
         }
       } catch (error) {

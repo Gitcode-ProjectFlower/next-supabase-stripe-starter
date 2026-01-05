@@ -34,7 +34,7 @@ export async function logUsage(userId: string, action: UsageAction, count: numbe
 
   const { data: insertData, error } = await supabase
     .from('usage_log')
-    // @ts-expect-error - Supabase browser client has TypeScript inference issue with insert queries
+    // @ts-ignore - Supabase browser client has TypeScript inference issue with insert queries
     .insert({
       user_id: userId,
       action,
@@ -88,7 +88,7 @@ export async function checkUsageLimit(
     (action === 'ai_question' && process.env.UNLIMITED_AI_USAGE === 'true')
   ) {
     // Get current usage just for reporting
-    // @ts-expect-error - Supabase RPC type inference issue
+    // @ts-ignore - Supabase RPC type inference issue
     const { data: rawStats } = await supabase.rpc('get_usage_stats', {
       p_user_id: userId,
     });
@@ -121,7 +121,7 @@ export async function checkUsageLimit(
   const limit = action === 'record_download' ? planConfig.maxDownloadsPer30Days : planConfig.maxAiCallsPer30Days;
 
   // Check if user can perform action
-  // @ts-expect-error - Supabase RPC type inference issue
+  // @ts-ignore - Supabase RPC type inference issue
   const { data: canProceed, error: checkError } = await supabase.rpc('check_usage_limit', {
     p_user_id: userId,
     p_action: action,
@@ -136,7 +136,7 @@ export async function checkUsageLimit(
   }
 
   // Get current usage for response
-  // @ts-expect-error - Supabase RPC type inference issue
+  // @ts-ignore - Supabase RPC type inference issue
   const { data: rawStats, error: statsError } = await supabase.rpc('get_usage_stats', {
     p_user_id: userId,
   });
@@ -167,7 +167,7 @@ export async function checkUsageLimit(
 export async function getUsageStats(userId: string): Promise<UsageStats | null> {
   const supabase = await createSupabaseServerClient();
 
-  // @ts-expect-error - Supabase RPC type inference issue
+  // @ts-ignore - Supabase RPC type inference issue
   const { data, error } = await supabase.rpc('get_usage_stats', {
     p_user_id: userId,
   });

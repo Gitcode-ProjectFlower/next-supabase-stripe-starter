@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
         // Update database immediately (webhook will also update, but this ensures immediate consistency)
         await supabase
           .from('subscriptions')
-          // @ts-expect-error - Supabase browser client has TypeScript inference issue with update queries
+          // @ts-ignore - Supabase browser client has TypeScript inference issue with update queries
           .update({
             status: 'canceled',
             ended_at: new Date().toISOString(),

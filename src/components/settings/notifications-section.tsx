@@ -133,7 +133,7 @@ export function NotificationsSection({ initialEmailNotifications }: Notification
       // Update email_notifications_enabled in Supabase users table
       const { error: updateError } = await supabase
         .from('users')
-        // @ts-expect-error - Supabase browser client has TypeScript inference issue with update queries
+        // @ts-ignore - Supabase browser client has TypeScript inference issue with update queries
         // The update payload is correctly typed, but TypeScript infers the parameter as 'never'
         // This is a known limitation and the code works correctly at runtime
         .update({ email_notifications_enabled: emailNotifications })

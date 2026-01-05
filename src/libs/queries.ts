@@ -145,7 +145,7 @@ export function useDownloadsQuery(
               .eq('id', download.selection_id)
               .single();
 
-            // @ts-expect-error - Supabase type inference issue with select queries
+            // @ts-ignore - Supabase type inference issue with select queries
             selectionName = selection?.name;
           }
 

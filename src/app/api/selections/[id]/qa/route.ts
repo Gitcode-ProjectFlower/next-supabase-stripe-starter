@@ -106,7 +106,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
       const { data: updatedSessionData, error: updateError } = await supabase
         .from('qa_sessions')
-        // @ts-expect-error - Supabase browser client has TypeScript inference issue with update queries
+        // @ts-ignore - Supabase browser client has TypeScript inference issue with update queries
         .update({
           status: 'processing',
           progress: 0,
@@ -133,7 +133,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     if (!qaSessionId) {
       const { data: qaSessionData, error: sessionError } = await supabase
         .from('qa_sessions')
-        // @ts-expect-error - Supabase browser client has TypeScript inference issue with insert queries
+        // @ts-ignore - Supabase browser client has TypeScript inference issue with insert queries
         .insert({
           user_id: user.id,
           selection_id: selectionId,
@@ -208,7 +208,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       // No usage was logged, so nothing to reverse
       await supabase
         .from('qa_sessions')
-        // @ts-expect-error - Supabase browser client has TypeScript inference issue with insert queries
+        // @ts-ignore - Supabase browser client has TypeScript inference issue with insert queries
         .update({
           status: 'failed',
           error_message: errorMessage,

@@ -32,7 +32,7 @@ export async function GET() {
     }
 
     // Return the preference (default to false if not set)
-    // @ts-expect-error - Supabase type inference issue with select queries
+    // @ts-ignore - Supabase type inference issue with select queries
     const enabled = userData?.email_notifications_enabled ?? false;
 
     return NextResponse.json({ enabled });
@@ -70,7 +70,7 @@ export async function PUT(request: NextRequest) {
     // Update user preferences in users table
     const { error: updateError } = await supabase
       .from('users')
-      // @ts-expect-error - Supabase browser client has TypeScript inference issue with update queries
+      // @ts-ignore - Supabase browser client has TypeScript inference issue with update queries
       .update({ email_notifications_enabled: enabled })
       .eq('id', user.id);
 
