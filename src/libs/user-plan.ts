@@ -102,7 +102,17 @@ export async function getUserPlan(userId: string, checkStripeFallback = false): 
       }
     }
 
-    const price = subscription.prices;
+    // Type assertion for subscription with nested prices and products
+    const subscriptionData = subscription as {
+      prices: any;
+      [key: string]: any;
+    } | null;
+
+    if (!subscriptionData) {
+      return 'free_tier';
+    }
+
+    const price = subscriptionData.prices;
     // Handle array or object for price
     const priceData = Array.isArray(price) ? price[0] : price;
 

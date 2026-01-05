@@ -32,8 +32,9 @@ export async function logUsage(userId: string, action: UsageAction, count: numbe
     count,
   });
 
-  const { data, error } = await supabase
+  const { data: insertData, error } = await supabase
     .from('usage_log')
+    // @ts-expect-error - Supabase browser client has TypeScript inference issue with insert queries
     .insert({
       user_id: userId,
       action,
@@ -41,6 +42,8 @@ export async function logUsage(userId: string, action: UsageAction, count: numbe
     })
     .select('id')
     .single();
+
+  const data = insertData as { id: string } | null;
 
   if (error) {
     console.error('[Usage Tracking] Failed to log usage:', {

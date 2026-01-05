@@ -1,11 +1,11 @@
 'use client';
 
-import { useQuery, type UseQueryOptions } from '@tanstack/react-query'
+import { useQuery, type UseQueryOptions } from '@tanstack/react-query';
 
-import { ApiError, apiFetch } from './api-client'
-import type { UserPlan } from './plan-config'
-import { QUERY_KEYS } from './query-keys'
-import { createSupabaseBrowserClient } from './supabase/supabase-browser-client'
+import { ApiError, apiFetch } from './api-client';
+import type { UserPlan } from './plan-config';
+import { QUERY_KEYS } from './query-keys';
+import { createSupabaseBrowserClient } from './supabase/supabase-browser-client';
 
 type UsageStatsResponse = {
   downloads: number;
@@ -135,7 +135,7 @@ export function useDownloadsQuery(
 
       // Format downloads with selection names if available
       const formattedDownloads: DownloadItem[] = await Promise.all(
-        (downloads || []).map(async (download): Promise<DownloadItem> => {
+        (downloads || []).map(async (download: any): Promise<DownloadItem> => {
           let selectionName: string | undefined;
 
           if (download.selection_id) {
@@ -145,6 +145,7 @@ export function useDownloadsQuery(
               .eq('id', download.selection_id)
               .single();
 
+            // @ts-expect-error - Supabase type inference issue with select queries
             selectionName = selection?.name;
           }
 
@@ -275,13 +276,13 @@ export function useRecentActivityQuery(
 
       // Fetch related records to get metadata
       const activitiesResults = await Promise.all(
-        usageLogs.map(async (log): Promise<ActivityItem | null> => {
+        (usageLogs || []).map(async (log: any): Promise<ActivityItem | null> => {
           const logTime = new Date(log.created_at || Date.now());
           const timeWindow = 5 * 60 * 1000; // 5 minutes window
 
           if (log.action === 'ai_question') {
             // Find related QA session
-            const { data: qaSessions } = await supabase
+            const { data: qaSessionsData } = await supabase
               .from('qa_sessions')
               .select('id, selection_id, prompt, status, created_at')
               .eq('user_id', user.id)
@@ -291,16 +292,24 @@ export function useRecentActivityQuery(
               .limit(1)
               .single();
 
+            const qaSessions = qaSessionsData as {
+              id: string;
+              selection_id: string;
+              prompt: string;
+              status: string;
+              created_at: string;
+            } | null;
+
             if (qaSessions) {
               // Get selection name
               let selectionName = 'Unknown Selection';
               if (qaSessions.selection_id) {
-                const { data: selection } = await supabase
+                const { data: selectionData } = await supabase
                   .from('selections')
                   .select('name')
                   .eq('id', qaSessions.selection_id)
                   .single();
-                selectionName = selection?.name || selectionName;
+                selectionName = (selectionData as { name?: string } | null)?.name || selectionName;
               }
 
               const statusMap: Record<string, 'queued' | 'running' | 'done' | 'failed'> = {
@@ -327,7 +336,7 @@ export function useRecentActivityQuery(
             }
           } else if (log.action === 'selection_created') {
             // Find related selection
-            const { data: selections } = await supabase
+            const { data: selectionsData } = await supabase
               .from('selections')
               .select('id, name, item_count, created_at')
               .eq('user_id', user.id)
@@ -336,6 +345,13 @@ export function useRecentActivityQuery(
               .order('created_at', { ascending: false })
               .limit(1)
               .single();
+
+            const selections = selectionsData as {
+              id: string;
+              name: string;
+              item_count: number;
+              created_at: string;
+            } | null;
 
             if (selections) {
               return {
@@ -353,7 +369,7 @@ export function useRecentActivityQuery(
             }
           } else if (log.action === 'record_download') {
             // Find related download
-            const { data: downloads } = await supabase
+            const { data: downloadsData } = await supabase
               .from('downloads')
               .select('id, selection_id, type, created_at, expires_at')
               .eq('user_id', user.id)
@@ -363,16 +379,24 @@ export function useRecentActivityQuery(
               .limit(1)
               .single();
 
+            const downloads = downloadsData as {
+              id: string;
+              selection_id: string | null;
+              type: string;
+              created_at: string;
+              expires_at: string | null;
+            } | null;
+
             if (downloads) {
               // Get selection name
               let selectionName = 'Unknown Selection';
               if (downloads.selection_id) {
-                const { data: selection } = await supabase
+                const { data: selectionData } = await supabase
                   .from('selections')
                   .select('name')
                   .eq('id', downloads.selection_id)
                   .single();
-                selectionName = selection?.name || selectionName;
+                selectionName = (selectionData as { name?: string } | null)?.name || selectionName;
               }
 
               const isExpired = downloads.expires_at ? new Date(downloads.expires_at) < new Date() : false;

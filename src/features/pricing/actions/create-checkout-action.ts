@@ -35,14 +35,22 @@ export async function createCheckoutAction(formData: FormData) {
 
   // 3. Fetch price from database to determine type
   const supabase = await createSupabaseServerClient();
-  const { data: price } = await supabase.from('prices').select('*').eq('id', priceId).single();
+  const { data: priceData } = await supabase.from('prices').select('*').eq('id', priceId).single();
+
+  const price = priceData as {
+    id: string;
+    product_id: string | null;
+    type: string;
+    unit_amount: number | null;
+    interval: string | null;
+  } | null;
 
   if (!price) {
     throw new Error('Price not found');
   }
 
   // 4. Check for existing active subscription (excluding canceled ones)
-  const { data: existingSubscription } = await supabase
+  const { data: existingSubscriptionData } = await supabase
     .from('subscriptions')
     .select('id, status, price_id, prices(*, products(*))')
     .eq('user_id', session.user.id)
@@ -51,6 +59,12 @@ export async function createCheckoutAction(formData: FormData) {
     .order('created', { ascending: false })
     .limit(1)
     .maybeSingle();
+
+  const existingSubscription = existingSubscriptionData as {
+    id: string;
+    status: string;
+    price_id: string | null;
+  } | null;
 
   // If user has active subscription and trying to subscribe to the same plan
   if (existingSubscription && existingSubscription.price_id === priceId) {
@@ -68,6 +82,7 @@ export async function createCheckoutAction(formData: FormData) {
       // Update database immediately (webhook will also update, but this ensures immediate consistency)
       await supabase
         .from('subscriptions')
+        // @ts-expect-error - Supabase browser client has TypeScript inference issue with update queries
         .update({
           status: 'canceled',
           ended_at: new Date().toISOString(),
@@ -82,10 +97,10 @@ export async function createCheckoutAction(formData: FormData) {
   }
 
   // Get product info for tracking
-  let product = null;
+  let product: { name: string } | null = null;
   if (price.product_id) {
-    const { data } = await supabase.from('products').select('name').eq('id', price.product_id).single();
-    product = data;
+    const { data: productData } = await supabase.from('products').select('name').eq('id', price.product_id).single();
+    product = productData as { name: string } | null;
   }
 
   // 5. Create a checkout session in Stripe
