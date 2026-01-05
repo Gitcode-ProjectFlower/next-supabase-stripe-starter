@@ -454,7 +454,7 @@ export function Dashboard() {
         // Update selection metadata (name and criteria only - item_count will be updated by RPC)
         const { error: updateError } = await supabase
           .from('selections')
-          // @ts-expect-error - Supabase browser client has TypeScript inference issue with update queries
+          // @ts-ignore - Supabase browser client has TypeScript inference issue with update queries
           .update({
             name: selectionName,
             criteria_json: criteria,
@@ -659,7 +659,7 @@ export function Dashboard() {
         // Update selection metadata (name and criteria only - item_count will be updated by RPC)
         const { error: updateError } = await supabase
           .from('selections')
-          // @ts-expect-error - Supabase browser client has TypeScript inference issue with update queries
+          // @ts-ignore - Supabase browser client has TypeScript inference issue with update queries
           .update({
             name: selectionName,
             criteria_json: criteria,
