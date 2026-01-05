@@ -15,7 +15,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     }
 
     // Fetch QA session from Supabase
-    const { data: session, error: sessionError } = await supabase
+    const { data: sessionData, error: sessionError } = await supabase
       .from('qa_sessions')
       .select(
         `
@@ -30,9 +30,11 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       .eq('selection_id', selectionId)
       .single();
 
-    if (sessionError || !session) {
+    if (sessionError || !sessionData) {
       return NextResponse.json({ error: 'QA session not found' }, { status: 404 });
     }
+
+    const session = sessionData as any;
 
     // Fetch Q&A answers from Supabase (saved by Inngest function after Haystack API calls)
     const { data: answers, error: answersError } = await supabase

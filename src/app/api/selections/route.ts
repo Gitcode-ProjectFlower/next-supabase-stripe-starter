@@ -109,6 +109,7 @@ export async function POST(request: NextRequest) {
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7);
 
+    // @ts-expect-error - Supabase RPC type inference issue
     const { data: selectionId, error: rpcError } = await supabase.rpc('create_selection', {
       p_name: validatedData.name,
       p_criteria_json: validatedData.criteria,

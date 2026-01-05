@@ -10,6 +10,7 @@ import { useSelectionDetailQuery, useUsageStatsQuery } from '@/libs/queries';
 import { QUERY_KEYS } from '@/libs/query-keys';
 import { createSupabaseBrowserClient } from '@/libs/supabase/supabase-browser-client';
 
+import { FullPageLoader } from '@/components/full-page-loader';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -91,7 +92,7 @@ const COLUMN_CONFIG: Record<
   },
 };
 
-export default function SelectionDetailPage() {
+export function Selection() {
   const params = useParams();
   const router = useRouter();
   const { toast } = useToast();
@@ -534,139 +535,129 @@ export default function SelectionDetailPage() {
     }
   };
 
-  if (isCheckingAuth || isLoading) {
-    return (
-      <div className='flex min-h-screen items-center justify-center'>
-        <div className='text-center'>
-          <div className='text-lg font-medium text-gray-900'>Loading selection...</div>
-        </div>
-      </div>
-    );
-  }
+  if (isLoading) return <FullPageLoader text='Loading selection...' />;
 
   if (!selection) {
     return null;
   }
 
   return (
-    <div className='min-h-screen bg-gray-50 p-6'>
-      <div className='mx-auto max-w-7xl'>
-        {/* Header */}
-        <div className='mb-6'>
-          <Button variant='ghost' className='-ml-2 mb-4 hover:bg-gray-100' onClick={() => router.push('/selections')}>
-            <ArrowLeft className='mr-2 h-4 w-4' />
-            Back to Selections
-          </Button>
+    <>
+      {/* Header */}
+      <div className='mb-6'>
+        <Button variant='ghost' className='-ml-2 mb-4 hover:bg-gray-100' onClick={() => router.push('/selections')}>
+          <ArrowLeft className='mr-2 h-4 w-4' />
+          Back to Selections
+        </Button>
 
-          <div className='flex items-start justify-between'>
-            <div>
-              <h1 className='text-3xl font-bold text-black'>{selection.name}</h1>
-              <div className='mt-2 flex items-center gap-4 text-sm text-gray-600'>
-                <span>{selection.item_count} candidates</span>
-                <span>•</span>
-                <span>Created: {formatDate(selection.created_at)}</span>
-                <span>•</span>
-                <span>Expires: {formatDate(selection.expires_at)}</span>
-              </div>
+        <div className='flex items-start justify-between'>
+          <div>
+            <h1 className='text-3xl font-bold text-black'>{selection.name}</h1>
+            <div className='mt-2 flex items-center gap-4 text-sm text-gray-600'>
+              <span>{selection.item_count} candidates</span>
+              <span>•</span>
+              <span>Created: {formatDate(selection.created_at)}</span>
+              <span>•</span>
+              <span>Expires: {formatDate(selection.expires_at)}</span>
             </div>
-            <div className='flex gap-2'>
-              <Button
-                variant='outline'
-                className='rounded-lg px-4 py-2 hover:bg-gray-100'
-                onClick={() => setIsQAModalOpen(true)}
-              >
-                <MessageSquare className='mr-2 h-4 w-4' />
-                Ask Q&A
-              </Button>
-              <Button
-                className='rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700'
-                onClick={handleExport}
-                disabled={isExporting}
-              >
-                <Download className='mr-2 h-4 w-4' />
-                {isExporting ? 'Exporting...' : 'Export CSV'}
-              </Button>
-            </div>
+          </div>
+          <div className='flex gap-2'>
+            <Button
+              variant='outline'
+              className='rounded-lg px-4 py-2 hover:bg-gray-100'
+              onClick={() => setIsQAModalOpen(true)}
+            >
+              <MessageSquare className='mr-2 h-4 w-4' />
+              Ask Q&A
+            </Button>
+            <Button
+              className='rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700'
+              onClick={handleExport}
+              disabled={isExporting}
+            >
+              <Download className='mr-2 h-4 w-4' />
+              {isExporting ? 'Exporting...' : 'Export CSV'}
+            </Button>
           </div>
         </div>
+      </div>
 
-        {/* Filters Summary */}
-        {selection.criteria && (
-          <div className='mb-6 rounded-2xl border bg-white p-4 shadow-sm'>
-            <h2 className='mb-2 font-semibold text-gray-900'>Search Criteria</h2>
-            <div className='flex flex-wrap gap-2'>
-              {selection.criteria.names && selection.criteria.names.length > 0 && (
-                <div className='rounded-lg bg-gray-100 px-3 py-1.5 text-sm'>
-                  <span className='font-medium text-gray-700'>Names:</span>{' '}
-                  <span className='text-gray-600'>{selection.criteria.names.join(', ')}</span>
-                </div>
-              )}
-              {selection.criteria.sectors && selection.criteria.sectors.length > 0 && (
-                <div className='rounded-lg bg-gray-100 px-3 py-1.5 text-sm'>
-                  <span className='font-medium text-gray-700'>Sectors:</span>{' '}
-                  <span className='text-gray-600'>{selection.criteria.sectors.length} selected</span>
-                </div>
-              )}
-              {selection.criteria.regions && selection.criteria.regions.length > 0 && (
-                <div className='rounded-lg bg-gray-100 px-3 py-1.5 text-sm'>
-                  <span className='font-medium text-gray-700'>Regions:</span>{' '}
-                  <span className='text-gray-600'>{selection.criteria.regions.length} selected</span>
-                </div>
-              )}
-              {selection.criteria.top_k && (
-                <div className='rounded-lg bg-gray-100 px-3 py-1.5 text-sm'>
-                  <span className='font-medium text-gray-700'>Top-K:</span>{' '}
-                  <span className='text-gray-600'>{selection.criteria.top_k}</span>
-                </div>
-              )}
-            </div>
+      {/* Filters Summary */}
+      {selection.criteria && (
+        <div className='mb-6 rounded-2xl border bg-white p-4 shadow-sm'>
+          <h2 className='mb-2 font-semibold text-gray-900'>Search Criteria</h2>
+          <div className='flex flex-wrap gap-2'>
+            {selection.criteria.names && selection.criteria.names.length > 0 && (
+              <div className='rounded-lg bg-gray-100 px-3 py-1.5 text-sm'>
+                <span className='font-medium text-gray-700'>Names:</span>{' '}
+                <span className='text-gray-600'>{selection.criteria.names.join(', ')}</span>
+              </div>
+            )}
+            {selection.criteria.sectors && selection.criteria.sectors.length > 0 && (
+              <div className='rounded-lg bg-gray-100 px-3 py-1.5 text-sm'>
+                <span className='font-medium text-gray-700'>Sectors:</span>{' '}
+                <span className='text-gray-600'>{selection.criteria.sectors.length} selected</span>
+              </div>
+            )}
+            {selection.criteria.regions && selection.criteria.regions.length > 0 && (
+              <div className='rounded-lg bg-gray-100 px-3 py-1.5 text-sm'>
+                <span className='font-medium text-gray-700'>Regions:</span>{' '}
+                <span className='text-gray-600'>{selection.criteria.regions.length} selected</span>
+              </div>
+            )}
+            {selection.criteria.top_k && (
+              <div className='rounded-lg bg-gray-100 px-3 py-1.5 text-sm'>
+                <span className='font-medium text-gray-700'>Top-K:</span>{' '}
+                <span className='text-gray-600'>{selection.criteria.top_k}</span>
+              </div>
+            )}
           </div>
-        )}
+        </div>
+      )}
 
-        {/* Candidates Table */}
-        <div className='overflow-hidden rounded-2xl border bg-white shadow-sm'>
-          <div className='overflow-auto'>
-            <Table>
-              <TableHeader className='bg-gray-50'>
-                <TableRow className='hover:bg-transparent'>
+      {/* Candidates Table */}
+      <div className='overflow-hidden rounded-2xl border bg-white shadow-sm'>
+        <div className='overflow-auto'>
+          <Table>
+            <TableHeader className='bg-gray-50'>
+              <TableRow className='hover:bg-transparent'>
+                {visibleColumns.map((key) => (
+                  <TableHead key={key} className='whitespace-nowrap px-4 py-3 font-semibold text-gray-700'>
+                    {COLUMN_CONFIG[key].label}
+                  </TableHead>
+                ))}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {selection.items?.map((item, index) => (
+                <TableRow key={item.id || `${item.doc_id}-${index}`} className='hover:bg-gray-50'>
                   {visibleColumns.map((key) => (
-                    <TableHead key={key} className='whitespace-nowrap px-4 py-3 font-semibold text-gray-700'>
-                      {COLUMN_CONFIG[key].label}
-                    </TableHead>
+                    <TableCell
+                      key={key}
+                      className={cn(
+                        'px-4 py-3 text-sm text-gray-600',
+                        key === 'name' && 'font-medium text-gray-900',
+                        key === 'email' || key === 'sectors' || key === 'city' || key === 'street'
+                          ? 'max-w-[220px] truncate'
+                          : 'whitespace-nowrap'
+                      )}
+                      title={
+                        key === 'email'
+                          ? item.email
+                          : key === 'sectors'
+                          ? item.sectors?.join(', ')
+                          : key === 'city' || key === 'street'
+                          ? (item as any)[key] || ''
+                          : undefined
+                      }
+                    >
+                      {COLUMN_CONFIG[key].render(item)}
+                    </TableCell>
                   ))}
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {selection.items?.map((item, index) => (
-                  <TableRow key={item.id || `${item.doc_id}-${index}`} className='hover:bg-gray-50'>
-                    {visibleColumns.map((key) => (
-                      <TableCell
-                        key={key}
-                        className={cn(
-                          'px-4 py-3 text-sm text-gray-600',
-                          key === 'name' && 'font-medium text-gray-900',
-                          key === 'email' || key === 'sectors' || key === 'city' || key === 'street'
-                            ? 'max-w-[220px] truncate'
-                            : 'whitespace-nowrap'
-                        )}
-                        title={
-                          key === 'email'
-                            ? item.email
-                            : key === 'sectors'
-                            ? item.sectors?.join(', ')
-                            : key === 'city' || key === 'street'
-                            ? (item as any)[key] || ''
-                            : undefined
-                        }
-                      >
-                        {COLUMN_CONFIG[key].render(item)}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+              ))}
+            </TableBody>
+          </Table>
         </div>
       </div>
 
@@ -767,6 +758,6 @@ export default function SelectionDetailPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   );
 }

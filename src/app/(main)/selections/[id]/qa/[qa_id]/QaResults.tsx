@@ -8,6 +8,7 @@ import { getVisibleColumns, type UserPlan } from '@/libs/plan-config';
 import { useQAResultQuery, useUsageStatsQuery } from '@/libs/queries';
 import { createSupabaseBrowserClient } from '@/libs/supabase/supabase-browser-client';
 
+import { FullPageLoader } from '@/components/full-page-loader';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/components/ui/use-toast';
@@ -37,7 +38,7 @@ interface QAResult {
   answers: CandidateAnswer[];
 }
 
-export default function QAResultsPage() {
+export function QaResults() {
   const params = useParams();
   const router = useRouter();
   const { toast } = useToast();
@@ -150,28 +151,76 @@ export default function QAResultsPage() {
     );
   };
 
-  const handleDownloadCSV = () => {
-    if (result?.csv_url && result.csv_url !== '#') {
-      window.open(result.csv_url, '_blank');
-    } else {
+  const handleDownloadCSV = async () => {
+    if (!result?.csv_url || result.csv_url === '#') {
       toast({
         title: 'Coming soon',
         description: 'CSV download will be available soon',
       });
+      return;
     }
+
+    // First, find the download record for this Q&A session
+    // We need to get the download ID from the downloads table
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        // Fallback to direct download if not authenticated
+        window.open(result.csv_url, '_blank');
+        return;
+      }
+
+      const { data: downloads, error: downloadError } = await supabase
+        .from('downloads')
+        .select('id, row_count')
+        .eq('user_id', user.id)
+        .eq('selection_id', selectionId)
+        .eq('type', 'qa')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single<{ id: string; row_count: number }>();
+
+      if (!downloadError && downloads?.id) {
+        // Call API endpoint to log the download
+        const response = await fetch(`/api/downloads/${downloads.id}/download`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          console.error('[QaResults] Failed to log download:', {
+            status: response.status,
+            error: errorData.error || 'Unknown error',
+          });
+          // Still allow download even if logging fails
+        } else {
+          const data = await response.json();
+          // Use the URL from the API response (or fallback to original)
+          const downloadUrl = data.downloadUrl || result.csv_url;
+          window.open(downloadUrl, '_blank');
+          return;
+        }
+      } else {
+        console.warn('[QaResults] Could not find download record, logging may not work:', downloadError);
+      }
+    } catch (error) {
+      console.error('[QaResults] Error calling download API:', error);
+      // Fallback to direct download if API call fails
+    }
+
+    // Fallback: open URL directly if API call failed
+    window.open(result.csv_url, '_blank');
   };
 
   const result = qaResult;
 
-  if (isCheckingAuth || isLoading) {
-    return (
-      <div className='flex min-h-screen items-center justify-center'>
-        <div className='text-center'>
-          <div className='text-lg font-medium text-gray-900'>Loading Q&A results...</div>
-        </div>
-      </div>
-    );
-  }
+  if (isCheckingAuth || isLoading) return <FullPageLoader text='Loading Q&A results...' />;
 
   if (!result) {
     return null;

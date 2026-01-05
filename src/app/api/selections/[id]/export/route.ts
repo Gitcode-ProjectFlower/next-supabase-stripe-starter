@@ -18,11 +18,13 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { data: selection, error: selectionError } = await supabase
+    const { data: selectionData, error: selectionError } = await supabase
       .from('selections')
       .select('id, user_id, item_count')
       .eq('id', selectionId)
       .single();
+
+    const selection = selectionData as { id: string; user_id: string; item_count: number } | null;
 
     if (selectionError || !selection) {
       return NextResponse.json({ error: 'Selection not found' }, { status: 404 });

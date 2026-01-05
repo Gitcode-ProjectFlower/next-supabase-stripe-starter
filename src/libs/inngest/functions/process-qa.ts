@@ -525,7 +525,54 @@ export const processQAJob = inngest.createFunction(
         }
 
         console.log('[Inngest processQAJob] Session marked as failed due to low success rate');
-        // Don't log usage if session failed
+
+        // Still log record_download usage even if session failed, since CSV was generated
+        // This ensures the download appears in recent activity
+        console.log('[Inngest processQAJob] Logging record_download usage for Q&A CSV (failed session)...', {
+          userId,
+          rowCount: results.length,
+        });
+
+        try {
+          const { data: usageLog, error: usageError } = await supabaseAdminClient
+            .from('usage_log')
+            .insert({
+              user_id: userId,
+              action: 'record_download',
+              count: results.length,
+            })
+            .select('id')
+            .single();
+
+          if (usageError) {
+            console.error('[Inngest processQAJob] Failed to log record_download usage (failed session):', {
+              error: usageError.message,
+              code: usageError.code,
+              details: usageError.details,
+              hint: usageError.hint,
+              userId,
+              action: 'record_download',
+              count: results.length,
+            });
+            // Don't throw - continue even if usage logging fails
+          } else {
+            console.log('[Inngest processQAJob] record_download usage logged successfully (failed session):', {
+              logId: usageLog?.id,
+              userId,
+              action: 'record_download',
+              count: results.length,
+            });
+          }
+        } catch (usageError) {
+          console.error('[Inngest processQAJob] Failed to log record_download usage (failed session, non-critical):', {
+            error: usageError instanceof Error ? usageError.message : String(usageError),
+            userId,
+            action: 'record_download',
+            count: results.length,
+          });
+          // Don't fail the job if usage logging fails - it's not critical
+        }
+
         return;
       }
 
@@ -556,6 +603,53 @@ export const processQAJob = inngest.createFunction(
         console.log(`[Inngest processQAJob] Usage logged: ${successCount} AI calls (only successful answers)`);
       } catch (usageError) {
         console.error('[Inngest processQAJob] Failed to log usage:', usageError);
+        // Don't fail the job if usage logging fails - it's not critical
+      }
+
+      // Log record_download usage for Q&A CSV (similar to lookalikes export)
+      // This ensures the download appears in recent activity
+      console.log('[Inngest processQAJob] Logging record_download usage for Q&A CSV...', {
+        userId,
+        rowCount: results.length,
+      });
+
+      try {
+        const { data: usageLog, error: usageError } = await supabaseAdminClient
+          .from('usage_log')
+          .insert({
+            user_id: userId,
+            action: 'record_download',
+            count: results.length,
+          })
+          .select('id')
+          .single();
+
+        if (usageError) {
+          console.error('[Inngest processQAJob] Failed to log record_download usage:', {
+            error: usageError.message,
+            code: usageError.code,
+            details: usageError.details,
+            hint: usageError.hint,
+            userId,
+            action: 'record_download',
+            count: results.length,
+          });
+          // Don't throw - continue even if usage logging fails
+        } else {
+          console.log('[Inngest processQAJob] record_download usage logged successfully:', {
+            logId: usageLog?.id,
+            userId,
+            action: 'record_download',
+            count: results.length,
+          });
+        }
+      } catch (usageError) {
+        console.error('[Inngest processQAJob] Failed to log record_download usage (non-critical):', {
+          error: usageError instanceof Error ? usageError.message : String(usageError),
+          userId,
+          action: 'record_download',
+          count: results.length,
+        });
         // Don't fail the job if usage logging fails - it's not critical
       }
     });

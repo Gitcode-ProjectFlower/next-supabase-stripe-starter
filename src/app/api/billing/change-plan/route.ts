@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Fetch existing active/trialing subscription (excluding canceled ones)
-    const { data: subscription } = await supabase
+    const { data: subscriptionData } = await supabase
       .from('subscriptions')
       .select('id, status, price_id')
       .eq('user_id', user.id)
@@ -38,6 +38,8 @@ export async function POST(request: NextRequest) {
       .order('created', { ascending: false })
       .limit(1)
       .maybeSingle();
+
+    const subscription = subscriptionData as { id: string; status: string; price_id: string | null } | null;
 
     // If user has active subscription and trying to subscribe to the same plan
     if (subscription && subscription.price_id === priceId) {
@@ -55,6 +57,7 @@ export async function POST(request: NextRequest) {
         // Update database immediately (webhook will also update, but this ensures immediate consistency)
         await supabase
           .from('subscriptions')
+          // @ts-expect-error - Supabase browser client has TypeScript inference issue with update queries
           .update({
             status: 'canceled',
             ended_at: new Date().toISOString(),

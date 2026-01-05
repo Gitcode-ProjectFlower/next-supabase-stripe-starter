@@ -1,11 +1,11 @@
 'use client';
 
-import { CheckCircle2, Clock, FileDown, MessageSquare, Search, XCircle } from 'lucide-react';
+import { CheckCircle2, Clock, FileDown, MessageSquare, RefreshCw, Search, XCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 import { useRecentActivityQuery } from '@/libs/queries';
-import { createSupabaseBrowserClient } from '@/libs/supabase/supabase-browser-client';
 
+import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 
 /**
@@ -15,8 +15,11 @@ import { useToast } from '@/components/ui/use-toast';
 export function RecentActivity() {
   const router = useRouter();
   const { toast } = useToast();
-  const supabase = createSupabaseBrowserClient();
-  const { data, isLoading, error } = useRecentActivityQuery({ retry: 1 });
+  const { data, isLoading, error, refetch, isRefetching } = useRecentActivityQuery({
+    retry: 1,
+    refetchInterval: 30000,
+    refetchOnWindowFocus: true,
+  });
 
   const handleActivityClick = async (activity: { type: string; link?: string; metadata?: any }) => {
     if (!activity.link) {
@@ -32,18 +35,21 @@ export function RecentActivity() {
       // For search, navigate to selection detail page
       router.push(activity.link!);
     } else if (activity.type === 'export') {
-      // For exports, we need to get the download URL from the downloads table
+      // For exports, use the API endpoint to log the download
       if (activity.metadata?.downloadId) {
         try {
-          const { data: download } = await supabase
-            .from('downloads')
-            .select('url, expires_at')
-            .eq('id', activity.metadata.downloadId)
-            .single();
+          // Call API endpoint to log the download
+          const response = await fetch(`/api/downloads/${activity.metadata.downloadId}/download`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          });
 
-          if (download && download.url) {
-            const isExpired = download.expires_at ? new Date(download.expires_at) < new Date() : false;
-            if (isExpired) {
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+
+            if (response.status === 410) {
               toast({
                 title: 'Download Expired',
                 description: 'This download link has expired',
@@ -51,16 +57,35 @@ export function RecentActivity() {
               });
               return;
             }
-            window.open(download.url, '_blank');
+
+            if (response.status === 404) {
+              toast({
+                title: 'Download Not Found',
+                description: 'The download file is no longer available',
+                variant: 'destructive',
+              });
+              return;
+            }
+
+            console.error('[RecentActivity] Failed to log download:', {
+              status: response.status,
+              error: errorData.error || 'Unknown error',
+            });
+            // Still try to open download even if logging fails
+          }
+
+          const data = await response.json();
+          if (data.downloadUrl) {
+            window.open(data.downloadUrl, '_blank');
           } else {
             toast({
-              title: 'Download Not Found',
-              description: 'The download file is no longer available',
+              title: 'Error',
+              description: 'Failed to get download URL',
               variant: 'destructive',
             });
           }
         } catch (error) {
-          console.error('Failed to fetch download URL:', error);
+          console.error('[RecentActivity] Failed to fetch download URL:', error);
           toast({
             title: 'Error',
             description: 'Failed to open download',
@@ -146,8 +171,22 @@ export function RecentActivity() {
   return (
     <div className='rounded-xl border border-gray-200 bg-white'>
       <div className='border-b border-gray-200 px-6 py-4'>
-        <h3 className='text-lg font-semibold text-gray-900'>Recent Activity</h3>
-        <p className='mt-1 text-sm text-gray-600'>Your latest actions and results</p>
+        <div className='flex items-center justify-between'>
+          <div>
+            <h3 className='text-lg font-semibold text-gray-900'>Recent Activity</h3>
+            <p className='mt-1 text-sm text-gray-600'>Your latest actions and results</p>
+          </div>
+          <Button
+            variant='outline'
+            size='sm'
+            onClick={() => refetch()}
+            disabled={isRefetching}
+            className='flex items-center gap-2'
+          >
+            <RefreshCw className={`h-4 w-4 ${isRefetching ? 'animate-spin' : ''}`} />
+            {isRefetching ? 'Refreshing...' : 'Refresh'}
+          </Button>
+        </div>
       </div>
       <div className='divide-y divide-gray-200'>
         {activities.map((activity) => (

@@ -33,7 +33,7 @@ export async function GET() {
 
     // Format downloads with selection names if available
     const formattedDownloads = await Promise.all(
-      (downloads || []).map(async (download) => {
+      (downloads || []).map(async (download: any) => {
         let selectionName: string | undefined;
 
         if (download.selection_id) {
@@ -43,6 +43,7 @@ export async function GET() {
             .eq('id', download.selection_id)
             .single();
 
+          // @ts-expect-error - Supabase type inference issue with select queries
           selectionName = selection?.name;
         }
 

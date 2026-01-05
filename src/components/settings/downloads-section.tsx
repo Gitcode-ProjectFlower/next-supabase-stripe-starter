@@ -3,6 +3,7 @@
 import { Button } from '@/components/ui/button';
 import { useDownloadsQuery } from '@/libs/queries';
 import { RefreshCw } from 'lucide-react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 
 interface Download {
   id: string;
@@ -47,12 +48,41 @@ export function DownloadsSection({ initialDownloads = [] }: DownloadsSectionProp
   };
 
   const handleDownload = async (download: Download) => {
-    if (download.downloadUrl) {
-      // Open signed URL in new tab for download
-      window.open(download.downloadUrl, '_blank');
-    } else {
+    if (!download.downloadUrl) {
       console.error('No download URL available for download:', download.id);
+      return;
     }
+
+    try {
+      // Call API endpoint to log the download
+      const response = await fetch(`/api/downloads/${download.id}/download`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('[DownloadsSection] Failed to log download:', {
+          status: response.status,
+          error: errorData.error || 'Unknown error',
+        });
+        // Still allow download even if logging fails
+      } else {
+        const data = await response.json();
+        // Use the URL from the API response (or fallback to original)
+        const downloadUrl = data.downloadUrl || download.downloadUrl;
+        window.open(downloadUrl, '_blank');
+        return;
+      }
+    } catch (error) {
+      console.error('[DownloadsSection] Error calling download API:', error);
+      // Fallback to direct download if API call fails
+    }
+
+    // Fallback: open URL directly if API call failed
+    window.open(download.downloadUrl, '_blank');
   };
 
   if (isLoading) {
@@ -102,34 +132,44 @@ export function DownloadsSection({ initialDownloads = [] }: DownloadsSectionProp
         </Button>
       </div>
       <div className='overflow-auto rounded-xl border border-gray-200'>
-        <table className='min-w-full divide-y divide-gray-200'>
-          <thead className='bg-gray-50'>
-            <tr>
-              <th className='px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600'>Type</th>
-              <th className='px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600'>
+        <Table className='min-w-full divide-y divide-gray-200'>
+          <TableHeader className='bg-gray-50'>
+            <TableRow className='hover:bg-transparent'>
+              <TableHead className='px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600'>
+                Type
+              </TableHead>
+              <TableHead className='px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600'>
                 Selection
-              </th>
-              <th className='px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600'>
+              </TableHead>
+              <TableHead className='px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600'>
                 Created
-              </th>
-              <th className='px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600'>
+              </TableHead>
+              <TableHead className='px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600'>
                 Expires
-              </th>
-              <th className='px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600'>Size</th>
-              <th className='px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-600'>
+              </TableHead>
+              <TableHead className='px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600'>
+                Size
+              </TableHead>
+              <TableHead className='px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-600'>
                 Action
-              </th>
-            </tr>
-          </thead>
-          <tbody className='divide-y divide-gray-200 bg-white'>
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody className='divide-y divide-gray-200 bg-white'>
             {downloads.map((download) => (
-              <tr key={download.id} className='hover:bg-gray-50'>
-                <td className='whitespace-nowrap px-4 py-3 text-sm text-gray-900'>{download.type}</td>
-                <td className='px-4 py-3 text-sm text-gray-900'>{download.selectionName || download.selectionId}</td>
-                <td className='whitespace-nowrap px-4 py-3 text-sm text-gray-600'>{formatDate(download.createdAt)}</td>
-                <td className='whitespace-nowrap px-4 py-3 text-sm text-gray-600'>{formatDate(download.expiresAt)}</td>
-                <td className='px-4 py-3 text-sm text-gray-600'>{download.size}</td>
-                <td className='whitespace-nowrap px-4 py-3 text-right text-sm'>
+              <TableRow key={download.id} className='hover:bg-gray-50'>
+                <TableCell className='whitespace-nowrap px-4 py-3 text-sm text-gray-900'>{download.type}</TableCell>
+                <TableCell className='px-4 py-3 text-sm text-gray-900'>
+                  {download.selectionName || download.selectionId}
+                </TableCell>
+                <TableCell className='whitespace-nowrap px-4 py-3 text-sm text-gray-600'>
+                  {formatDate(download.createdAt)}
+                </TableCell>
+                <TableCell className='whitespace-nowrap px-4 py-3 text-sm text-gray-600'>
+                  {formatDate(download.expiresAt)}
+                </TableCell>
+                <TableCell className='whitespace-nowrap px-4 py-3 text-sm text-gray-600'>{download.size}</TableCell>
+                <TableCell className='whitespace-nowrap px-4 py-3 text-right text-sm'>
                   <Button
                     variant='outline'
                     size='sm'
@@ -138,11 +178,11 @@ export function DownloadsSection({ initialDownloads = [] }: DownloadsSectionProp
                   >
                     Download
                   </Button>
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
       <p className='mt-2 text-xs text-gray-600'>Files expire after 7 days.</p>
     </>

@@ -24,11 +24,13 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { data: selection, error: selectionError } = await supabase
+    const { data: selectionData, error: selectionError } = await supabase
       .from('selections')
       .select('id, user_id, item_count')
       .eq('id', selectionId)
       .single();
+
+    const selection = selectionData as { id: string; user_id: string; item_count: number } | null;
 
     if (selectionError || !selection) {
       return NextResponse.json({ error: 'Selection not found' }, { status: 404 });
@@ -80,7 +82,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     // This ensures failed jobs don't count against the user's limit
 
     // Check if there's an existing failed QA session for this selection and prompt (for regeneration)
-    const { data: existingFailedSession } = await supabase
+    const { data: existingFailedSessionData } = await supabase
       .from('qa_sessions')
       .select('id')
       .eq('user_id', user.id)
@@ -91,6 +93,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       .limit(1)
       .maybeSingle();
 
+    const existingFailedSession = existingFailedSessionData as { id: string } | null;
+
     let qaSessionId: string | null = null;
 
     if (existingFailedSession?.id) {
@@ -100,8 +104,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       // Delete old answers from previous failed attempt
       await supabase.from('qa_answers').delete().eq('session_id', existingFailedSession.id);
 
-      const { data: updatedSession, error: updateError } = await supabase
+      const { data: updatedSessionData, error: updateError } = await supabase
         .from('qa_sessions')
+        // @ts-expect-error - Supabase browser client has TypeScript inference issue with update queries
         .update({
           status: 'processing',
           progress: 0,
@@ -114,6 +119,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         .select('id')
         .single();
 
+      const updatedSession = updatedSessionData as { id: string } | null;
+
       if (updateError || !updatedSession) {
         console.error('[QA API] Failed to update existing QA session:', updateError);
         // Fall through to create new session
@@ -124,8 +131,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     // Create new QA session if we didn't update an existing one
     if (!qaSessionId) {
-      const { data: qaSession, error: sessionError } = await supabase
+      const { data: qaSessionData, error: sessionError } = await supabase
         .from('qa_sessions')
+        // @ts-expect-error - Supabase browser client has TypeScript inference issue with insert queries
         .insert({
           user_id: user.id,
           selection_id: selectionId,
@@ -135,6 +143,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         })
         .select('id')
         .single();
+
+      const qaSession = qaSessionData as { id: string } | null;
 
       if (sessionError || !qaSession) {
         console.error('Failed to create QA session:', sessionError);
@@ -198,6 +208,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       // No usage was logged, so nothing to reverse
       await supabase
         .from('qa_sessions')
+        // @ts-expect-error - Supabase browser client has TypeScript inference issue with insert queries
         .update({
           status: 'failed',
           error_message: errorMessage,

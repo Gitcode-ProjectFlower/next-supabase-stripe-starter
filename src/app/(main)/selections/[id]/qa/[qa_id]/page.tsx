@@ -1,0 +1,20 @@
+import { Metadata } from 'next';
+
+import { AuthGuard } from '@/components/auth-guard';
+import { NO_INDEX_PAGE } from '@/constants/seo.constants';
+
+import { QaResults } from './QaResults';
+
+export const metadata: Metadata = {
+  title: 'Qa Results',
+  description: 'Qa Results',
+  ...NO_INDEX_PAGE,
+};
+
+export default function QaResultsPage() {
+  return (
+    <AuthGuard description='Please sign in to view and manage your qa results'>
+      <QaResults />
+    </AuthGuard>
+  );
+}

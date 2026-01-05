@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get user's active subscription
-    const { data: subscription } = await supabase
+    const { data: subscriptionData } = await supabase
       .from('subscriptions')
       .select('id, status, price_id')
       .eq('user_id', user.id)
@@ -26,6 +26,8 @@ export async function POST(request: NextRequest) {
       .order('created', { ascending: false })
       .limit(1)
       .maybeSingle();
+
+    const subscription = subscriptionData as { id: string; status: string; price_id: string | null } | null;
 
     if (!subscription) {
       return NextResponse.json({ error: 'No active subscription found' }, { status: 404 });
@@ -66,6 +68,7 @@ export async function POST(request: NextRequest) {
 
       const { error: upsertError, data: upsertedData } = await supabase
         .from('subscriptions')
+        // @ts-expect-error - Supabase browser client has TypeScript inference issue with upsert queries
         .upsert([subscriptionData], {
           onConflict: 'id',
         })

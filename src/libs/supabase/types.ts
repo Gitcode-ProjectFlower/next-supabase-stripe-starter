@@ -296,6 +296,7 @@ export type Database = {
           id: string;
           item_count: number;
           name: string;
+          updated_at: string | null;
           user_id: string;
         };
         Insert: {
@@ -305,6 +306,7 @@ export type Database = {
           id?: string;
           item_count?: number;
           name: string;
+          updated_at?: string | null;
           user_id: string;
         };
         Update: {
@@ -314,6 +316,7 @@ export type Database = {
           id?: string;
           item_count?: number;
           name?: string;
+          updated_at?: string | null;
           user_id?: string;
         };
         Relationships: [];

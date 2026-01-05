@@ -22,7 +22,7 @@ export async function getNotificationPreference(userId: string): Promise<boolean
     }
 
     // Return the preference (default to false if not set)
-    return data?.email_notifications_enabled ?? false;
+    return (data as { email_notifications_enabled?: boolean } | null)?.email_notifications_enabled ?? false;
   } catch (error) {
     console.error('[getNotificationPreference] Unexpected error:', error);
     return false;
