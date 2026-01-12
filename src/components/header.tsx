@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { createSupabaseBrowserClient } from '@/libs/supabase/supabase-browser-client';
+import { useLocalePath } from '@/utils/use-locale-path';
 
 const navigation = [
   { name: 'Dashboard', href: '/', requiresAuth: false },
@@ -20,6 +21,7 @@ const navigation = [
 
 export function Header() {
   const pathname = usePathname();
+  const getLocalePath = useLocalePath;
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const supabase = createSupabaseBrowserClient();
@@ -49,7 +51,8 @@ export function Header() {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    window.location.href = '/';
+    const locale = pathname?.split('/')[1] || 'uk';
+    window.location.href = `/${locale}`;
   };
 
   return (
@@ -58,7 +61,7 @@ export function Header() {
         <div className='flex h-16 items-center justify-between'>
           {/* Logo */}
           <div className='flex items-center'>
-            <Link href='/' className='text-xl font-bold text-gray-900'>
+            <Link href={getLocalePath('/')} className='text-xl font-bold text-gray-900'>
               App
             </Link>
           </div>
@@ -70,11 +73,12 @@ export function Header() {
               if (item.requiresAuth && !isAuthenticated) {
                 return null;
               }
-              const isActive = pathname === item.href || pathname?.startsWith(item.href + '/');
+              const itemPath = getLocalePath(item.href);
+              const isActive = pathname === itemPath || pathname?.startsWith(itemPath + '/');
               return (
                 <Link
                   key={item.name}
-                  href={item.href}
+                  href={itemPath}
                   className={`text-sm font-medium transition-colors ${
                     isActive ? 'text-blue-600' : 'text-gray-700 hover:text-gray-900'
                   }`}
@@ -90,7 +94,7 @@ export function Header() {
               </Button>
             ) : (
               <Button variant='default' size='sm' asChild className='bg-blue-600 text-white hover:bg-blue-700'>
-                <Link href='/login'>Sign In</Link>
+                <Link href={getLocalePath('/login')}>Sign In</Link>
               </Button>
             )}
           </div>
@@ -120,11 +124,12 @@ export function Header() {
               if (item.requiresAuth && !isAuthenticated) {
                 return null;
               }
-              const isActive = pathname === item.href || pathname?.startsWith(item.href + '/');
+              const itemPath = getLocalePath(item.href);
+              const isActive = pathname === itemPath || pathname?.startsWith(itemPath + '/');
               return (
                 <Link
                   key={item.name}
-                  href={item.href}
+                  href={itemPath}
                   className={`block rounded-md px-3 py-2 text-base font-medium ${
                     isActive ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
                   }`}
@@ -144,7 +149,7 @@ export function Header() {
               </button>
             ) : (
               <Link
-                href='/login'
+                href={getLocalePath('/login')}
                 className='block rounded-md px-3 py-2 text-base font-medium text-blue-600 hover:bg-blue-50'
                 onClick={() => setMobileMenuOpen(false)}
               >

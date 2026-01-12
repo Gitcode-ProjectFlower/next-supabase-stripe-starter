@@ -30,15 +30,28 @@ type SelectionsListResponse = { selections: SelectionListItem[] };
 
 type SelectionItem = {
   doc_id: string;
+  // Required fields (always present, may be empty)
   name: string;
-  email?: string;
-  phone?: string;
-  city?: string;
-  street?: string;
-  sectors?: string[];
-  experience_years?: number;
+  domain: string;
+  company_size: string;
+  email: string;
+  phone: string;
+  street: string;
+  city: string;
+  postal_code: string;
+  sector_level1: string;
+  sector_level2: string;
+  sector_level3: string;
+  region_level1: string;
+  region_level2: string;
+  region_level3: string;
+  region_level4: string;
+  linkedin_company_url: string;
+  legal_form: string;
+  // Optional fields
   similarity?: number;
-};
+}
+
 
 type SelectionDetailResponse = {
   selection: SelectionListItem & {

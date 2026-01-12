@@ -50,9 +50,31 @@ export function getTopKLimit(plan: UserPlan): number {
 
 /**
  * Get the ordered list of columns that should be visible for the given plan.
- * Falls back to the anonymous plan shape so we never render an empty table.
+ * All 17 required fields are always displayed (even if empty).
+ * Plan-based masking may hide values but not columns.
  */
 export function getVisibleColumns(plan: UserPlan): readonly string[] {
-  const effectivePlan = plan || 'anonymous';
-  return PLAN_CONFIGS[effectivePlan]?.visibleColumns || PLAN_CONFIGS.anonymous.visibleColumns;
+  // All 17 required fields (always displayed, in order)
+  const requiredColumns = [
+    'name',
+    'domain',
+    'company_size',
+    'email',
+    'phone',
+    'street',
+    'city',
+    'postal_code',
+    'sector_level1',
+    'sector_level2',
+    'sector_level3',
+    'region_level1',
+    'region_level2',
+    'region_level3',
+    'region_level4',
+    'linkedin_company_url',
+    'legal_form',
+    'similarity', // Optional but commonly shown
+  ] as const;
+
+  return requiredColumns;
 }

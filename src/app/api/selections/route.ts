@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
+import { getCollectionFromLocale, getDefaultLocale, getLocaleFromPath } from '@/libs/collection-mapping';
 import { getIdempotencyKey, getRequestId, IdempotencyHandler } from '@/libs/idempotency';
 import { getTopKLimit } from '@/libs/plan-config';
 import { searchRateLimiter } from '@/libs/ratelimit';
@@ -15,6 +16,7 @@ const createSelectionSchema = z.object({
     regions: z.array(z.string()).optional(),
     sectors: z.array(z.string()).optional(),
     experience_years: z.array(z.number()).optional(),
+    collection: z.string().optional(),
   }),
   top_k: z.number().int().min(1),
   items: z.array(
@@ -30,6 +32,8 @@ const createSelectionSchema = z.object({
       similarity: z.number().min(0).max(1),
     })
   ),
+  locale: z.string().optional(),
+  collection: z.string().optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -77,7 +81,42 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
+
+    let locale = body.locale;
+    let collection = body.collection;
+
+    if (!locale) {
+      locale = request.headers.get('x-locale') || null;
+    }
+    if (!collection) {
+      collection = request.headers.get('x-collection') || null;
+    }
+
+    if (!locale) {
+      const referer = request.headers.get('referer');
+      if (referer) {
+        try {
+          const refererUrl = new URL(referer);
+          locale = getLocaleFromPath(refererUrl.pathname);
+        } catch (e) {
+          // Invalid referer URL, ignore
+        }
+      }
+    }
+
+    if (!locale) {
+      locale = getDefaultLocale(); // Default locale
+    }
+    if (!collection) {
+      collection = getCollectionFromLocale(locale);
+    }
+
     const validatedData = createSelectionSchema.parse(body);
+
+    const criteriaWithCollection = {
+      ...validatedData.criteria,
+      collection: collection,
+    };
 
     const plan = await getUserPlan(user.id);
     const topKLimit = getTopKLimit(plan);
@@ -112,7 +151,7 @@ export async function POST(request: NextRequest) {
     // @ts-ignore - Supabase RPC type inference issue
     const { data: selectionId, error: rpcError } = await supabase.rpc('create_selection', {
       p_name: validatedData.name,
-      p_criteria_json: validatedData.criteria,
+      p_criteria_json: criteriaWithCollection,
       p_items: validatedData.items,
     });
 

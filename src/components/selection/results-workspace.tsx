@@ -14,6 +14,7 @@ import { getTopKLimit, getVisibleColumns, type UserPlan } from '@/libs/plan-conf
 import { requiresUpgrade } from '@/libs/soft-gating';
 import { LookalikeResult } from '@/types/selection';
 import { cn } from '@/utils/cn';
+import { normalizeValue } from '@/utils/normalize-value';
 
 interface ResultsWorkspaceProps {
   results: LookalikeResult[];
@@ -27,7 +28,26 @@ interface ResultsWorkspaceProps {
   topK?: number;
 }
 
-type ColumnKey = 'name' | 'email' | 'phone' | 'city' | 'street' | 'sectors' | 'experience_years' | 'similarity';
+// All 17 required fields + similarity (optional)
+type ColumnKey =
+  | 'name'
+  | 'domain'
+  | 'company_size'
+  | 'email'
+  | 'phone'
+  | 'street'
+  | 'city'
+  | 'postal_code'
+  | 'sector_level1'
+  | 'sector_level2'
+  | 'sector_level3'
+  | 'region_level1'
+  | 'region_level2'
+  | 'region_level3'
+  | 'region_level4'
+  | 'linkedin_company_url'
+  | 'legal_form'
+  | 'similarity';
 
 type SortKey = ColumnKey;
 type SortDirection = 'asc' | 'desc';
@@ -42,38 +62,97 @@ const COLUMN_CONFIG: Record<
 > = {
   name: {
     label: 'Name',
-    render: (row) => row.name,
-    sortValue: (row) => row.name || '',
+    render: (row) => normalizeValue(row.name) || '-',
+    sortValue: (row) => normalizeValue(row.name),
+  },
+  domain: {
+    label: 'Domain',
+    render: (row) => normalizeValue(row.domain) || '-',
+    sortValue: (row) => normalizeValue(row.domain),
+  },
+  company_size: {
+    label: 'Company Size',
+    render: (row) => normalizeValue(row.company_size) || '-',
+    sortValue: (row) => normalizeValue(row.company_size),
   },
   email: {
     label: 'Email',
-    render: (row) => row.email || '-',
-    sortValue: (row) => row.email || '',
+    render: (row) => normalizeValue(row.email) || '-',
+    sortValue: (row) => normalizeValue(row.email),
   },
   phone: {
     label: 'Phone',
-    render: (row) => row.phone || '-',
-    sortValue: (row) => row.phone || '',
-  },
-  city: {
-    label: 'City',
-    render: (row) => row.city || '-',
-    sortValue: (row) => row.city || '',
+    render: (row) => normalizeValue(row.phone) || '-',
+    sortValue: (row) => normalizeValue(row.phone),
   },
   street: {
     label: 'Street',
-    render: (row) => row.street || '-',
-    sortValue: (row) => row.street || '',
+    render: (row) => normalizeValue(row.street) || '-',
+    sortValue: (row) => normalizeValue(row.street),
   },
-  sectors: {
-    label: 'Sector',
-    render: (row) => row.sectors?.[0] || '-',
-    sortValue: (row) => row.sectors?.[0] || '',
+  city: {
+    label: 'City',
+    render: (row) => normalizeValue(row.city) || '-',
+    sortValue: (row) => normalizeValue(row.city),
   },
-  experience_years: {
-    label: 'Years Experience',
-    render: (row) => (row.experience_years ? `${row.experience_years} years` : '-'),
-    sortValue: (row) => row.experience_years ?? 0,
+  postal_code: {
+    label: 'Postal Code',
+    render: (row) => normalizeValue(row.postal_code) || '-',
+    sortValue: (row) => normalizeValue(row.postal_code),
+  },
+  sector_level1: {
+    label: 'Sector Level 1',
+    render: (row) => normalizeValue(row.sector_level1) || '-',
+    sortValue: (row) => normalizeValue(row.sector_level1),
+  },
+  sector_level2: {
+    label: 'Sector Level 2',
+    render: (row) => normalizeValue(row.sector_level2) || '-',
+    sortValue: (row) => normalizeValue(row.sector_level2),
+  },
+  sector_level3: {
+    label: 'Sector Level 3',
+    render: (row) => normalizeValue(row.sector_level3) || '-',
+    sortValue: (row) => normalizeValue(row.sector_level3),
+  },
+  region_level1: {
+    label: 'Region Level 1',
+    render: (row) => normalizeValue(row.region_level1) || '-',
+    sortValue: (row) => normalizeValue(row.region_level1),
+  },
+  region_level2: {
+    label: 'Region Level 2',
+    render: (row) => normalizeValue(row.region_level2) || '-',
+    sortValue: (row) => normalizeValue(row.region_level2),
+  },
+  region_level3: {
+    label: 'Region Level 3',
+    render: (row) => normalizeValue(row.region_level3) || '-',
+    sortValue: (row) => normalizeValue(row.region_level3),
+  },
+  region_level4: {
+    label: 'Region Level 4',
+    render: (row) => normalizeValue(row.region_level4) || '-',
+    sortValue: (row) => normalizeValue(row.region_level4),
+  },
+  linkedin_company_url: {
+    label: 'LinkedIn URL',
+    render: (row) => {
+      const url = normalizeValue(row.linkedin_company_url);
+      return url ? (
+        <a href={url} target='_blank' rel='noopener noreferrer' className='text-blue-600 hover:underline'>
+          {url}
+        </a>
+      ) : (
+        '-'
+      );
+    },
+    sortValue: (row) => normalizeValue(row.linkedin_company_url),
+  },
+  legal_form: {
+    label: 'Legal Form',
+    render: (row) => normalizeValue(row.legal_form) || '-',
+    sortValue: (row) => normalizeValue(row.legal_form),
   },
   similarity: {
     label: 'Fit Score',
@@ -343,7 +422,7 @@ export function ResultsWorkspace({
                           key={key}
                           className={cn(
                             'px-3 py-2',
-                            key === 'email' || key === 'sectors' || key === 'city' || key === 'street'
+                            key === 'email' || key === 'city' || key === 'street' || key === 'linkedin_company_url'
                               ? 'max-w-[200px] truncate'
                               : 'whitespace-nowrap',
                             key === 'name' && 'font-medium'
@@ -351,9 +430,7 @@ export function ResultsWorkspace({
                           title={
                             key === 'email'
                               ? r.email
-                              : key === 'sectors'
-                              ? r.sectors?.join(', ')
-                              : key === 'city' || key === 'street'
+                              : key === 'city' || key === 'street' || key === 'linkedin_company_url'
                               ? (r as any)[key] || ''
                               : undefined
                           }

@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
+import { getCollectionFromLocale, getDefaultLocale, getLocaleFromPath } from '@/libs/collection-mapping';
 import { getTopKLimit, validateFilterKeys } from '@/libs/facet-config';
 import { checkRateLimit, searchRateLimiter } from '@/libs/ratelimit';
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
 import { getAnonymousPlan, getUserPlan } from '@/libs/user-plan';
+import { normalizeValue } from '@/utils/normalize-value';
 
 const searchSchema = z.object({
   names: z.array(z.string()).min(0).max(4).optional(),
@@ -21,8 +23,12 @@ const searchSchema = z.object({
   region_level3: z.array(z.string()).optional(),
   region_level4: z.array(z.string()).optional(),
   experience_years: z.array(z.number()).optional(),
+  company_size: z.array(z.string()).optional(), // For new collections
   filters: z.record(z.any()).optional(),
   top_k: z.number().int().min(1).max(5000),
+  // Locale/Collection detection
+  locale: z.string().optional(),
+  collection: z.string().optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -60,10 +66,41 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
 
+    let locale = body.locale;
+    let collection = body.collection;
+
+    if (!locale) {
+      locale = request.headers.get('x-locale') || null;
+    }
+    if (!collection) {
+      collection = request.headers.get('x-collection') || null;
+    }
+
+    if (!locale) {
+      const referer = request.headers.get('referer');
+      if (referer) {
+        try {
+          const refererUrl = new URL(referer);
+          locale = getLocaleFromPath(refererUrl.pathname);
+        } catch (e) {
+          // Invalid referer URL, ignore
+        }
+      }
+    }
+
+    if (!locale) {
+      locale = getDefaultLocale(); // Default locale
+    }
+    if (!collection) {
+      collection = getCollectionFromLocale(locale);
+    }
+
     // Debug: Log what we received from frontend
     console.log('[API] Received request body:', {
       raw: body,
       formatted: JSON.stringify(body, null, 2),
+      detectedLocale: locale,
+      detectedCollection: collection,
     });
 
     const validation = searchSchema.safeParse(body);
@@ -141,6 +178,7 @@ export async function POST(request: NextRequest) {
     const haystackPayload: Record<string, any> = {
       names: finalLookalikeNames,
       top_k: effectiveTopK,
+      collection: collection,
     };
 
     // Add hierarchical sector filters (preferred method)
@@ -185,6 +223,11 @@ export async function POST(request: NextRequest) {
       haystackPayload.experience_years = experience_years;
     }
 
+    // Add company_size for new collections (collection_uk, collection_de)
+    if (validation.data.company_size && validation.data.company_size.length > 0) {
+      haystackPayload.company_size = validation.data.company_size;
+    }
+
     // Merge any explicit filters (for backward compatibility)
     if (explicitFilters && Object.keys(explicitFilters).length > 0) {
       Object.assign(haystackPayload, explicitFilters);
@@ -216,7 +259,33 @@ export async function POST(request: NextRequest) {
 
     const results = haystackData.results || [];
 
-    const limitedResults = isAnonymous ? results.slice(0, 3) : results;
+    // Normalize all fields to ensure all 17 required fields are present
+    const normalizedResults = results.map((result: any) => ({
+      doc_id: result.doc_id || '',
+      name: normalizeValue(result.name),
+      domain: normalizeValue(result.domain),
+      company_size: normalizeValue(result.company_size),
+      email: normalizeValue(result.email),
+      phone: normalizeValue(result.phone),
+      street: normalizeValue(result.street),
+      city: normalizeValue(result.city),
+      postal_code: normalizeValue(result.postal_code),
+      sector_level1: normalizeValue(result.sector_level1),
+      sector_level2: normalizeValue(result.sector_level2),
+      sector_level3: normalizeValue(result.sector_level3),
+      region_level1: normalizeValue(result.region_level1),
+      region_level2: normalizeValue(result.region_level2),
+      region_level3: normalizeValue(result.region_level3),
+      region_level4: normalizeValue(result.region_level4),
+      linkedin_company_url: normalizeValue(result.linkedin_company_url),
+      legal_form: normalizeValue(result.legal_form),
+      similarity: result.similarity,
+      // Legacy fields for backward compatibility
+      experience_years: result.experience_years,
+      sectors: result.sectors,
+    }));
+
+    const limitedResults = isAnonymous ? normalizedResults.slice(0, 3) : normalizedResults;
 
     return NextResponse.json({
       success: true,

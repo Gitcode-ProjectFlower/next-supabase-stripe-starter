@@ -1,5 +1,6 @@
 import { inngest } from '@/libs/inngest/client';
 import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
+import { normalizeValue } from '@/utils/normalize-value';
 
 export const exportLookalikesJob = inngest.createFunction(
   {
@@ -58,17 +59,47 @@ export const exportLookalikesJob = inngest.createFunction(
       const downloadUrl = await step.run('generate-and-upload-csv', async () => {
         const supabase = supabaseAdminClient;
 
-        const headers = ['Name', 'Email', 'Phone', 'City', 'Street', 'Sectors', 'Experience Years', 'Similarity'];
+        // Required CSV headers (always in this order - 17 required fields)
+        const headers = [
+          'Name',
+          'Domain',
+          'Company Size',
+          'Email',
+          'Phone',
+          'Street',
+          'City',
+          'Postal Code',
+          'Sector Level 1',
+          'Sector Level 2',
+          'Sector Level 3',
+          'Region Level 1',
+          'Region Level 2',
+          'Region Level 3',
+          'Region Level 4',
+          'LinkedIn Company URL',
+          'Legal Form',
+        ];
 
-        const rows = items.map((item) => [
-          item.name || '',
-          item.email || '',
-          item.phone || '',
-          item.city || '',
-          item.street || '',
-          Array.isArray(item.sectors) ? item.sectors.join('; ') : '',
-          item.experience_years?.toString() || '',
-          item.similarity?.toFixed(4) || '',
+        // Generate CSV row (always include all fields, even if empty)
+        // Use type assertion since database types may not be updated yet after migration
+        const rows = items.map((item: any) => [
+          normalizeValue(item.name),
+          normalizeValue(item.domain),
+          normalizeValue(item.company_size),
+          normalizeValue(item.email),
+          normalizeValue(item.phone),
+          normalizeValue(item.street),
+          normalizeValue(item.city),
+          normalizeValue(item.postal_code),
+          normalizeValue(item.sector_level1),
+          normalizeValue(item.sector_level2),
+          normalizeValue(item.sector_level3),
+          normalizeValue(item.region_level1),
+          normalizeValue(item.region_level2),
+          normalizeValue(item.region_level3),
+          normalizeValue(item.region_level4),
+          normalizeValue(item.linkedin_company_url),
+          normalizeValue(item.legal_form),
         ]);
 
         const csvContent = [headers.join(','), ...rows.map((row) => row.map((cell) => `"${cell}"`).join(','))].join(

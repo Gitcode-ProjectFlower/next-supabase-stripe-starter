@@ -102,6 +102,7 @@ export class HaystackClient {
   async askBatch(
     items: Array<{ doc_id: string; name?: string; email?: string; city?: string; [key: string]: any }>,
     prompt: string,
+    collection?: string,
     customTimeout?: number
   ): Promise<QAResponse[]> {
     try {
@@ -177,6 +178,7 @@ export class HaystackClient {
         itemCount: formattedItems.length,
         promptLength: cleanedPrompt.length,
         promptPreview: cleanedPrompt.substring(0, 100),
+        collection: collection || 'collection_uk',
       });
 
       // Backend expects QARequest model:
@@ -189,11 +191,13 @@ export class HaystackClient {
       //       "city": "string"     // Optional
       //     }
       //   ],
-      //   "prompt": "string"
+      //   "prompt": "string",
+      //   "collection": "string"
       // }
       const requestBody = {
         selection_items: formattedItems,
         prompt: cleanedPrompt,
+        collection: collection || 'collection_uk',
       };
 
       // Log the exact request being sent (matches curl format)

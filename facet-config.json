@@ -121,11 +121,7 @@
               "Waste collection, treatment and disposal activities; materials recovery",
               "Water collection, treatment and supply"
             ],
-            "CONSTRUCTION": [
-              "Civil engineering",
-              "Construction of buildings",
-              "Specialised construction activities"
-            ],
+            "CONSTRUCTION": ["Civil engineering", "Construction of buildings", "Specialised construction activities"],
             "WHOLESALE AND RETAIL TRADE; REPAIR OF MOTOR VEHICLES AND MOTORCYCLES": [
               "Retail trade, except of motor vehicles and motorcycles",
               "Wholesale and retail trade and repair of motor vehicles and motorcycles",
@@ -138,10 +134,7 @@
               "Warehousing and support activities for transportation",
               "Water transport"
             ],
-            "ACCOMMODATION AND FOOD SERVICE ACTIVITIES": [
-              "Accommodation",
-              "Food and beverage service activities"
-            ],
+            "ACCOMMODATION AND FOOD SERVICE ACTIVITIES": ["Accommodation", "Food and beverage service activities"],
             "INFORMATION AND COMMUNICATION": [
               "Computer programming, consultancy and related activities",
               "Information service activities",
@@ -155,9 +148,7 @@
               "Financial service activities, except insurance and pension funding",
               "Insurance, reinsurance and pension funding, except compulsory social security"
             ],
-            "REAL ESTATE ACTIVITIES": [
-              "Real estate activities"
-            ],
+            "REAL ESTATE ACTIVITIES": ["Real estate activities"],
             "PROFESSIONAL, SCIENTIFIC AND TECHNICAL ACTIVITIES": [
               "Activities of head offices; management consultancy activities",
               "Advertising and market research",
@@ -178,9 +169,7 @@
             "PUBLIC ADMINISTRATION AND DEFENCE; COMPULSORY SOCIAL SECURITY": [
               "Public administration and defence; compulsory social security"
             ],
-            "EDUCATION": [
-              "Education"
-            ],
+            "EDUCATION": ["Education"],
             "HUMAN HEALTH AND SOCIAL WORK ACTIVITIES": [
               "Human health activities",
               "Residential care activities",
@@ -325,9 +314,7 @@
               "11060 - Manufacture of malt",
               "11070 - Manufacture of soft drinks; production of mineral waters and other bottled waters"
             ],
-            "Manufacture of tobacco products": [
-              "12000 - Manufacture of tobacco products"
-            ],
+            "Manufacture of tobacco products": ["12000 - Manufacture of tobacco products"],
             "Manufacture of textiles": [
               "13100 - Preparation and spinning of textile fibres",
               "13200 - Weaving of textiles",
@@ -619,12 +606,8 @@
               "35230 - Trade of gas through mains",
               "35300 - Steam and air conditioning supply"
             ],
-            "Water collection, treatment and supply": [
-              "36000 - Water collection, treatment and supply"
-            ],
-            "Sewerage": [
-              "37000 - Sewerage"
-            ],
+            "Water collection, treatment and supply": ["36000 - Water collection, treatment and supply"],
+            "Sewerage": ["37000 - Sewerage"],
             "Waste collection, treatment and disposal activities; materials recovery": [
               "38110 - Collection of non-hazardous waste",
               "38120 - Collection of hazardous waste",
@@ -1012,9 +995,7 @@
               "74902 - Quantity surveying activities",
               "74909 - Other professional, scientific and technical activities (not including environmental consultancy or quantity surveying) nec"
             ],
-            "Veterinary activities": [
-              "75000 - Veterinary activities"
-            ],
+            "Veterinary activities": ["75000 - Veterinary activities"],
             "Rental and leasing activities": [
               "77110 - Renting and leasing of cars and light motor vehicles",
               "77120 - Renting and leasing of trucks",
@@ -1140,9 +1121,7 @@
               "91030 - Operation of historical sites and buildings and similar visitor attractions",
               "91040 - Botanical and zoological gardens and nature reserve activities"
             ],
-            "Gambling and betting activities": [
-              "92000 - Gambling and betting activities"
-            ],
+            "Gambling and betting activities": ["92000 - Gambling and betting activities"],
             "Sports activities and amusement and recreation activities": [
               "93110 - Operation of sports facilities",
               "93120 - Activities of sport clubs",
@@ -1679,1468 +1658,413 @@
             ]
           },
           "region_level3": {
-            "Aberdeen": [
-              "AB"
-            ],
-            "Aberdeenshire": [
-              "AB"
-            ],
-            "Moray": [
-              "AB",
-              "IV"
-            ],
-            "St Albans": [
-              "AL"
-            ],
-            "Welwyn Hatfield": [
-              "AL"
-            ],
-            "Birmingham": [
-              "B1",
-              "B2",
-              "B3",
-              "B4",
-              "B5",
-              "B6",
-              "B7",
-              "B8",
-              "B9"
-            ],
-            "Solihull": [
-              "B3",
-              "B4",
-              "B9"
-            ],
-            "North Warwickshire": [
-              "B4",
-              "CV"
-            ],
-            "Bromsgrove Worcestershire": [
-              "B4"
-            ],
-            "Stratford-on-Avon": [
-              "B4",
-              "B5",
-              "B8",
-              "B9",
-              "CV"
-            ],
-            "Bromsgrove": [
-              "B6"
-            ],
-            "Dudley": [
-              "B6",
-              "DY"
-            ],
-            "Sandwell": [
-              "B6",
-              "B7",
-              "WS"
-            ],
-            "Tamworth": [
-              "B7"
-            ],
-            "Redditch": [
-              "B9"
-            ],
-            "Bath and North East Somerset": [
-              "BA",
-              "BS"
-            ],
-            "Mendip": [
-              "BA"
-            ],
-            "South Somerset": [
-              "BA",
-              "TA"
-            ],
-            "Wiltshire": [
-              "BA",
-              "SN",
-              "SP"
-            ],
-            "Blackburn with Darwen": [
-              "BB"
-            ],
-            "Rossendale": [
-              "BB",
-              "OL"
-            ],
-            "Hyndburn": [
-              "BB"
-            ],
-            "Ribble Valley": [
-              "BB"
-            ],
-            "Pendle": [
-              "BB"
-            ],
-            "Burnley": [
-              "BB"
-            ],
-            "Bradford": [
-              "BD",
-              "LS"
-            ],
-            "Kirklees": [
-              "BD",
-              "HD",
-              "WF"
-            ],
-            "Bingley": [
-              "BD"
-            ],
-            "Craven": [
-              "BD"
-            ],
-            "British Forces": [
-              "BF"
-            ],
-            "Bournemouth": [
-              "BH"
-            ],
-            "Poole": [
-              "BH"
-            ],
-            "Purbeck": [
-              "BH"
-            ],
-            "East Dorset": [
-              "BH"
-            ],
-            "Christchurch": [
-              "BH"
-            ],
-            "New Forest": [
-              "BH",
-              "SO",
-              "SP"
-            ],
-            "Bury": [
-              "BL",
-              "M2",
-              "M4"
-            ],
-            "Bolton": [
-              "BL"
-            ],
-            "Brighton and Hove": [
-              "BN"
-            ],
-            "Horsham": [
-              "BN",
-              "RH"
-            ],
-            "Lewes": [
-              "BN"
-            ],
-            "Worthing": [
-              "BN"
-            ],
-            "Arun": [
-              "BN"
-            ],
-            "Eastbourne": [
-              "BN"
-            ],
-            "Wealden": [
-              "BN",
-              "TN"
-            ],
-            "Adur": [
-              "BN"
-            ],
-            "Mid Sussex": [
-              "BN",
-              "RH"
-            ],
-            "Bromley": [
-              "BR",
-              "SE",
-              "TN"
-            ],
-            "Sevenoaks": [
-              "BR",
-              "TN"
-            ],
-            "Bristol": [
-              "BS"
-            ],
-            "North Somerset": [
-              "BS"
-            ],
-            "Somerset": [
-              "BS",
-              "TA"
-            ],
-            "South Gloucestershire": [
-              "BS"
-            ],
-            "Belfast": [
-              "BT"
-            ],
-            "North Down": [
-              "BT"
-            ],
-            "Ards": [
-              "BT"
-            ],
-            "Down": [
-              "BT"
-            ],
-            "Banbridge": [
-              "BT"
-            ],
-            "Lisburn": [
-              "BT"
-            ],
-            "County Antrim": [
-              "BT"
-            ],
-            "Newry and Mourne": [
-              "BT"
-            ],
-            "Newtownabbey": [
-              "BT"
-            ],
-            "Carrickfergus": [
-              "BT"
-            ],
-            "Larne": [
-              "BT"
-            ],
-            "Antrim": [
-              "BT"
-            ],
-            "Ballymena": [
-              "BT"
-            ],
-            "Magherafelt": [
-              "BT"
-            ],
-            "Derry": [
-              "BT"
-            ],
-            "Limavady": [
-              "BT"
-            ],
-            "Coleraine": [
-              "BT"
-            ],
-            "Ballymoney": [
-              "BT"
-            ],
-            "Moyle": [
-              "BT"
-            ],
-            "Armagh": [
-              "BT"
-            ],
-            "Craigavon": [
-              "BT"
-            ],
-            "Dungannon and South Tyrone": [
-              "BT"
-            ],
-            "Fermanagh": [
-              "BT"
-            ],
-            "Omagh": [
-              "BT"
-            ],
-            "Cookstown": [
-              "BT"
-            ],
-            "Strabane": [
-              "BT"
-            ],
-            "Carlisle": [
-              "CA"
-            ],
-            "Allerdale": [
-              "CA"
-            ],
-            "Eden": [
-              "CA"
-            ],
-            "Copeland": [
-              "CA",
-              "LA"
-            ],
-            "Cambridge": [
-              "CB"
-            ],
-            "Ely": [
-              "CB"
-            ],
-            "Newmarket": [
-              "CB"
-            ],
-            "St Edmundsbury": [
-              "CB",
-              "IP"
-            ],
-            "Uttlesford": [
-              "CB",
-              "CM"
-            ],
-            "Cardiff": [
-              "CF"
-            ],
-            "Bridgend": [
-              "CF"
-            ],
-            "Rhondda Cynon Taf": [
-              "CF"
-            ],
-            "Merthyr Tydfil": [
-              "CF"
-            ],
-            "Vale of Glamorgan": [
-              "CF"
-            ],
-            "Caerphilly": [
-              "CF",
-              "NP"
-            ],
-            "Cheshire West and Chester": [
-              "CH",
-              "CW",
-              "SY",
-              "WA"
-            ],
-            "Flintshire": [
-              "CH",
-              "LL"
-            ],
-            "Wirral": [
-              "CH"
-            ],
-            "Maldon": [
-              "CM"
-            ],
-            "Chelmsford": [
-              "CM"
-            ],
-            "Brentwood": [
-              "CM"
-            ],
-            "Epping Forest": [
-              "CM",
-              "EN",
-              "IG"
-            ],
-            "Braintree": [
-              "CM",
-              "CO"
-            ],
-            "Basildon": [
-              "CM",
-              "SS"
-            ],
-            "Harlow": [
-              "CM"
-            ],
-            "East Hertfordshire": [
-              "CM",
-              "SG"
-            ],
-            "Colchester": [
-              "CO"
-            ],
-            "Babergh": [
-              "CO",
-              "IP"
-            ],
-            "Tendring": [
-              "CO"
-            ],
-            "Croydon": [
-              "CR",
-              "SE"
-            ],
-            "Merton": [
-              "CR",
-              "SM",
-              "SW"
-            ],
-            "Kent": [
-              "CT"
-            ],
-            "Canterbury": [
-              "CT"
-            ],
-            "Broadstairs": [
-              "CT"
-            ],
-            "Ramsgate": [
-              "CT"
-            ],
-            "Folkestone": [
-              "CT"
-            ],
-            "Coventry": [
-              "CV"
-            ],
-            "Warwick": [
-              "CV"
-            ],
-            "Nuneaton & Bedworth": [
-              "CV"
-            ],
-            "Hinckley and Bosworth": [
-              "CV"
-            ],
-            "Rugby": [
-              "CV"
-            ],
-            "Cheshire East": [
-              "CW",
-              "SK",
-              "WA"
-            ],
-            "Dartford": [
-              "DA"
-            ],
-            "Bexley": [
-              "DA"
-            ],
-            "Gravesham": [
-              "DA"
-            ],
-            "Dundee": [
-              "DD"
-            ],
-            "Fife": [
-              "DD",
-              "KY"
-            ],
-            "Angus": [
-              "DD"
-            ],
-            "Derby": [
-              "DE"
-            ],
-            "Derbyshire Dales": [
-              "DE",
-              "S3",
-              "SK"
-            ],
-            "Amber Valley": [
-              "DE"
-            ],
-            "Erewash": [
-              "DE",
-              "NG"
-            ],
-            "South Derbyshire": [
-              "DE"
-            ],
-            "East Staffordshire": [
-              "DE"
-            ],
-            "North West Leicestershire": [
-              "DE"
-            ],
-            "Dumfriesshire": [
-              "DG"
-            ],
-            "Kirkcudbrightshire": [
-              "DG"
-            ],
-            "Wigtownshire": [
-              "DG"
-            ],
-            "County Durham": [
-              "DH",
-              "DL",
-              "SR",
-              "TS"
-            ],
-            "Sunderland": [
-              "DH",
-              "NE",
-              "SR"
-            ],
-            "Darlington": [
-              "DL"
-            ],
-            "North Yorkshire": [
-              "DL",
-              "YO"
-            ],
-            "Doncaster": [
-              "DN",
-              "S6"
-            ],
-            "East Riding of Yorkshire": [
-              "DN",
-              "HU",
-              "YO"
-            ],
-            "North Lincolnshire": [
-              "DN"
-            ],
-            "West Lindsey": [
-              "DN",
-              "LN"
-            ],
-            "Bassetlaw": [
-              "DN",
-              "S8"
-            ],
-            "North East Lincolnshire": [
-              "DN"
-            ],
-            "West Dorset": [
-              "DT"
-            ],
-            "Weymouth and Portland": [
-              "DT"
-            ],
-            "North Dorset": [
-              "DT",
-              "SP"
-            ],
-            "South Staffordshire": [
-              "DY",
-              "WS",
-              "WV"
-            ],
-            "Wyre Forest": [
-              "DY"
-            ],
-            "Shropshire": [
-              "DY",
-              "SY",
-              "TF",
-              "WV"
-            ],
-            "Tower Hamlets": [
-              "E1",
-              "E2",
-              "E3",
-              "E7",
-              "E9",
-              "EC"
-            ],
-            "Waltham Forest": [
-              "E1",
-              "E4"
-            ],
-            "Hackney": [
-              "E1",
-              "E5",
-              "E8",
-              "E9",
-              "EC",
-              "N1"
-            ],
-            "Newham": [
-              "E1",
-              "E2",
-              "E6",
-              "E7"
-            ],
-            "Redbridge": [
-              "E1",
-              "IG"
-            ],
-            "City of London": [
-              "EC"
-            ],
-            "Islington": [
-              "EC",
-              "N1",
-              "N5",
-              "N7"
-            ],
-            "Camden": [
-              "EC",
-              "N1",
-              "N6",
-              "NW",
-              "W1",
-              "WC"
-            ],
-            "Edinburgh": [
-              "EH"
-            ],
-            "Midlothian": [
-              "EH"
-            ],
-            "East Lothian": [
-              "EH",
-              "TD"
-            ],
-            "West Lothian": [
-              "EH"
-            ],
-            "Scottish Borders": [
-              "EH",
-              "TD"
-            ],
-            "Falkirk": [
-              "EH",
-              "FK"
-            ],
-            "Enfield": [
-              "EN",
-              "N1",
-              "N2",
-              "N9"
-            ],
-            "Barnet": [
-              "EN",
-              "N1",
-              "N2",
-              "N3",
-              "NW"
-            ],
-            "Hertsmere": [
-              "EN",
-              "WD"
-            ],
-            "Broxbourne": [
-              "EN"
-            ],
-            "Exeter": [
-              "EX"
-            ],
-            "East Devon": [
-              "EX"
-            ],
-            "Teignbridge": [
-              "EX",
-              "TQ"
-            ],
-            "Mid Devon": [
-              "EX"
-            ],
-            "Cornwall": [
-              "EX",
-              "PL",
-              "TR"
-            ],
-            "Torridge": [
-              "EX"
-            ],
-            "Blackpool": [
-              "FY"
-            ],
-            "Wyre": [
-              "FY"
-            ],
-            "Fylde": [
-              "FY",
-              "PR"
-            ],
-            "Glasgow": [
-              "G1",
-              "G2",
-              "G3",
-              "G4",
-              "G5",
-              "G6",
-              "G8",
-              "G9",
-              "PA"
-            ],
-            "West Dunbartonshire": [
-              "G6",
-              "G8"
-            ],
-            "East Dunbartonshire": [
-              "G6"
-            ],
-            "Stirling": [
-              "G6"
-            ],
-            "North Lanarkshire": [
-              "G6",
-              "G7",
-              "ML"
-            ],
-            "Lanarkshire": [
-              "G7"
-            ],
-            "South Lanarkshire": [
-              "G7",
-              "ML"
-            ],
-            "East Renfrewshire": [
-              "G7"
-            ],
-            "Argyll and Bute": [
-              "G8"
-            ],
-            "Gloucester": [
-              "GL"
-            ],
-            "Stroud": [
-              "GL"
-            ],
-            "Cotswold": [
-              "GL"
-            ],
-            "Tewkesbury": [
-              "GL"
-            ],
-            "Guildford": [
-              "GU",
-              "KT"
-            ],
-            "Waverley": [
-              "GU"
-            ],
-            "Rushmoor": [
-              "GU"
-            ],
-            "Hampshire": [
-              "GU",
-              "PO",
-              "RG"
-            ],
-            "Surrey Heath": [
-              "GU"
-            ],
-            "Hart": [
-              "GU"
-            ],
-            "Woking": [
-              "GU"
-            ],
-            "Runnymede": [
-              "GU",
-              "KT",
-              "TW"
-            ],
-            "Chichester": [
-              "GU",
-              "RH"
-            ],
-            "East Hampshire": [
-              "GU"
-            ],
-            "Bracknell Forest": [
-              "GU",
-              "RG",
-              "SL"
-            ],
-            "Guernsey": [
-              "GY"
-            ],
-            "Harrow": [
-              "HA"
-            ],
-            "Hillingdon": [
-              "HA",
-              "TW",
-              "UB"
-            ],
-            "Brent": [
-              "HA",
-              "NW"
-            ],
-            "Calderdale": [
-              "HD",
-              "HX",
-              "OL"
-            ],
-            "Harrogate": [
-              "HG"
-            ],
-            "Ripon": [
-              "HG"
-            ],
-            "Dacorum": [
-              "HP",
-              "WD"
-            ],
-            "Chiltern": [
-              "HP"
-            ],
-            "South Buckinghamshire": [
-              "HP",
-              "SL",
-              "UB"
-            ],
-            "Wycombe": [
-              "HP"
-            ],
-            "Aylesbury Vale": [
-              "HP",
-              "MK"
-            ],
-            "Hereford": [
-              "HR"
-            ],
-            "Comhairle nan Eilean Siar": [
-              "HS",
-              "PA"
-            ],
-            "Kingston upon Hull": [
-              "HU"
-            ],
-            "Barking and Dagenham": [
-              "IG",
-              "RM"
-            ],
-            "Isle of Man": [
-              "IM"
-            ],
-            "Ipswich": [
-              "IP"
-            ],
-            "Suffolk Coastal": [
-              "IP"
-            ],
-            "Mid Suffolk": [
-              "IP"
-            ],
-            "Waveney": [
-              "IP"
-            ],
-            "South Norfolk": [
-              "IP"
-            ],
-            "Breckland": [
-              "IP"
-            ],
-            "Forest Heath": [
-              "IP"
-            ],
-            "Highland": [
-              "IV",
-              "KW",
-              "PA",
-              "PH"
-            ],
-            "Jersey": [
-              "JE"
-            ],
-            "East Ayrshire": [
-              "KA"
-            ],
-            "South Ayrshire": [
-              "KA"
-            ],
-            "North Ayrshire": [
-              "KA"
-            ],
-            "Kingston upon Thames": [
-              "KT"
-            ],
-            "Sutton": [
-              "KT",
-              "SM"
-            ],
-            "Elmbridge": [
-              "KT"
-            ],
-            "Epsom and Ewell": [
-              "KT"
-            ],
-            "Reigate and Banstead": [
-              "KT",
-              "RH",
-              "SM"
-            ],
-            "Mole Valley": [
-              "KT",
-              "RH"
-            ],
-            "Orkney Islands": [
-              "KW"
-            ],
-            "Kinross-Shire": [
-              "KY"
-            ],
-            "Liverpool": [
-              "L1",
-              "L2",
-              "L3",
-              "L4",
-              "L5",
-              "L6",
-              "L7",
-              "L8",
-              "L9"
-            ],
-            "Sefton": [
-              "L2",
-              "L3",
-              "PR"
-            ],
-            "Knowsley": [
-              "L3"
-            ],
-            "West Lancashire": [
-              "L3",
-              "L4",
-              "WN"
-            ],
-            "Lancaster": [
-              "LA"
-            ],
-            "South Lakeland": [
-              "LA"
-            ],
-            "Barrow-in-Furness": [
-              "LA"
-            ],
-            "Llandrindod Wells": [
-              "LD"
-            ],
-            "Leicester": [
-              "LE"
-            ],
-            "Charnwood": [
-              "LE"
-            ],
-            "Melton": [
-              "LE"
-            ],
-            "Rutland": [
-              "LE"
-            ],
-            "Harborough": [
-              "LE"
-            ],
-            "Wrexham": [
-              "LL"
-            ],
-            "Denbighshire": [
-              "LL"
-            ],
-            "Conwy": [
-              "LL"
-            ],
-            "Gwynedd": [
-              "LL"
-            ],
-            "Anglesey": [
-              "LL"
-            ],
-            "Lincoln": [
-              "LN"
-            ],
-            "North Kesteven": [
-              "LN",
-              "NG"
-            ],
-            "East Lindsey": [
-              "LN",
-              "PE"
-            ],
-            "Leeds": [
-              "LS",
-              "WF"
-            ],
-            "Selby": [
-              "LS"
-            ],
-            "Luton": [
-              "LU"
-            ],
-            "Central Bedfordshire": [
-              "LU",
-              "SG"
-            ],
-            "Manchester": [
-              "M1",
-              "M2",
-              "M3",
-              "M4",
-              "M5",
-              "M6",
-              "M8",
-              "M9"
-            ],
-            "Salford": [
-              "M2",
-              "M3",
-              "M4",
-              "M5",
-              "M6",
-              "M7"
-            ],
-            "Trafford": [
-              "M1",
-              "M3",
-              "M4",
-              "WA"
-            ],
-            "Rochdale": [
-              "M2",
-              "OL"
-            ],
-            "Wigan": [
-              "M2",
-              "M4",
-              "WA",
-              "WN"
-            ],
-            "Tameside": [
-              "M3",
-              "M4",
-              "OL",
-              "SK"
-            ],
-            "Oldham": [
-              "M3",
-              "OL"
-            ],
-            "Medway": [
-              "ME"
-            ],
-            "Tonbridge and Malling": [
-              "ME",
-              "TN"
-            ],
-            "Swale": [
-              "ME"
-            ],
-            "Maidstone": [
-              "ME",
-              "TN"
-            ],
-            "Milton Keynes": [
-              "MK"
-            ],
-            "Bedford": [
-              "MK",
-              "NN"
-            ],
-            "Haringey": [
-              "N1",
-              "N2",
-              "N4",
-              "N8"
-            ],
-            "Newcastle": [
-              "NE"
-            ],
-            "Gateshead": [
-              "NE"
-            ],
-            "North Tyneside": [
-              "NE"
-            ],
-            "Northumberland": [
-              "NE",
-              "TD"
-            ],
-            "South Tyneside": [
-              "NE"
-            ],
-            "Nottingham": [
-              "NG"
-            ],
-            "Gedling": [
-              "NG"
-            ],
-            "Broxtowe": [
-              "NG"
-            ],
-            "Rushcliffe": [
-              "NG"
-            ],
-            "Ashfield": [
-              "NG"
-            ],
-            "Mansfield": [
-              "NG"
-            ],
-            "Bolsover": [
-              "NG",
-              "S4"
-            ],
-            "Newark and Sherwood": [
-              "NG"
-            ],
-            "South Kesteven": [
-              "NG",
-              "PE"
-            ],
-            "Northampton": [
-              "NN"
-            ],
-            "Daventry": [
-              "NN"
-            ],
-            "Wellingborough": [
-              "NN"
-            ],
-            "East Northamptonshire": [
-              "NN",
-              "PE"
-            ],
-            "South Northamptonshire": [
-              "NN"
-            ],
-            "Kettering": [
-              "NN"
-            ],
-            "Corby": [
-              "NN"
-            ],
-            "Newport": [
-              "NP"
-            ],
-            "Monmouthshire": [
-              "NP"
-            ],
-            "Powys": [
-              "NP",
-              "SY"
-            ],
-            "Blaenau Gwent": [
-              "NP"
-            ],
-            "Torfaen": [
-              "NP"
-            ],
-            "Norfolk": [
-              "NR"
-            ],
-            "Suffolk": [
-              "NR"
-            ],
-            "Oxford": [
-              "OX"
-            ],
-            "Cherwell": [
-              "OX"
-            ],
-            "West Oxfordshire": [
-              "OX"
-            ],
-            "South Oxfordshire": [
-              "OX",
-              "RG"
-            ],
-            "Vale of White Horse": [
-              "OX",
-              "SN"
-            ],
-            "Renfrewshire": [
-              "PA"
-            ],
-            "Ayrshire": [
-              "PA"
-            ],
-            "Buteshire": [
-              "PA"
-            ],
-            "Argyllshire": [
-              "PA"
-            ],
-            "Peterborough": [
-              "PE"
-            ],
-            "South Holland": [
-              "PE"
-            ],
-            "Fenland": [
-              "PE"
-            ],
-            "Huntingdonshire": [
-              "PE"
-            ],
-            "Boston": [
-              "PE"
-            ],
-            "West Norfolk": [
-              "PE"
-            ],
-            "Perth and Kinross": [
-              "PH"
-            ],
-            "Plymouth": [
-              "PL"
-            ],
-            "South Hams": [
-              "PL",
-              "TQ"
-            ],
-            "West Devon": [
-              "PL"
-            ],
-            "Sussex": [
-              "PO"
-            ],
-            "Isle of Wight": [
-              "PO"
-            ],
-            "Preston": [
-              "PR"
-            ],
-            "South Ribble": [
-              "PR"
-            ],
-            "Chorley": [
-              "PR"
-            ],
-            "Berkshire": [
-              "RG"
-            ],
-            "Wokingham": [
-              "RG"
-            ],
-            "West Berkshire": [
-              "RG"
-            ],
-            "Crawley": [
-              "RH"
-            ],
-            "Tandridge": [
-              "RH"
-            ],
-            "Havering": [
-              "RM"
-            ],
-            "Thurrock": [
-              "RM",
-              "SS"
-            ],
-            "Sheffield": [
-              "S1",
-              "S2",
-              "S3",
-              "S4",
-              "S5",
-              "S6",
-              "S7",
-              "S8",
-              "S9"
-            ],
-            "North East Derbyshire": [
-              "S1",
-              "S2",
-              "S4"
-            ],
-            "Rotherham": [
-              "S2",
-              "S3",
-              "S6",
-              "S9"
-            ],
-            "High Peak": [
-              "S3",
-              "SK"
-            ],
-            "Barnsley": [
-              "S3",
-              "S6",
-              "S7"
-            ],
-            "Chesterfield": [
-              "S4"
-            ],
-            "Swansea": [
-              "SA"
-            ],
-            "Neath Port Talbot": [
-              "SA"
-            ],
-            "Carmarthenshire": [
-              "SA"
-            ],
-            "Pembrokeshire": [
-              "SA"
-            ],
-            "Ceredigion": [
-              "SA",
-              "SY"
-            ],
-            "Southwark": [
-              "SE"
-            ],
-            "Greenwich": [
-              "SE"
-            ],
-            "Lewisham": [
-              "SE"
-            ],
-            "Lambeth": [
-              "SE",
-              "SW"
-            ],
-            "Stevenage": [
-              "SG"
-            ],
-            "North Hertfordshire": [
-              "SG"
-            ],
-            "Hertfordshire": [
-              "SG"
-            ],
-            "Stockport": [
-              "SK"
-            ],
-            "Slough": [
-              "SL"
-            ],
-            "Windsor and Maidenhead": [
-              "SL"
-            ],
-            "Swindon": [
-              "SN"
-            ],
-            "Kennet": [
-              "SN"
-            ],
-            "Southampton": [
-              "SO"
-            ],
-            "Test Valley": [
-              "SO",
-              "SP"
-            ],
-            "Winchester": [
-              "SO"
-            ],
-            "Eastleigh": [
-              "SO"
-            ],
-            "Southend-on-Sea": [
-              "SS"
-            ],
-            "Rochford": [
-              "SS"
-            ],
-            "Castle Point": [
-              "SS"
-            ],
-            "Staffordshire": [
-              "ST"
-            ],
-            "Westminster": [
-              "SW",
-              "W1",
-              "W2",
-              "W9",
-              "WC"
-            ],
-            "Kensington and Chelsea": [
-              "SW",
-              "W1",
-              "W8"
-            ],
-            "Hammersmith and Fulham": [
-              "SW",
-              "W1",
-              "W6"
-            ],
-            "Wandsworth": [
-              "SW"
-            ],
-            "Richmond upon Thames": [
-              "SW",
-              "TW"
-            ],
-            "Sedgemoor": [
-              "TA"
-            ],
-            "Telford and Wrekin": [
-              "TF"
-            ],
-            "Tunbridge Wells": [
-              "TN"
-            ],
-            "Rother": [
-              "TN"
-            ],
-            "Ashford": [
-              "TN"
-            ],
-            "Shepway": [
-              "TN"
-            ],
-            "Hastings": [
-              "TN"
-            ],
-            "Torbay": [
-              "TQ"
-            ],
-            "Isles of Scilly": [
-              "TR"
-            ],
-            "Middlesbrough": [
-              "TS"
-            ],
-            "Redcar & Cleveland": [
-              "TS"
-            ],
-            "Hambleton": [
-              "TS"
-            ],
-            "Stockton-on-Tees": [
-              "TS"
-            ],
-            "Hartlepool": [
-              "TS"
-            ],
-            "Hounslow": [
-              "TW",
-              "W4"
-            ],
-            "Spelthorne": [
-              "TW"
-            ],
-            "Ealing": [
-              "UB",
-              "W1",
-              "W3",
-              "W5",
-              "W7"
-            ],
-            "Warrington": [
-              "WA"
-            ],
-            "Halton": [
-              "WA"
-            ],
-            "St. Helens": [
-              "WA"
-            ],
-            "Watford": [
-              "WD"
-            ],
-            "Three Rivers": [
-              "WD"
-            ],
-            "Wakefield": [
-              "WF"
-            ],
-            "Worcester": [
-              "WR"
-            ],
-            "Wychavon": [
-              "WR"
-            ],
-            "Malvern Hills": [
-              "WR"
-            ],
-            "Walsall": [
-              "WS"
-            ],
-            "Lichfield": [
-              "WS"
-            ],
-            "Cannock Chase": [
-              "WS"
-            ],
-            "Wolverhampton": [
-              "WV"
-            ],
-            "York": [
-              "YO"
-            ],
-            "Shetland": [
-              "ZE"
-            ]
+            "Aberdeen": ["AB"],
+            "Aberdeenshire": ["AB"],
+            "Moray": ["AB", "IV"],
+            "St Albans": ["AL"],
+            "Welwyn Hatfield": ["AL"],
+            "Birmingham": ["B1", "B2", "B3", "B4", "B5", "B6", "B7", "B8", "B9"],
+            "Solihull": ["B3", "B4", "B9"],
+            "North Warwickshire": ["B4", "CV"],
+            "Bromsgrove Worcestershire": ["B4"],
+            "Stratford-on-Avon": ["B4", "B5", "B8", "B9", "CV"],
+            "Bromsgrove": ["B6"],
+            "Dudley": ["B6", "DY"],
+            "Sandwell": ["B6", "B7", "WS"],
+            "Tamworth": ["B7"],
+            "Redditch": ["B9"],
+            "Bath and North East Somerset": ["BA", "BS"],
+            "Mendip": ["BA"],
+            "South Somerset": ["BA", "TA"],
+            "Wiltshire": ["BA", "SN", "SP"],
+            "Blackburn with Darwen": ["BB"],
+            "Rossendale": ["BB", "OL"],
+            "Hyndburn": ["BB"],
+            "Ribble Valley": ["BB"],
+            "Pendle": ["BB"],
+            "Burnley": ["BB"],
+            "Bradford": ["BD", "LS"],
+            "Kirklees": ["BD", "HD", "WF"],
+            "Bingley": ["BD"],
+            "Craven": ["BD"],
+            "British Forces": ["BF"],
+            "Bournemouth": ["BH"],
+            "Poole": ["BH"],
+            "Purbeck": ["BH"],
+            "East Dorset": ["BH"],
+            "Christchurch": ["BH"],
+            "New Forest": ["BH", "SO", "SP"],
+            "Bury": ["BL", "M2", "M4"],
+            "Bolton": ["BL"],
+            "Brighton and Hove": ["BN"],
+            "Horsham": ["BN", "RH"],
+            "Lewes": ["BN"],
+            "Worthing": ["BN"],
+            "Arun": ["BN"],
+            "Eastbourne": ["BN"],
+            "Wealden": ["BN", "TN"],
+            "Adur": ["BN"],
+            "Mid Sussex": ["BN", "RH"],
+            "Bromley": ["BR", "SE", "TN"],
+            "Sevenoaks": ["BR", "TN"],
+            "Bristol": ["BS"],
+            "North Somerset": ["BS"],
+            "Somerset": ["BS", "TA"],
+            "South Gloucestershire": ["BS"],
+            "Belfast": ["BT"],
+            "North Down": ["BT"],
+            "Ards": ["BT"],
+            "Down": ["BT"],
+            "Banbridge": ["BT"],
+            "Lisburn": ["BT"],
+            "County Antrim": ["BT"],
+            "Newry and Mourne": ["BT"],
+            "Newtownabbey": ["BT"],
+            "Carrickfergus": ["BT"],
+            "Larne": ["BT"],
+            "Antrim": ["BT"],
+            "Ballymena": ["BT"],
+            "Magherafelt": ["BT"],
+            "Derry": ["BT"],
+            "Limavady": ["BT"],
+            "Coleraine": ["BT"],
+            "Ballymoney": ["BT"],
+            "Moyle": ["BT"],
+            "Armagh": ["BT"],
+            "Craigavon": ["BT"],
+            "Dungannon and South Tyrone": ["BT"],
+            "Fermanagh": ["BT"],
+            "Omagh": ["BT"],
+            "Cookstown": ["BT"],
+            "Strabane": ["BT"],
+            "Carlisle": ["CA"],
+            "Allerdale": ["CA"],
+            "Eden": ["CA"],
+            "Copeland": ["CA", "LA"],
+            "Cambridge": ["CB"],
+            "Ely": ["CB"],
+            "Newmarket": ["CB"],
+            "St Edmundsbury": ["CB", "IP"],
+            "Uttlesford": ["CB", "CM"],
+            "Cardiff": ["CF"],
+            "Bridgend": ["CF"],
+            "Rhondda Cynon Taf": ["CF"],
+            "Merthyr Tydfil": ["CF"],
+            "Vale of Glamorgan": ["CF"],
+            "Caerphilly": ["CF", "NP"],
+            "Cheshire West and Chester": ["CH", "CW", "SY", "WA"],
+            "Flintshire": ["CH", "LL"],
+            "Wirral": ["CH"],
+            "Maldon": ["CM"],
+            "Chelmsford": ["CM"],
+            "Brentwood": ["CM"],
+            "Epping Forest": ["CM", "EN", "IG"],
+            "Braintree": ["CM", "CO"],
+            "Basildon": ["CM", "SS"],
+            "Harlow": ["CM"],
+            "East Hertfordshire": ["CM", "SG"],
+            "Colchester": ["CO"],
+            "Babergh": ["CO", "IP"],
+            "Tendring": ["CO"],
+            "Croydon": ["CR", "SE"],
+            "Merton": ["CR", "SM", "SW"],
+            "Kent": ["CT"],
+            "Canterbury": ["CT"],
+            "Broadstairs": ["CT"],
+            "Ramsgate": ["CT"],
+            "Folkestone": ["CT"],
+            "Coventry": ["CV"],
+            "Warwick": ["CV"],
+            "Nuneaton & Bedworth": ["CV"],
+            "Hinckley and Bosworth": ["CV"],
+            "Rugby": ["CV"],
+            "Cheshire East": ["CW", "SK", "WA"],
+            "Dartford": ["DA"],
+            "Bexley": ["DA"],
+            "Gravesham": ["DA"],
+            "Dundee": ["DD"],
+            "Fife": ["DD", "KY"],
+            "Angus": ["DD"],
+            "Derby": ["DE"],
+            "Derbyshire Dales": ["DE", "S3", "SK"],
+            "Amber Valley": ["DE"],
+            "Erewash": ["DE", "NG"],
+            "South Derbyshire": ["DE"],
+            "East Staffordshire": ["DE"],
+            "North West Leicestershire": ["DE"],
+            "Dumfriesshire": ["DG"],
+            "Kirkcudbrightshire": ["DG"],
+            "Wigtownshire": ["DG"],
+            "County Durham": ["DH", "DL", "SR", "TS"],
+            "Sunderland": ["DH", "NE", "SR"],
+            "Darlington": ["DL"],
+            "North Yorkshire": ["DL", "YO"],
+            "Doncaster": ["DN", "S6"],
+            "East Riding of Yorkshire": ["DN", "HU", "YO"],
+            "North Lincolnshire": ["DN"],
+            "West Lindsey": ["DN", "LN"],
+            "Bassetlaw": ["DN", "S8"],
+            "North East Lincolnshire": ["DN"],
+            "West Dorset": ["DT"],
+            "Weymouth and Portland": ["DT"],
+            "North Dorset": ["DT", "SP"],
+            "South Staffordshire": ["DY", "WS", "WV"],
+            "Wyre Forest": ["DY"],
+            "Shropshire": ["DY", "SY", "TF", "WV"],
+            "Tower Hamlets": ["E1", "E2", "E3", "E7", "E9", "EC"],
+            "Waltham Forest": ["E1", "E4"],
+            "Hackney": ["E1", "E5", "E8", "E9", "EC", "N1"],
+            "Newham": ["E1", "E2", "E6", "E7"],
+            "Redbridge": ["E1", "IG"],
+            "City of London": ["EC"],
+            "Islington": ["EC", "N1", "N5", "N7"],
+            "Camden": ["EC", "N1", "N6", "NW", "W1", "WC"],
+            "Edinburgh": ["EH"],
+            "Midlothian": ["EH"],
+            "East Lothian": ["EH", "TD"],
+            "West Lothian": ["EH"],
+            "Scottish Borders": ["EH", "TD"],
+            "Falkirk": ["EH", "FK"],
+            "Enfield": ["EN", "N1", "N2", "N9"],
+            "Barnet": ["EN", "N1", "N2", "N3", "NW"],
+            "Hertsmere": ["EN", "WD"],
+            "Broxbourne": ["EN"],
+            "Exeter": ["EX"],
+            "East Devon": ["EX"],
+            "Teignbridge": ["EX", "TQ"],
+            "Mid Devon": ["EX"],
+            "Cornwall": ["EX", "PL", "TR"],
+            "Torridge": ["EX"],
+            "Blackpool": ["FY"],
+            "Wyre": ["FY"],
+            "Fylde": ["FY", "PR"],
+            "Glasgow": ["G1", "G2", "G3", "G4", "G5", "G6", "G8", "G9", "PA"],
+            "West Dunbartonshire": ["G6", "G8"],
+            "East Dunbartonshire": ["G6"],
+            "Stirling": ["G6"],
+            "North Lanarkshire": ["G6", "G7", "ML"],
+            "Lanarkshire": ["G7"],
+            "South Lanarkshire": ["G7", "ML"],
+            "East Renfrewshire": ["G7"],
+            "Argyll and Bute": ["G8"],
+            "Gloucester": ["GL"],
+            "Stroud": ["GL"],
+            "Cotswold": ["GL"],
+            "Tewkesbury": ["GL"],
+            "Guildford": ["GU", "KT"],
+            "Waverley": ["GU"],
+            "Rushmoor": ["GU"],
+            "Hampshire": ["GU", "PO", "RG"],
+            "Surrey Heath": ["GU"],
+            "Hart": ["GU"],
+            "Woking": ["GU"],
+            "Runnymede": ["GU", "KT", "TW"],
+            "Chichester": ["GU", "RH"],
+            "East Hampshire": ["GU"],
+            "Bracknell Forest": ["GU", "RG", "SL"],
+            "Guernsey": ["GY"],
+            "Harrow": ["HA"],
+            "Hillingdon": ["HA", "TW", "UB"],
+            "Brent": ["HA", "NW"],
+            "Calderdale": ["HD", "HX", "OL"],
+            "Harrogate": ["HG"],
+            "Ripon": ["HG"],
+            "Dacorum": ["HP", "WD"],
+            "Chiltern": ["HP"],
+            "South Buckinghamshire": ["HP", "SL", "UB"],
+            "Wycombe": ["HP"],
+            "Aylesbury Vale": ["HP", "MK"],
+            "Hereford": ["HR"],
+            "Comhairle nan Eilean Siar": ["HS", "PA"],
+            "Kingston upon Hull": ["HU"],
+            "Barking and Dagenham": ["IG", "RM"],
+            "Isle of Man": ["IM"],
+            "Ipswich": ["IP"],
+            "Suffolk Coastal": ["IP"],
+            "Mid Suffolk": ["IP"],
+            "Waveney": ["IP"],
+            "South Norfolk": ["IP"],
+            "Breckland": ["IP"],
+            "Forest Heath": ["IP"],
+            "Highland": ["IV", "KW", "PA", "PH"],
+            "Jersey": ["JE"],
+            "East Ayrshire": ["KA"],
+            "South Ayrshire": ["KA"],
+            "North Ayrshire": ["KA"],
+            "Kingston upon Thames": ["KT"],
+            "Sutton": ["KT", "SM"],
+            "Elmbridge": ["KT"],
+            "Epsom and Ewell": ["KT"],
+            "Reigate and Banstead": ["KT", "RH", "SM"],
+            "Mole Valley": ["KT", "RH"],
+            "Orkney Islands": ["KW"],
+            "Kinross-Shire": ["KY"],
+            "Liverpool": ["L1", "L2", "L3", "L4", "L5", "L6", "L7", "L8", "L9"],
+            "Sefton": ["L2", "L3", "PR"],
+            "Knowsley": ["L3"],
+            "West Lancashire": ["L3", "L4", "WN"],
+            "Lancaster": ["LA"],
+            "South Lakeland": ["LA"],
+            "Barrow-in-Furness": ["LA"],
+            "Llandrindod Wells": ["LD"],
+            "Leicester": ["LE"],
+            "Charnwood": ["LE"],
+            "Melton": ["LE"],
+            "Rutland": ["LE"],
+            "Harborough": ["LE"],
+            "Wrexham": ["LL"],
+            "Denbighshire": ["LL"],
+            "Conwy": ["LL"],
+            "Gwynedd": ["LL"],
+            "Anglesey": ["LL"],
+            "Lincoln": ["LN"],
+            "North Kesteven": ["LN", "NG"],
+            "East Lindsey": ["LN", "PE"],
+            "Leeds": ["LS", "WF"],
+            "Selby": ["LS"],
+            "Luton": ["LU"],
+            "Central Bedfordshire": ["LU", "SG"],
+            "Manchester": ["M1", "M2", "M3", "M4", "M5", "M6", "M8", "M9"],
+            "Salford": ["M2", "M3", "M4", "M5", "M6", "M7"],
+            "Trafford": ["M1", "M3", "M4", "WA"],
+            "Rochdale": ["M2", "OL"],
+            "Wigan": ["M2", "M4", "WA", "WN"],
+            "Tameside": ["M3", "M4", "OL", "SK"],
+            "Oldham": ["M3", "OL"],
+            "Medway": ["ME"],
+            "Tonbridge and Malling": ["ME", "TN"],
+            "Swale": ["ME"],
+            "Maidstone": ["ME", "TN"],
+            "Milton Keynes": ["MK"],
+            "Bedford": ["MK", "NN"],
+            "Haringey": ["N1", "N2", "N4", "N8"],
+            "Newcastle": ["NE"],
+            "Gateshead": ["NE"],
+            "North Tyneside": ["NE"],
+            "Northumberland": ["NE", "TD"],
+            "South Tyneside": ["NE"],
+            "Nottingham": ["NG"],
+            "Gedling": ["NG"],
+            "Broxtowe": ["NG"],
+            "Rushcliffe": ["NG"],
+            "Ashfield": ["NG"],
+            "Mansfield": ["NG"],
+            "Bolsover": ["NG", "S4"],
+            "Newark and Sherwood": ["NG"],
+            "South Kesteven": ["NG", "PE"],
+            "Northampton": ["NN"],
+            "Daventry": ["NN"],
+            "Wellingborough": ["NN"],
+            "East Northamptonshire": ["NN", "PE"],
+            "South Northamptonshire": ["NN"],
+            "Kettering": ["NN"],
+            "Corby": ["NN"],
+            "Newport": ["NP"],
+            "Monmouthshire": ["NP"],
+            "Powys": ["NP", "SY"],
+            "Blaenau Gwent": ["NP"],
+            "Torfaen": ["NP"],
+            "Norfolk": ["NR"],
+            "Suffolk": ["NR"],
+            "Oxford": ["OX"],
+            "Cherwell": ["OX"],
+            "West Oxfordshire": ["OX"],
+            "South Oxfordshire": ["OX", "RG"],
+            "Vale of White Horse": ["OX", "SN"],
+            "Renfrewshire": ["PA"],
+            "Ayrshire": ["PA"],
+            "Buteshire": ["PA"],
+            "Argyllshire": ["PA"],
+            "Peterborough": ["PE"],
+            "South Holland": ["PE"],
+            "Fenland": ["PE"],
+            "Huntingdonshire": ["PE"],
+            "Boston": ["PE"],
+            "West Norfolk": ["PE"],
+            "Perth and Kinross": ["PH"],
+            "Plymouth": ["PL"],
+            "South Hams": ["PL", "TQ"],
+            "West Devon": ["PL"],
+            "Sussex": ["PO"],
+            "Isle of Wight": ["PO"],
+            "Preston": ["PR"],
+            "South Ribble": ["PR"],
+            "Chorley": ["PR"],
+            "Berkshire": ["RG"],
+            "Wokingham": ["RG"],
+            "West Berkshire": ["RG"],
+            "Crawley": ["RH"],
+            "Tandridge": ["RH"],
+            "Havering": ["RM"],
+            "Thurrock": ["RM", "SS"],
+            "Sheffield": ["S1", "S2", "S3", "S4", "S5", "S6", "S7", "S8", "S9"],
+            "North East Derbyshire": ["S1", "S2", "S4"],
+            "Rotherham": ["S2", "S3", "S6", "S9"],
+            "High Peak": ["S3", "SK"],
+            "Barnsley": ["S3", "S6", "S7"],
+            "Chesterfield": ["S4"],
+            "Swansea": ["SA"],
+            "Neath Port Talbot": ["SA"],
+            "Carmarthenshire": ["SA"],
+            "Pembrokeshire": ["SA"],
+            "Ceredigion": ["SA", "SY"],
+            "Southwark": ["SE"],
+            "Greenwich": ["SE"],
+            "Lewisham": ["SE"],
+            "Lambeth": ["SE", "SW"],
+            "Stevenage": ["SG"],
+            "North Hertfordshire": ["SG"],
+            "Hertfordshire": ["SG"],
+            "Stockport": ["SK"],
+            "Slough": ["SL"],
+            "Windsor and Maidenhead": ["SL"],
+            "Swindon": ["SN"],
+            "Kennet": ["SN"],
+            "Southampton": ["SO"],
+            "Test Valley": ["SO", "SP"],
+            "Winchester": ["SO"],
+            "Eastleigh": ["SO"],
+            "Southend-on-Sea": ["SS"],
+            "Rochford": ["SS"],
+            "Castle Point": ["SS"],
+            "Staffordshire": ["ST"],
+            "Westminster": ["SW", "W1", "W2", "W9", "WC"],
+            "Kensington and Chelsea": ["SW", "W1", "W8"],
+            "Hammersmith and Fulham": ["SW", "W1", "W6"],
+            "Wandsworth": ["SW"],
+            "Richmond upon Thames": ["SW", "TW"],
+            "Sedgemoor": ["TA"],
+            "Telford and Wrekin": ["TF"],
+            "Tunbridge Wells": ["TN"],
+            "Rother": ["TN"],
+            "Ashford": ["TN"],
+            "Shepway": ["TN"],
+            "Hastings": ["TN"],
+            "Torbay": ["TQ"],
+            "Isles of Scilly": ["TR"],
+            "Middlesbrough": ["TS"],
+            "Redcar & Cleveland": ["TS"],
+            "Hambleton": ["TS"],
+            "Stockton-on-Tees": ["TS"],
+            "Hartlepool": ["TS"],
+            "Hounslow": ["TW", "W4"],
+            "Spelthorne": ["TW"],
+            "Ealing": ["UB", "W1", "W3", "W5", "W7"],
+            "Warrington": ["WA"],
+            "Halton": ["WA"],
+            "St. Helens": ["WA"],
+            "Watford": ["WD"],
+            "Three Rivers": ["WD"],
+            "Wakefield": ["WF"],
+            "Worcester": ["WR"],
+            "Wychavon": ["WR"],
+            "Malvern Hills": ["WR"],
+            "Walsall": ["WS"],
+            "Lichfield": ["WS"],
+            "Cannock Chase": ["WS"],
+            "Wolverhampton": ["WV"],
+            "York": ["YO"],
+            "Shetland": ["ZE"]
           },
           "region_level4": {
             "AB": [
@@ -3185,115 +2109,16 @@
               "AB9",
               "AB99"
             ],
-            "AL": [
-              "AL1",
-              "AL10",
-              "AL2",
-              "AL3",
-              "AL4",
-              "AL5",
-              "AL6",
-              "AL7",
-              "AL8",
-              "AL9"
-            ],
-            "B1": [
-              "B1",
-              "B10",
-              "B11",
-              "B12",
-              "B13",
-              "B14",
-              "B15",
-              "B16",
-              "B17",
-              "B18",
-              "B19"
-            ],
-            "B2": [
-              "B2",
-              "B20",
-              "B21",
-              "B22",
-              "B23",
-              "B24",
-              "B25",
-              "B26",
-              "B27",
-              "B28",
-              "B29"
-            ],
-            "B3": [
-              "B3",
-              "B30",
-              "B31",
-              "B32",
-              "B33",
-              "B34",
-              "B35",
-              "B36",
-              "B37",
-              "B38"
-            ],
-            "B4": [
-              "B4",
-              "B40",
-              "B42",
-              "B43",
-              "B44",
-              "B45",
-              "B46",
-              "B47",
-              "B48",
-              "B49"
-            ],
-            "B5": [
-              "B5",
-              "B50"
-            ],
-            "B6": [
-              "B6",
-              "B60",
-              "B61",
-              "B62",
-              "B63",
-              "B64",
-              "B65",
-              "B66",
-              "B67",
-              "B68",
-              "B69"
-            ],
-            "B7": [
-              "B7",
-              "B70",
-              "B71",
-              "B72",
-              "B73",
-              "B74",
-              "B75",
-              "B76",
-              "B77",
-              "B78",
-              "B79"
-            ],
-            "B8": [
-              "B8",
-              "B80"
-            ],
-            "B9": [
-              "B9",
-              "B90",
-              "B91",
-              "B92",
-              "B93",
-              "B94",
-              "B95",
-              "B96",
-              "B97",
-              "B98",
-              "B99"
-            ],
+            "AL": ["AL1", "AL10", "AL2", "AL3", "AL4", "AL5", "AL6", "AL7", "AL8", "AL9"],
+            "B1": ["B1", "B10", "B11", "B12", "B13", "B14", "B15", "B16", "B17", "B18", "B19"],
+            "B2": ["B2", "B20", "B21", "B22", "B23", "B24", "B25", "B26", "B27", "B28", "B29"],
+            "B3": ["B3", "B30", "B31", "B32", "B33", "B34", "B35", "B36", "B37", "B38"],
+            "B4": ["B4", "B40", "B42", "B43", "B44", "B45", "B46", "B47", "B48", "B49"],
+            "B5": ["B5", "B50"],
+            "B6": ["B6", "B60", "B61", "B62", "B63", "B64", "B65", "B66", "B67", "B68", "B69"],
+            "B7": ["B7", "B70", "B71", "B72", "B73", "B74", "B75", "B76", "B77", "B78", "B79"],
+            "B8": ["B8", "B80"],
+            "B9": ["B9", "B90", "B91", "B92", "B93", "B94", "B95", "B96", "B97", "B98", "B99"],
             "BA": [
               "BA1",
               "BA10",
@@ -3361,9 +2186,7 @@
               "BD98",
               "BD99"
             ],
-            "BF": [
-              "BF1"
-            ],
+            "BF": ["BF1"],
             "BH": [
               "BH1",
               "BH10",
@@ -3392,20 +2215,7 @@
               "BH8",
               "BH9"
             ],
-            "BL": [
-              "BL0",
-              "BL1",
-              "BL11",
-              "BL2",
-              "BL3",
-              "BL4",
-              "BL5",
-              "BL6",
-              "BL7",
-              "BL78",
-              "BL8",
-              "BL9"
-            ],
+            "BL": ["BL0", "BL1", "BL11", "BL2", "BL3", "BL4", "BL5", "BL6", "BL7", "BL78", "BL8", "BL9"],
             "BN": [
               "BN1",
               "BN10",
@@ -3446,17 +2256,7 @@
               "BN95",
               "BN99"
             ],
-            "BR": [
-              "BR1",
-              "BR2",
-              "BR3",
-              "BR4",
-              "BR5",
-              "BR6",
-              "BR7",
-              "BR8",
-              "BR98"
-            ],
+            "BR": ["BR1", "BR2", "BR3", "BR4", "BR5", "BR6", "BR7", "BR8", "BR98"],
             "BS": [
               "BS0",
               "BS1",
@@ -3775,19 +2575,7 @@
               "CO8",
               "CO9"
             ],
-            "CR": [
-              "CR0",
-              "CR2",
-              "CR3",
-              "CR4",
-              "CR44",
-              "CR5",
-              "CR6",
-              "CR7",
-              "CR8",
-              "CR9",
-              "CR90"
-            ],
+            "CR": ["CR0", "CR2", "CR3", "CR4", "CR44", "CR5", "CR6", "CR7", "CR8", "CR9", "CR90"],
             "CT": [
               "CT1",
               "CT10",
@@ -3838,21 +2626,7 @@
               "CV8",
               "CV9"
             ],
-            "CW": [
-              "CW1",
-              "CW10",
-              "CW11",
-              "CW12",
-              "CW2",
-              "CW3",
-              "CW4",
-              "CW5",
-              "CW6",
-              "CW7",
-              "CW8",
-              "CW9",
-              "CW98"
-            ],
+            "CW": ["CW1", "CW10", "CW11", "CW12", "CW2", "CW3", "CW4", "CW5", "CW6", "CW7", "CW8", "CW9", "CW98"],
             "DA": [
               "DA1",
               "DA10",
@@ -3873,19 +2647,7 @@
               "DA8",
               "DA9"
             ],
-            "DD": [
-              "DD1",
-              "DD10",
-              "DD11",
-              "DD2",
-              "DD3",
-              "DD4",
-              "DD5",
-              "DD6",
-              "DD7",
-              "DD8",
-              "DD9"
-            ],
+            "DD": ["DD1", "DD10", "DD11", "DD2", "DD3", "DD4", "DD5", "DD6", "DD7", "DD8", "DD9"],
             "DE": [
               "DE1",
               "DE11",
@@ -3930,20 +2692,7 @@
               "DG8",
               "DG9"
             ],
-            "DH": [
-              "DH1",
-              "DH2",
-              "DH3",
-              "DH4",
-              "DH5",
-              "DH6",
-              "DH7",
-              "DH8",
-              "DH9",
-              "DH97",
-              "DH98",
-              "DH99"
-            ],
+            "DH": ["DH1", "DH2", "DH3", "DH4", "DH5", "DH6", "DH7", "DH8", "DH9", "DH97", "DH98", "DH99"],
             "DL": [
               "DL1",
               "DL10",
@@ -3999,19 +2748,7 @@
               "DN8",
               "DN9"
             ],
-            "DT": [
-              "DT1",
-              "DT10",
-              "DT11",
-              "DT2",
-              "DT3",
-              "DT4",
-              "DT5",
-              "DT6",
-              "DT7",
-              "DT8",
-              "DT9"
-            ],
+            "DT": ["DT1", "DT10", "DT11", "DT2", "DT3", "DT4", "DT5", "DT6", "DT7", "DT8", "DT9"],
             "DY": [
               "DY1",
               "DY10",
@@ -4028,47 +2765,15 @@
               "DY8",
               "DY9"
             ],
-            "E1": [
-              "E1",
-              "E10",
-              "E11",
-              "E12",
-              "E13",
-              "E14",
-              "E15",
-              "E16",
-              "E17",
-              "E18",
-              "E1W"
-            ],
-            "E2": [
-              "E2",
-              "E20",
-              "E22"
-            ],
-            "E3": [
-              "E3"
-            ],
-            "E4": [
-              "E4"
-            ],
-            "E5": [
-              "E5"
-            ],
-            "E6": [
-              "E6"
-            ],
-            "E7": [
-              "E7",
-              "E77"
-            ],
-            "E8": [
-              "E8"
-            ],
-            "E9": [
-              "E9",
-              "E98"
-            ],
+            "E1": ["E1", "E10", "E11", "E12", "E13", "E14", "E15", "E16", "E17", "E18", "E1W"],
+            "E2": ["E2", "E20", "E22"],
+            "E3": ["E3"],
+            "E4": ["E4"],
+            "E5": ["E5"],
+            "E6": ["E6"],
+            "E7": ["E7", "E77"],
+            "E8": ["E8"],
+            "E9": ["E9", "E98"],
             "EC": [
               "EC1A",
               "EC1M",
@@ -4161,20 +2866,7 @@
               "EH95",
               "EH99"
             ],
-            "EN": [
-              "EN1",
-              "EN10",
-              "EN11",
-              "EN2",
-              "EN3",
-              "EN4",
-              "EN5",
-              "EN6",
-              "EN7",
-              "EN77",
-              "EN8",
-              "EN9"
-            ],
+            "EN": ["EN1", "EN10", "EN11", "EN2", "EN3", "EN4", "EN5", "EN6", "EN7", "EN77", "EN8", "EN9"],
             "EX": [
               "EX1",
               "EX10",
@@ -4233,95 +2925,17 @@
               "FK8",
               "FK9"
             ],
-            "FY": [
-              "FY0",
-              "FY1",
-              "FY2",
-              "FY3",
-              "FY4",
-              "FY5",
-              "FY6",
-              "FY7",
-              "FY8"
-            ],
-            "G1": [
-              "G1",
-              "G11",
-              "G12",
-              "G13",
-              "G14",
-              "G15"
-            ],
-            "G2": [
-              "G2",
-              "G20",
-              "G21",
-              "G22",
-              "G23"
-            ],
-            "G3": [
-              "G3",
-              "G31",
-              "G32",
-              "G33",
-              "G34"
-            ],
-            "G4": [
-              "G4",
-              "G40",
-              "G41",
-              "G42",
-              "G43",
-              "G44",
-              "G45",
-              "G46"
-            ],
-            "G5": [
-              "G5",
-              "G51",
-              "G52",
-              "G53",
-              "G58",
-              "G59"
-            ],
-            "G9": [
-              "G9",
-              "G90"
-            ],
-            "G6": [
-              "G60",
-              "G61",
-              "G62",
-              "G63",
-              "G64",
-              "G65",
-              "G66",
-              "G67",
-              "G68",
-              "G69"
-            ],
-            "G7": [
-              "G70",
-              "G71",
-              "G72",
-              "G73",
-              "G74",
-              "G75",
-              "G76",
-              "G77",
-              "G78",
-              "G79"
-            ],
-            "G8": [
-              "G80",
-              "G81",
-              "G82",
-              "G83",
-              "G84"
-            ],
-            "GI": [
-              "GIR"
-            ],
+            "FY": ["FY0", "FY1", "FY2", "FY3", "FY4", "FY5", "FY6", "FY7", "FY8"],
+            "G1": ["G1", "G11", "G12", "G13", "G14", "G15"],
+            "G2": ["G2", "G20", "G21", "G22", "G23"],
+            "G3": ["G3", "G31", "G32", "G33", "G34"],
+            "G4": ["G4", "G40", "G41", "G42", "G43", "G44", "G45", "G46"],
+            "G5": ["G5", "G51", "G52", "G53", "G58", "G59"],
+            "G9": ["G9", "G90"],
+            "G6": ["G60", "G61", "G62", "G63", "G64", "G65", "G66", "G67", "G68", "G69"],
+            "G7": ["G70", "G71", "G72", "G73", "G74", "G75", "G76", "G77", "G78", "G79"],
+            "G8": ["G80", "G81", "G82", "G83", "G84"],
+            "GI": ["GIR"],
             "GL": [
               "GL1",
               "GL10",
@@ -4393,48 +3007,10 @@
               "GU9",
               "GU95"
             ],
-            "GY": [
-              "GY1",
-              "GY10",
-              "GY2",
-              "GY3",
-              "GY4",
-              "GY5",
-              "GY6",
-              "GY7",
-              "GY8",
-              "GY9"
-            ],
-            "HA": [
-              "HA0",
-              "HA1",
-              "HA2",
-              "HA3",
-              "HA4",
-              "HA5",
-              "HA6",
-              "HA7",
-              "HA8",
-              "HA9"
-            ],
-            "HD": [
-              "HD1",
-              "HD2",
-              "HD3",
-              "HD4",
-              "HD5",
-              "HD6",
-              "HD7",
-              "HD8",
-              "HD9"
-            ],
-            "HG": [
-              "HG1",
-              "HG2",
-              "HG3",
-              "HG4",
-              "HG5"
-            ],
+            "GY": ["GY1", "GY10", "GY2", "GY3", "GY4", "GY5", "GY6", "GY7", "GY8", "GY9"],
+            "HA": ["HA0", "HA1", "HA2", "HA3", "HA4", "HA5", "HA6", "HA7", "HA8", "HA9"],
+            "HD": ["HD1", "HD2", "HD3", "HD4", "HD5", "HD6", "HD7", "HD8", "HD9"],
+            "HG": ["HG1", "HG2", "HG3", "HG4", "HG5"],
             "HP": [
               "HP1",
               "HP10",
@@ -4461,28 +3037,8 @@
               "HP8",
               "HP9"
             ],
-            "HR": [
-              "HR1",
-              "HR2",
-              "HR3",
-              "HR4",
-              "HR5",
-              "HR6",
-              "HR7",
-              "HR8",
-              "HR9"
-            ],
-            "HS": [
-              "HS1",
-              "HS2",
-              "HS3",
-              "HS4",
-              "HS5",
-              "HS6",
-              "HS7",
-              "HS8",
-              "HS9"
-            ],
+            "HR": ["HR1", "HR2", "HR3", "HR4", "HR5", "HR6", "HR7", "HR8", "HR9"],
+            "HS": ["HS1", "HS2", "HS3", "HS4", "HS5", "HS6", "HS7", "HS8", "HS9"],
             "HU": [
               "HU1",
               "HU10",
@@ -4506,39 +3062,9 @@
               "HU8",
               "HU9"
             ],
-            "HX": [
-              "HX1",
-              "HX2",
-              "HX3",
-              "HX4",
-              "HX5",
-              "HX6",
-              "HX7"
-            ],
-            "IG": [
-              "IG1",
-              "IG10",
-              "IG11",
-              "IG2",
-              "IG3",
-              "IG4",
-              "IG5",
-              "IG6",
-              "IG7",
-              "IG8",
-              "IG9"
-            ],
-            "IM": [
-              "IM1",
-              "IM2",
-              "IM3",
-              "IM4",
-              "IM5",
-              "IM6",
-              "IM7",
-              "IM8",
-              "IM9"
-            ],
+            "HX": ["HX1", "HX2", "HX3", "HX4", "HX5", "HX6", "HX7"],
+            "IG": ["IG1", "IG10", "IG11", "IG2", "IG3", "IG4", "IG5", "IG6", "IG7", "IG8", "IG9"],
+            "IM": ["IM1", "IM2", "IM3", "IM4", "IM5", "IM6", "IM7", "IM8", "IM9"],
             "IP": [
               "IP1",
               "IP10",
@@ -4630,10 +3156,7 @@
               "IV9",
               "IV99"
             ],
-            "JE": [
-              "JE2",
-              "JE3"
-            ],
+            "JE": ["JE2", "JE3"],
             "KA": [
               "KA1",
               "KA10",
@@ -4729,90 +3252,15 @@
               "KY9",
               "KY99"
             ],
-            "L1": [
-              "L1",
-              "L10",
-              "L11",
-              "L12",
-              "L13",
-              "L14",
-              "L15",
-              "L16",
-              "L17",
-              "L18",
-              "L19"
-            ],
-            "L2": [
-              "L2",
-              "L20",
-              "L21",
-              "L22",
-              "L23",
-              "L24",
-              "L25",
-              "L26",
-              "L27",
-              "L28",
-              "L29"
-            ],
-            "L3": [
-              "L3",
-              "L30",
-              "L31",
-              "L32",
-              "L33",
-              "L34",
-              "L35",
-              "L36",
-              "L37",
-              "L38",
-              "L39"
-            ],
-            "L4": [
-              "L4",
-              "L40",
-              "L41",
-              "L42",
-              "L43",
-              "L44",
-              "L45",
-              "L46",
-              "L47",
-              "L48",
-              "L49"
-            ],
-            "L5": [
-              "L5"
-            ],
-            "L6": [
-              "L6",
-              "L60",
-              "L61",
-              "L62",
-              "L63",
-              "L64",
-              "L65",
-              "L66",
-              "L67",
-              "L68",
-              "L69"
-            ],
-            "L7": [
-              "L7",
-              "L70",
-              "L71",
-              "L72",
-              "L73",
-              "L74",
-              "L75"
-            ],
-            "L8": [
-              "L8",
-              "L80"
-            ],
-            "L9": [
-              "L9"
-            ],
+            "L1": ["L1", "L10", "L11", "L12", "L13", "L14", "L15", "L16", "L17", "L18", "L19"],
+            "L2": ["L2", "L20", "L21", "L22", "L23", "L24", "L25", "L26", "L27", "L28", "L29"],
+            "L3": ["L3", "L30", "L31", "L32", "L33", "L34", "L35", "L36", "L37", "L38", "L39"],
+            "L4": ["L4", "L40", "L41", "L42", "L43", "L44", "L45", "L46", "L47", "L48", "L49"],
+            "L5": ["L5"],
+            "L6": ["L6", "L60", "L61", "L62", "L63", "L64", "L65", "L66", "L67", "L68", "L69"],
+            "L7": ["L7", "L70", "L71", "L72", "L73", "L74", "L75"],
+            "L8": ["L8", "L80"],
+            "L9": ["L9"],
             "LA": [
               "LA1",
               "LA10",
@@ -4838,16 +3286,7 @@
               "LA8",
               "LA9"
             ],
-            "LD": [
-              "LD1",
-              "LD2",
-              "LD3",
-              "LD4",
-              "LD5",
-              "LD6",
-              "LD7",
-              "LD8"
-            ],
+            "LD": ["LD1", "LD2", "LD3", "LD4", "LD5", "LD6", "LD7", "LD8"],
             "LE": [
               "LE1",
               "LE10",
@@ -4947,21 +3386,7 @@
               "LL77",
               "LL78"
             ],
-            "LN": [
-              "LN1",
-              "LN10",
-              "LN11",
-              "LN12",
-              "LN13",
-              "LN2",
-              "LN3",
-              "LN4",
-              "LN5",
-              "LN6",
-              "LN7",
-              "LN8",
-              "LN9"
-            ],
+            "LN": ["LN1", "LN10", "LN11", "LN12", "LN13", "LN2", "LN3", "LN4", "LN5", "LN6", "LN7", "LN8", "LN9"],
             "LS": [
               "LS1",
               "LS10",
@@ -4997,82 +3422,16 @@
               "LS98",
               "LS99"
             ],
-            "LU": [
-              "LU1",
-              "LU2",
-              "LU3",
-              "LU4",
-              "LU5",
-              "LU6",
-              "LU7",
-              "LU95"
-            ],
-            "M1": [
-              "M1",
-              "M10",
-              "M11",
-              "M12",
-              "M13",
-              "M14",
-              "M15",
-              "M16",
-              "M17",
-              "M18",
-              "M19"
-            ],
-            "M2": [
-              "M2",
-              "M20",
-              "M21",
-              "M22",
-              "M23",
-              "M24",
-              "M25",
-              "M26",
-              "M27",
-              "M28",
-              "M29"
-            ],
-            "M3": [
-              "M3",
-              "M30",
-              "M31",
-              "M32",
-              "M33",
-              "M34",
-              "M35",
-              "M38"
-            ],
-            "M4": [
-              "M4",
-              "M40",
-              "M41",
-              "M43",
-              "M44",
-              "M45",
-              "M46"
-            ],
-            "M5": [
-              "M5",
-              "M50",
-              "M52"
-            ],
-            "M6": [
-              "M6",
-              "M60",
-              "M61"
-            ],
-            "M7": [
-              "M7"
-            ],
-            "M8": [
-              "M8"
-            ],
-            "M9": [
-              "M9",
-              "M90",
-              "M99"
-            ],
+            "LU": ["LU1", "LU2", "LU3", "LU4", "LU5", "LU6", "LU7", "LU95"],
+            "M1": ["M1", "M10", "M11", "M12", "M13", "M14", "M15", "M16", "M17", "M18", "M19"],
+            "M2": ["M2", "M20", "M21", "M22", "M23", "M24", "M25", "M26", "M27", "M28", "M29"],
+            "M3": ["M3", "M30", "M31", "M32", "M33", "M34", "M35", "M38"],
+            "M4": ["M4", "M40", "M41", "M43", "M44", "M45", "M46"],
+            "M5": ["M5", "M50", "M52"],
+            "M6": ["M6", "M60", "M61"],
+            "M7": ["M7"],
+            "M8": ["M8"],
+            "M9": ["M9", "M90", "M99"],
             "ME": [
               "ME1",
               "ME10",
@@ -5126,63 +3485,16 @@
               "MK9",
               "MK98"
             ],
-            "ML": [
-              "ML1",
-              "ML10",
-              "ML11",
-              "ML12",
-              "ML2",
-              "ML3",
-              "ML4",
-              "ML5",
-              "ML6",
-              "ML7",
-              "ML8",
-              "ML9"
-            ],
-            "N1": [
-              "N1",
-              "N10",
-              "N11",
-              "N12",
-              "N13",
-              "N14",
-              "N15",
-              "N16",
-              "N17",
-              "N18",
-              "N19",
-              "N1C",
-              "N1P"
-            ],
-            "N2": [
-              "N2",
-              "N20",
-              "N21",
-              "N22"
-            ],
-            "N3": [
-              "N3"
-            ],
-            "N4": [
-              "N4"
-            ],
-            "N5": [
-              "N5"
-            ],
-            "N6": [
-              "N6"
-            ],
-            "N7": [
-              "N7"
-            ],
-            "N8": [
-              "N8",
-              "N81"
-            ],
-            "N9": [
-              "N9"
-            ],
+            "ML": ["ML1", "ML10", "ML11", "ML12", "ML2", "ML3", "ML4", "ML5", "ML6", "ML7", "ML8", "ML9"],
+            "N1": ["N1", "N10", "N11", "N12", "N13", "N14", "N15", "N16", "N17", "N18", "N19", "N1C", "N1P"],
+            "N2": ["N2", "N20", "N21", "N22"],
+            "N3": ["N3"],
+            "N4": ["N4"],
+            "N5": ["N5"],
+            "N6": ["N6"],
+            "N7": ["N7"],
+            "N8": ["N8", "N81"],
+            "N9": ["N9"],
             "NE": [
               "NE1",
               "NE10",
@@ -5373,21 +3685,7 @@
               "NR9",
               "NR99"
             ],
-            "NW": [
-              "NW1",
-              "NW10",
-              "NW11",
-              "NW1W",
-              "NW2",
-              "NW26",
-              "NW3",
-              "NW4",
-              "NW5",
-              "NW6",
-              "NW7",
-              "NW8",
-              "NW9"
-            ],
+            "NW": ["NW1", "NW10", "NW11", "NW1W", "NW2", "NW26", "NW3", "NW4", "NW5", "NW6", "NW7", "NW8", "NW9"],
             "OL": [
               "OL1",
               "OL10",
@@ -5678,21 +3976,7 @@
               "PO8",
               "PO9"
             ],
-            "PR": [
-              "PR0",
-              "PR1",
-              "PR11",
-              "PR2",
-              "PR25",
-              "PR26",
-              "PR3",
-              "PR4",
-              "PR5",
-              "PR6",
-              "PR7",
-              "PR8",
-              "PR9"
-            ],
+            "PR": ["PR0", "PR1", "PR11", "PR2", "PR25", "PR26", "PR3", "PR4", "PR5", "PR6", "PR7", "PR8", "PR9"],
             "RG": [
               "RG1",
               "RG10",
@@ -5776,80 +4060,15 @@
               "RM8",
               "RM9"
             ],
-            "S1": [
-              "S1",
-              "S10",
-              "S11",
-              "S12",
-              "S13",
-              "S14",
-              "S17",
-              "S18",
-              "S19"
-            ],
-            "S2": [
-              "S2",
-              "S20",
-              "S21",
-              "S25",
-              "S26"
-            ],
-            "S3": [
-              "S3",
-              "S30",
-              "S31",
-              "S32",
-              "S33",
-              "S35",
-              "S36"
-            ],
-            "S4": [
-              "S4",
-              "S40",
-              "S41",
-              "S42",
-              "S43",
-              "S44",
-              "S45",
-              "S49"
-            ],
-            "S5": [
-              "S5"
-            ],
-            "S6": [
-              "S6",
-              "S60",
-              "S61",
-              "S62",
-              "S63",
-              "S64",
-              "S65",
-              "S66",
-              "S69"
-            ],
-            "S7": [
-              "S7",
-              "S70",
-              "S71",
-              "S72",
-              "S73",
-              "S74",
-              "S75"
-            ],
-            "S8": [
-              "S8",
-              "S80",
-              "S81"
-            ],
-            "S9": [
-              "S9",
-              "S94",
-              "S95",
-              "S96",
-              "S97",
-              "S98",
-              "S99"
-            ],
+            "S1": ["S1", "S10", "S11", "S12", "S13", "S14", "S17", "S18", "S19"],
+            "S2": ["S2", "S20", "S21", "S25", "S26"],
+            "S3": ["S3", "S30", "S31", "S32", "S33", "S35", "S36"],
+            "S4": ["S4", "S40", "S41", "S42", "S43", "S44", "S45", "S49"],
+            "S5": ["S5"],
+            "S6": ["S6", "S60", "S61", "S62", "S63", "S64", "S65", "S66", "S69"],
+            "S7": ["S7", "S70", "S71", "S72", "S73", "S74", "S75"],
+            "S8": ["S8", "S80", "S81"],
+            "S9": ["S9", "S94", "S95", "S96", "S97", "S98", "S99"],
             "SA": [
               "SA1",
               "SA10",
@@ -5979,29 +4198,8 @@
               "SK8",
               "SK9"
             ],
-            "SL": [
-              "SL0",
-              "SL1",
-              "SL2",
-              "SL3",
-              "SL4",
-              "SL5",
-              "SL6",
-              "SL60",
-              "SL7",
-              "SL8",
-              "SL9",
-              "SL95"
-            ],
-            "SM": [
-              "SM1",
-              "SM2",
-              "SM3",
-              "SM4",
-              "SM5",
-              "SM6",
-              "SM7"
-            ],
+            "SL": ["SL0", "SL1", "SL2", "SL3", "SL4", "SL5", "SL6", "SL60", "SL7", "SL8", "SL9", "SL95"],
+            "SM": ["SM1", "SM2", "SM3", "SM4", "SM5", "SM6", "SM7"],
             "SN": [
               "SN1",
               "SN10",
@@ -6060,32 +4258,8 @@
               "SO9",
               "SO97"
             ],
-            "SP": [
-              "SP1",
-              "SP10",
-              "SP11",
-              "SP2",
-              "SP3",
-              "SP4",
-              "SP5",
-              "SP6",
-              "SP7",
-              "SP8",
-              "SP9"
-            ],
-            "SR": [
-              "SR1",
-              "SR2",
-              "SR3",
-              "SR4",
-              "SR43",
-              "SR5",
-              "SR6",
-              "SR7",
-              "SR8",
-              "SR88",
-              "SR9"
-            ],
+            "SP": ["SP1", "SP10", "SP11", "SP2", "SP3", "SP4", "SP5", "SP6", "SP7", "SP8", "SP9"],
+            "SR": ["SR1", "SR2", "SR3", "SR4", "SR43", "SR5", "SR6", "SR7", "SR8", "SR88", "SR9"],
             "SS": [
               "SS0",
               "SS1",
@@ -6233,21 +4407,7 @@
               "TD8",
               "TD9"
             ],
-            "TF": [
-              "TF1",
-              "TF10",
-              "TF11",
-              "TF12",
-              "TF13",
-              "TF2",
-              "TF3",
-              "TF4",
-              "TF5",
-              "TF6",
-              "TF7",
-              "TF8",
-              "TF9"
-            ],
+            "TF": ["TF1", "TF10", "TF11", "TF12", "TF13", "TF2", "TF3", "TF4", "TF5", "TF6", "TF7", "TF8", "TF9"],
             "TN": [
               "TN1",
               "TN10",
@@ -6391,20 +4551,7 @@
               "TW9",
               "TW98"
             ],
-            "UB": [
-              "UB1",
-              "UB10",
-              "UB11",
-              "UB18",
-              "UB2",
-              "UB3",
-              "UB4",
-              "UB5",
-              "UB6",
-              "UB7",
-              "UB8",
-              "UB9"
-            ],
+            "UB": ["UB1", "UB10", "UB11", "UB18", "UB2", "UB3", "UB4", "UB5", "UB6", "UB7", "UB8", "UB9"],
             "W1": [
               "W10",
               "W11",
@@ -6433,30 +4580,14 @@
               "W1X",
               "W1Y"
             ],
-            "W2": [
-              "W2"
-            ],
-            "W3": [
-              "W3"
-            ],
-            "W4": [
-              "W4"
-            ],
-            "W5": [
-              "W5"
-            ],
-            "W6": [
-              "W6"
-            ],
-            "W7": [
-              "W7"
-            ],
-            "W8": [
-              "W8"
-            ],
-            "W9": [
-              "W9"
-            ],
+            "W2": ["W2"],
+            "W3": ["W3"],
+            "W4": ["W4"],
+            "W5": ["W5"],
+            "W6": ["W6"],
+            "W7": ["W7"],
+            "W8": ["W8"],
+            "W9": ["W9"],
             "WA": [
               "WA1",
               "WA10",
@@ -6530,16 +4661,7 @@
               "WF9",
               "WF90"
             ],
-            "WN": [
-              "WN1",
-              "WN2",
-              "WN3",
-              "WN4",
-              "WN5",
-              "WN6",
-              "WN7",
-              "WN8"
-            ],
+            "WN": ["WN1", "WN2", "WN3", "WN4", "WN5", "WN6", "WN7", "WN8"],
             "WR": [
               "WR1",
               "WR10",
@@ -6635,11 +4757,7 @@
               "YO91",
               "YO95"
             ],
-            "ZE": [
-              "ZE1",
-              "ZE2",
-              "ZE3"
-            ]
+            "ZE": ["ZE1", "ZE2", "ZE3"]
           }
         }
       },
@@ -6650,13 +4768,7 @@
         "label_i18n": {
           "en": "Years of experience"
         },
-        "options": [
-          "1-5",
-          "6-10",
-          "11-15",
-          "16-20",
-          "21-25"
-        ]
+        "options": ["1-5", "6-10", "11-15", "16-20", "21-25"]
       }
     },
     "field_projection": [
@@ -6671,17 +4783,8 @@
       "region_level4"
     ],
     "plan_field_visibility": {
-      "small": [
-        "sector_level1",
-        "region_level1"
-      ],
-      "medium": [
-        "sector_level1",
-        "sector_level2",
-        "region_level1",
-        "region_level2",
-        "experience_years"
-      ],
+      "small": ["sector_level1", "region_level1"],
+      "medium": ["sector_level1", "sector_level2", "region_level1", "region_level2", "experience_years"],
       "large": [
         "region_level3",
         "sector_level1",
@@ -6697,6 +4800,144 @@
     "metadata": {
       "source_file": "filters_sectors_and_region.xlsx",
       "missing_columns": []
+    }
+  },
+  "uk": {
+    "database_collection": "collection_uk",
+    "facets": {
+      "sector": {
+        "type": "hierarchy",
+        "levels": [
+          {
+            "key": "sector_level1",
+            "column": "sector_level1",
+            "label_i18n": {
+              "en": "Sector Level1"
+            }
+          },
+          {
+            "key": "sector_level2",
+            "column": "sector_level2",
+            "label_i18n": {
+              "en": "Sector Level2"
+            }
+          },
+          {
+            "key": "sector_level3",
+            "column": "sector_level3",
+            "label_i18n": {
+              "en": "Sector Level3"
+            }
+          }
+        ]
+      },
+      "region": {
+        "type": "hierarchy",
+        "levels": [
+          {
+            "key": "region_level1",
+            "column": "region_level1",
+            "label_i18n": {
+              "en": "Region Level1"
+            }
+          },
+          {
+            "key": "region_level2",
+            "column": "region_level2",
+            "label_i18n": {
+              "en": "Region Level2"
+            }
+          },
+          {
+            "key": "region_level3",
+            "column": "region_level3",
+            "label_i18n": {
+              "en": "Region Level3"
+            }
+          },
+          {
+            "key": "region_level4",
+            "column": "region_level4",
+            "label_i18n": {
+              "en": "Region Level4"
+            }
+          }
+        ]
+      },
+      "company_size": {
+        "type": "enum",
+        "column": "company_size",
+        "options": []
+      }
+    }
+  },
+  "de": {
+    "database_collection": "collection_de",
+    "facets": {
+      "sector": {
+        "type": "hierarchy",
+        "levels": [
+          {
+            "key": "sector_level1",
+            "column": "sector_level1",
+            "label_i18n": {
+              "en": "Sector Level1"
+            }
+          },
+          {
+            "key": "sector_level2",
+            "column": "sector_level2",
+            "label_i18n": {
+              "en": "Sector Level2"
+            }
+          },
+          {
+            "key": "sector_level3",
+            "column": "sector_level3",
+            "label_i18n": {
+              "en": "Sector Level3"
+            }
+          }
+        ]
+      },
+      "region": {
+        "type": "hierarchy",
+        "levels": [
+          {
+            "key": "region_level1",
+            "column": "region_level1",
+            "label_i18n": {
+              "en": "Region Level1"
+            }
+          },
+          {
+            "key": "region_level2",
+            "column": "region_level2",
+            "label_i18n": {
+              "en": "Region Level2"
+            }
+          },
+          {
+            "key": "region_level3",
+            "column": "region_level3",
+            "label_i18n": {
+              "en": "Region Level3"
+            }
+          },
+          {
+            "key": "region_level4",
+            "column": "region_level4",
+            "label_i18n": {
+              "en": "Region Level4"
+            }
+          }
+        ]
+      },
+      "company_size": {
+        "type": "enum",
+        "column": "company_size",
+        "options": []
+      }
     }
   }
 }

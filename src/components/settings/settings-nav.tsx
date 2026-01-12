@@ -9,6 +9,7 @@ interface SettingsNavProps {
 
 const NAV_ITEMS = [
   { id: 'general', label: 'General' },
+  { id: 'language', label: 'Language' },
   { id: 'plan', label: 'Plan' },
   { id: 'limits', label: 'Usage & Limits' },
   { id: 'notifications', label: 'Notifications' },

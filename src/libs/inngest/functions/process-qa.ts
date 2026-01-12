@@ -1,5 +1,6 @@
 import { inngest } from '@/libs/inngest/client';
 import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
+import { normalizeValue } from '@/utils/normalize-value';
 
 export const processQAJob = inngest.createFunction(
   {
@@ -39,24 +40,39 @@ export const processQAJob = inngest.createFunction(
       promptPreview: prompt?.substring(0, 100) || '',
     });
 
-    // Step 1: Fetch selection items from Supabase
-    const items = await step.run('fetch-selection-items', async () => {
-      console.log('[Inngest processQAJob] Fetching selection items from Supabase...');
+    // Step 1: Fetch selection and items from Supabase
+    const { selection, items } = await step.run('fetch-selection-and-items', async () => {
+      console.log('[Inngest processQAJob] Fetching selection and items from Supabase...');
 
-      const { data, error } = await supabaseAdminClient
+      // Fetch selection to get collection from criteria_json
+      const { data: selectionData, error: selectionError } = await supabaseAdminClient
+        .from('selections')
+        .select('id, criteria_json')
+        .eq('id', selectionId)
+        .single();
+
+      if (selectionError) {
+        console.error('[Inngest processQAJob] Error fetching selection:', selectionError);
+        throw new Error(`Failed to fetch selection: ${selectionError.message}`);
+      }
+
+      // Fetch selection items
+      const { data: itemsData, error: itemsError } = await supabaseAdminClient
         .from('selection_items')
         .select('*')
         .eq('selection_id', selectionId)
         .order('similarity', { ascending: false });
 
-      if (error) {
-        console.error('[Inngest processQAJob] Error fetching selection items:', error);
-        throw new Error(`Failed to fetch selection items: ${error.message}`);
+      if (itemsError) {
+        console.error('[Inngest processQAJob] Error fetching selection items:', itemsError);
+        throw new Error(`Failed to fetch selection items: ${itemsError.message}`);
       }
 
-      console.log('[Inngest processQAJob] Fetched selection items:', {
-        count: data?.length || 0,
-        items: data?.map((item: any) => ({
+      console.log('[Inngest processQAJob] Fetched selection and items:', {
+        selectionId: selectionData?.id,
+        collection: (selectionData?.criteria_json as any)?.collection,
+        itemsCount: itemsData?.length || 0,
+        items: itemsData?.map((item: any) => ({
           doc_id: item.doc_id,
           name: item.name,
           email: item.email,
@@ -64,8 +80,15 @@ export const processQAJob = inngest.createFunction(
         })),
       });
 
-      return data || [];
+      return {
+        selection: selectionData,
+        items: itemsData || [],
+      };
     });
+
+    // Extract collection from selection criteria
+    const collection = (selection?.criteria_json as any)?.collection || 'collection_uk';
+    console.log('[Inngest processQAJob] Using collection:', collection);
 
     if (!items || items.length === 0) {
       console.warn('[Inngest processQAJob] No items found for selection');
@@ -187,6 +210,7 @@ export const processQAJob = inngest.createFunction(
           batchNumber,
           batchSize: batchItems.length,
           haystackUrl: `${haystackUrl}/qa`,
+          collection: collection,
           items: batchItems.map((i) => ({
             doc_id: i.doc_id,
             name: i.name,
@@ -197,10 +221,10 @@ export const processQAJob = inngest.createFunction(
           promptPreview: cleanedPrompt.substring(0, 100),
         });
 
-        // Call Haystack API
+        // Call Haystack API with collection parameter
         let qaResponses: any[];
         try {
-          qaResponses = await haystackClient.askBatch(batchItems, cleanedPrompt);
+          qaResponses = await haystackClient.askBatch(batchItems, cleanedPrompt, collection);
           console.log(`[Inngest processQAJob] ===== BATCH ${batchNumber} - HAYSTACK RESPONSE RECEIVED =====`);
           console.log('[Inngest processQAJob] Response details:', {
             batchNumber,
@@ -217,19 +241,34 @@ export const processQAJob = inngest.createFunction(
           });
         } catch (haystackError) {
           console.error(`[Inngest processQAJob] Haystack API error for batch ${batchNumber}:`, haystackError);
-          // Return error responses for all items in batch
+          // Return error responses for all items in batch (with all required fields)
           return batch.map((item: any) => ({
             doc_id: item.doc_id,
-            name: item.name || '',
-            email: item.email || '',
-            city: item.city || null,
-            street: item.street || '',
-            sectors: item.sectors || [],
-            experience_years: item.experience_years || 0,
-            similarity: item.similarity || 0,
+            name: normalizeValue(item.name),
+            domain: normalizeValue(item.domain),
+            company_size: normalizeValue(item.company_size),
+            email: normalizeValue(item.email),
+            phone: normalizeValue(item.phone),
+            street: normalizeValue(item.street),
+            city: normalizeValue(item.city),
+            postal_code: normalizeValue(item.postal_code),
+            sector_level1: normalizeValue(item.sector_level1),
+            sector_level2: normalizeValue(item.sector_level2),
+            sector_level3: normalizeValue(item.sector_level3),
+            region_level1: normalizeValue(item.region_level1),
+            region_level2: normalizeValue(item.region_level2),
+            region_level3: normalizeValue(item.region_level3),
+            region_level4: normalizeValue(item.region_level4),
+            linkedin_company_url: normalizeValue(item.linkedin_company_url),
+            legal_form: normalizeValue(item.legal_form),
+            // Q&A specific fields
             answer: null,
             status: 'failed',
             error_message: haystackError instanceof Error ? haystackError.message : 'Haystack API call failed',
+            // Legacy fields
+            sectors: item.sectors || [],
+            experience_years: item.experience_years || 0,
+            similarity: item.similarity || 0,
           }));
         }
 
@@ -273,22 +312,40 @@ export const processQAJob = inngest.createFunction(
           }
 
           if (originalItem) {
+            // Use type assertion since database types may not be updated yet after migration
+            const item = originalItem as any;
             return {
-              doc_id: originalItem.doc_id,
-              name: originalItem.name || responseName,
-              email: originalItem.email || responseEmail,
-              city: originalItem.city || responseCity,
-              street: originalItem.street || '',
-              sectors: originalItem.sectors || [],
-              experience_years: originalItem.experience_years || 0,
-              similarity: originalItem.similarity || 0,
+              doc_id: item.doc_id,
+              // All 17 required fields
+              name: normalizeValue(item.name || responseName),
+              domain: normalizeValue(item.domain),
+              company_size: normalizeValue(item.company_size),
+              email: normalizeValue(item.email || responseEmail),
+              phone: normalizeValue(item.phone),
+              street: normalizeValue(item.street),
+              city: normalizeValue(item.city || responseCity),
+              postal_code: normalizeValue(item.postal_code),
+              sector_level1: normalizeValue(item.sector_level1),
+              sector_level2: normalizeValue(item.sector_level2),
+              sector_level3: normalizeValue(item.sector_level3),
+              region_level1: normalizeValue(item.region_level1),
+              region_level2: normalizeValue(item.region_level2),
+              region_level3: normalizeValue(item.region_level3),
+              region_level4: normalizeValue(item.region_level4),
+              linkedin_company_url: normalizeValue(item.linkedin_company_url),
+              legal_form: normalizeValue(item.legal_form),
+              // Q&A specific fields
               answer: answerText,
               status: isSuccess ? 'success' : 'failed',
               error_message: errorMessage,
+              // Legacy fields
+              sectors: item.sectors || [],
+              experience_years: item.experience_years || 0,
+              similarity: item.similarity || 0,
             };
           }
 
-          // Fallback: use response data
+          // Fallback: use response data with all required fields
           console.warn(`[Inngest processQAJob] Original item not found for response, using response data:`, {
             responseDocId: haystackResponse.doc_id,
             index,
@@ -296,16 +353,31 @@ export const processQAJob = inngest.createFunction(
 
           return {
             doc_id: haystackResponse.doc_id || batchItems[index]?.doc_id || 'unknown',
-            name: responseName || batchItems[index]?.name || 'Unknown',
-            email: responseEmail || batchItems[index]?.email || '',
-            city: responseCity || batchItems[index]?.city || null,
-            street: '',
+            name: normalizeValue(responseName),
+            domain: normalizeValue(''),
+            company_size: normalizeValue(''),
+            email: normalizeValue(responseEmail),
+            phone: normalizeValue(''),
+            street: normalizeValue(''),
+            city: normalizeValue(responseCity),
+            postal_code: normalizeValue(''),
+            sector_level1: normalizeValue(''),
+            sector_level2: normalizeValue(''),
+            sector_level3: normalizeValue(''),
+            region_level1: normalizeValue(''),
+            region_level2: normalizeValue(''),
+            region_level3: normalizeValue(''),
+            region_level4: normalizeValue(''),
+            linkedin_company_url: normalizeValue(''),
+            legal_form: normalizeValue(''),
+            // Q&A specific fields
+            answer: answerText,
+            status: isSuccess ? 'success' : 'failed',
+            error_message: errorMessage,
+            // Legacy fields
             sectors: [],
             experience_years: 0,
             similarity: 0,
-            answer: answerText,
-            status: isSuccess ? 'success' : 'failed',
-            error_message: haystackResponse.error_message || null,
           };
         });
 
@@ -401,30 +473,51 @@ export const processQAJob = inngest.createFunction(
     const downloadUrl = await step.run('generate-csv', async () => {
       console.log('[Inngest processQAJob] Generating CSV...');
 
+      // Required CSV headers (17 required fields + Q&A specific fields)
       const headers = [
         'Name',
+        'Domain',
+        'Company Size',
         'Email',
-        'City',
+        'Phone',
         'Street',
-        'Sectors',
-        'Experience Years',
+        'City',
+        'Postal Code',
+        'Sector Level 1',
+        'Sector Level 2',
+        'Sector Level 3',
+        'Region Level 1',
+        'Region Level 2',
+        'Region Level 3',
+        'Region Level 4',
+        'LinkedIn Company URL',
+        'Legal Form',
         'Answer',
-        'Similarity',
         'Status',
         'Error Message',
       ];
 
       const rows = results.map((r) => [
-        r.name || '',
-        r.email || '',
-        r.city || '',
-        r.street || '',
-        Array.isArray(r.sectors) ? r.sectors.join('; ') : '',
-        r.experience_years || '',
-        r.answer || '',
-        r.similarity || '',
-        r.status || '',
-        r.error_message || '',
+        normalizeValue(r.name),
+        normalizeValue(r.domain),
+        normalizeValue(r.company_size),
+        normalizeValue(r.email),
+        normalizeValue(r.phone),
+        normalizeValue(r.street),
+        normalizeValue(r.city),
+        normalizeValue(r.postal_code),
+        normalizeValue(r.sector_level1),
+        normalizeValue(r.sector_level2),
+        normalizeValue(r.sector_level3),
+        normalizeValue(r.region_level1),
+        normalizeValue(r.region_level2),
+        normalizeValue(r.region_level3),
+        normalizeValue(r.region_level4),
+        normalizeValue(r.linkedin_company_url),
+        normalizeValue(r.legal_form),
+        normalizeValue(r.answer),
+        normalizeValue(r.status),
+        normalizeValue(r.error_message),
       ]);
 
       const csvContent = [headers.join(','), ...rows.map((row) => row.map((cell) => `"${cell}"`).join(','))].join('\n');
