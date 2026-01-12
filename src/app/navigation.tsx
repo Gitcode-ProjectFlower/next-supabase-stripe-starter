@@ -6,8 +6,7 @@ import { Logo } from '@/components/logo';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTrigger } from '@/components/ui/sheet';
 import { getSession } from '@/features/account/controllers/get-session';
-
-import { signOut } from './(auth)/auth-actions';
+import { signOut } from './[locale]/(auth)/auth-actions';
 
 export async function Navigation() {
   const session = await getSession();
