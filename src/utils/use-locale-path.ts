@@ -1,16 +1,17 @@
 'use client';
 
 import { useParams } from 'next/navigation';
+import { getLocalePath } from './get-locale-path';
 
 /**
- * Hook to get locale-aware path
- * @param path - Path without locale (e.g., '/dashboard', '/selections')
- * @returns Path with locale (e.g., '/uk/dashboard', '/de/selections')
+ * Hook that returns a function to create locale-aware paths
+ * Use this during render (e.g., in JSX for Link href)
+ * For event handlers, use getLocalePath directly with useParams
+ * @returns Function that takes a path and returns locale-aware path
  */
-export function useLocalePath(path: string): string {
+export function useLocalePath() {
   const params = useParams();
   const locale = (params?.locale as string) || 'uk';
-  // Ensure path starts with /
-  const normalizedPath = path.startsWith('/') ? path : `/${path}`;
-  return `/${locale}${normalizedPath}`;
+
+  return (path: string) => getLocalePath(locale, path);
 }

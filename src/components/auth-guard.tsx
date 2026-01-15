@@ -1,8 +1,9 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 
 import { createSupabaseBrowserClient } from '@/libs/supabase/supabase-browser-client';
+import { getLocalePath } from '@/utils/get-locale-path';
 import { LockIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { FullPageLoader } from './full-page-loader';
@@ -15,6 +16,8 @@ interface SignInIsRequiredProps {
 
 export function AuthGuard({ description, children }: SignInIsRequiredProps) {
   const router = useRouter();
+  const params = useParams();
+  const locale = (params?.locale as string) || 'uk';
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const supabase = createSupabaseBrowserClient();
@@ -57,7 +60,7 @@ export function AuthGuard({ description, children }: SignInIsRequiredProps) {
         <p className='mt-2 text-gray-600'>{description}</p>
         <Button
           className='mt-6 rounded-lg bg-blue-600 px-6 py-2 text-white hover:bg-blue-700'
-          onClick={() => router.push('/login')}
+          onClick={() => router.push(getLocalePath(locale, '/login'))}
         >
           Sign In
         </Button>

@@ -2,7 +2,7 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 import { Trash2 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 import { FullPageLoader } from '@/components/full-page-loader';
@@ -21,9 +21,13 @@ import { trackEvent } from '@/libs/analytics/posthog';
 import { ApiError } from '@/libs/api-client';
 import { useSelectionsQuery } from '@/libs/queries';
 import { QUERY_KEYS } from '@/libs/query-keys';
+import { getLocalePath } from '@/utils/get-locale-path';
 
 export function Selections() {
   const router = useRouter();
+  const params = useParams();
+  const locale = (params?.locale as string) || 'uk';
+
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { data, isLoading, error, refetch } = useSelectionsQuery();
@@ -110,7 +114,7 @@ export function Selections() {
         <p className='mt-2 text-gray-600'>Create your first selection to save and manage candidate lists</p>
         <Button
           className='mt-6 rounded-lg bg-blue-600 px-6 py-2 text-white hover:bg-blue-700'
-          onClick={() => router.push('/')}
+          onClick={() => router.push(getLocalePath(locale, '/'))}
         >
           Create New Selection
         </Button>
@@ -125,7 +129,7 @@ export function Selections() {
         </div>
         <Button
           className='rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700'
-          onClick={() => router.push('/')}
+          onClick={() => router.push(getLocalePath(locale, '/'))}
         >
           Create New Selection
         </Button>
@@ -176,7 +180,7 @@ export function Selections() {
                         variant='outline'
                         size='sm'
                         className='hover:bg-gray-100'
-                        onClick={() => router.push(`/selections/${selection.id}`)}
+                        onClick={() => router.push(getLocalePath(locale, `/selections/${selection.id}`))}
                       >
                         Open
                       </Button>

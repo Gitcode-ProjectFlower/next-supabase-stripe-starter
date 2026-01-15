@@ -1,12 +1,13 @@
 'use client';
 
 import { CheckCircle2, Clock, FileDown, MessageSquare, RefreshCw, Search, XCircle } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 
 import { useRecentActivityQuery } from '@/libs/queries';
 
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
+import { getLocalePath } from '@/utils/get-locale-path';
 
 /**
  * Recent Activity component displaying user's recent actions
@@ -14,6 +15,8 @@ import { useToast } from '@/components/ui/use-toast';
  */
 export function RecentActivity() {
   const router = useRouter();
+  const params = useParams();
+  const locale = (params?.locale as string) || 'uk';
   const { toast } = useToast();
   const { data, isLoading, error, refetch, isRefetching } = useRecentActivityQuery({
     retry: 1,
@@ -33,7 +36,12 @@ export function RecentActivity() {
 
     if (activity.type === 'search') {
       // For search, navigate to selection detail page
-      router.push(activity.link!);
+      // activity.link comes from backend without locale prefix, so we add it
+      const link =
+        activity.link!.startsWith('/') && !activity.link!.match(/^\/[a-z]{2}\//)
+          ? getLocalePath(locale, activity.link!)
+          : activity.link!;
+      router.push(link);
     } else if (activity.type === 'export') {
       // For exports, use the API endpoint to log the download
       if (activity.metadata?.downloadId) {
@@ -94,8 +102,13 @@ export function RecentActivity() {
         }
       }
     } else {
-      // For search and Q&A, navigate to the page
-      router.push(activity.link);
+      // For Q&A, navigate to the page
+      // activity.link comes from backend without locale prefix, so we add it
+      const link =
+        activity.link.startsWith('/') && !activity.link.match(/^\/[a-z]{2}\//)
+          ? getLocalePath(locale, activity.link)
+          : activity.link;
+      router.push(link);
     }
   };
 

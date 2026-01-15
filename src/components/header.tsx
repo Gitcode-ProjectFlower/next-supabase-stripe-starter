@@ -21,7 +21,7 @@ const navigation = [
 
 export function Header() {
   const pathname = usePathname();
-  const getLocalePath = useLocalePath;
+  const getLocalePath = useLocalePath();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const supabase = createSupabaseBrowserClient();

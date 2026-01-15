@@ -24,6 +24,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
 import { cn } from '@/utils/cn';
+import { getLocalePath } from '@/utils/get-locale-path';
 import { normalizeValue } from '@/utils/normalize-value';
 
 // All 17 required fields + similarity (optional)
@@ -196,6 +197,7 @@ const COLUMN_CONFIG: Record<
 export function Selection() {
   const params = useParams();
   const router = useRouter();
+  const locale = (params?.locale as string) || 'uk';
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const supabase = createSupabaseBrowserClient();
@@ -244,7 +246,7 @@ export function Selection() {
         data: { user },
       } = await supabase.auth.getUser();
       if (!user) {
-        router.push('/login');
+        router.push(getLocalePath(locale, '/login'));
         return;
       }
       setIsCheckingAuth(false);
@@ -260,9 +262,9 @@ export function Selection() {
         variant: 'destructive',
       });
       if ((selectionError as any).status === 401) {
-        router.push('/login');
+        router.push(getLocalePath(locale, '/login'));
       } else if ((selectionError as any).status === 404) {
-        router.push('/selections');
+        router.push(getLocalePath(locale, '/selections'));
       }
     }
   }, [router, selectionError, toast]);
@@ -363,7 +365,7 @@ export function Selection() {
             description: 'Please sign in to use Q&A features',
             variant: 'destructive',
           });
-          router.push('/login');
+          router.push(getLocalePath(locale, '/login'));
           return;
         }
 
@@ -394,7 +396,7 @@ export function Selection() {
             description: 'The selection you are trying to access no longer exists',
             variant: 'destructive',
           });
-          router.push('/selections');
+          router.push(getLocalePath(locale, '/selections'));
           return;
         }
 
@@ -487,7 +489,7 @@ export function Selection() {
                 setQaPrompt('');
                 setQaSessionId(null);
                 setQaStatus(null);
-                router.push(`/selections/${params.id}/qa/${data.qaSessionId}`);
+                router.push(getLocalePath(locale, `/selections/${params.id}/qa/${data.qaSessionId}`));
               }, 1000);
             } else if (progressData.status === 'failed') {
               if (pollIntervalRef.current) {
@@ -569,7 +571,7 @@ export function Selection() {
             description: 'Please sign in to export selections',
             variant: 'destructive',
           });
-          router.push('/login');
+          router.push(getLocalePath(locale, '/login'));
           return;
         }
 
@@ -600,7 +602,7 @@ export function Selection() {
             description: 'The selection you are trying to export no longer exists',
             variant: 'destructive',
           });
-          router.push('/selections');
+          router.push(getLocalePath(locale, '/selections'));
           return;
         }
 
@@ -646,7 +648,11 @@ export function Selection() {
     <>
       {/* Header */}
       <div className='mb-6'>
-        <Button variant='ghost' className='-ml-2 mb-4 hover:bg-gray-100' onClick={() => router.push('/selections')}>
+        <Button
+          variant='ghost'
+          className='-ml-2 mb-4 hover:bg-gray-100'
+          onClick={() => router.push(getLocalePath(locale, '/selections'))}
+        >
           <ArrowLeft className='mr-2 h-4 w-4' />
           Back to Selections
         </Button>
@@ -815,7 +821,7 @@ export function Selection() {
                       setQaPrompt('');
                       setQaSessionId(null);
                       setQaStatus(null);
-                      router.push(`/selections/${params.id}/qa/${qaSessionId}`);
+                      router.push(getLocalePath(locale, `/selections/${params.id}/qa/${qaSessionId}`));
                     }}
                   >
                     View Results

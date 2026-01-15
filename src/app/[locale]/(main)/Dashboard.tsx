@@ -24,6 +24,7 @@ import { createSupabaseBrowserClient } from '@/libs/supabase/supabase-browser-cl
 import type { LookalikeResult } from '@/types/selection';
 import type { TreeNode } from '@/types/tree';
 import { cn } from '@/utils/cn';
+import { getLocalePath } from '@/utils/get-locale-path';
 
 export function Dashboard() {
   const { toast } = useToast();
@@ -480,11 +481,23 @@ export function Dashboard() {
           p_selection_id: savedSelectionId,
           p_items: uniqueItems.map((item) => ({
             doc_id: item.doc_id,
-            name: item.name,
-            email: item.email,
-            phone: item.phone,
-            city: item.city,
-            street: item.street,
+            name: item.name || '',
+            domain: item.domain || '',
+            company_size: item.company_size || '',
+            email: item.email || '',
+            phone: item.phone || '',
+            street: item.street || '',
+            city: item.city || '',
+            postal_code: item.postal_code || '',
+            sector_level1: item.sector_level1 || '',
+            sector_level2: item.sector_level2 || '',
+            sector_level3: item.sector_level3 || '',
+            region_level1: item.region_level1 || '',
+            region_level2: item.region_level2 || '',
+            region_level3: item.region_level3 || '',
+            region_level4: item.region_level4 || '',
+            linkedin_company_url: item.linkedin_company_url || '',
+            legal_form: item.legal_form || '',
             sectors: item.sectors,
             experience_years: item.experience_years,
             similarity: item.similarity,
@@ -507,11 +520,23 @@ export function Dashboard() {
           p_criteria_json: criteria,
           p_items: uniqueItems.map((item) => ({
             doc_id: item.doc_id,
-            name: item.name,
-            email: item.email,
-            phone: item.phone,
-            city: item.city,
-            street: item.street,
+            name: item.name || '',
+            domain: item.domain || '',
+            company_size: item.company_size || '',
+            email: item.email || '',
+            phone: item.phone || '',
+            street: item.street || '',
+            city: item.city || '',
+            postal_code: item.postal_code || '',
+            sector_level1: item.sector_level1 || '',
+            sector_level2: item.sector_level2 || '',
+            sector_level3: item.sector_level3 || '',
+            region_level1: item.region_level1 || '',
+            region_level2: item.region_level2 || '',
+            region_level3: item.region_level3 || '',
+            region_level4: item.region_level4 || '',
+            linkedin_company_url: item.linkedin_company_url || '',
+            legal_form: item.legal_form || '',
             sectors: item.sectors,
             experience_years: item.experience_years,
             similarity: item.similarity,
@@ -686,11 +711,23 @@ export function Dashboard() {
           p_selection_id: savedSelectionId,
           p_items: uniqueItems.map((item) => ({
             doc_id: item.doc_id,
-            name: item.name,
-            email: item.email,
-            phone: item.phone,
-            city: item.city,
-            street: item.street,
+            name: item.name || '',
+            domain: item.domain || '',
+            company_size: item.company_size || '',
+            email: item.email || '',
+            phone: item.phone || '',
+            street: item.street || '',
+            city: item.city || '',
+            postal_code: item.postal_code || '',
+            sector_level1: item.sector_level1 || '',
+            sector_level2: item.sector_level2 || '',
+            sector_level3: item.sector_level3 || '',
+            region_level1: item.region_level1 || '',
+            region_level2: item.region_level2 || '',
+            region_level3: item.region_level3 || '',
+            region_level4: item.region_level4 || '',
+            linkedin_company_url: item.linkedin_company_url || '',
+            legal_form: item.legal_form || '',
             sectors: item.sectors,
             experience_years: item.experience_years,
             similarity: item.similarity,
@@ -713,11 +750,23 @@ export function Dashboard() {
           p_criteria_json: criteria,
           p_items: uniqueItems.map((item) => ({
             doc_id: item.doc_id,
-            name: item.name,
-            email: item.email,
-            phone: item.phone,
-            city: item.city,
-            street: item.street,
+            name: item.name || '',
+            domain: item.domain || '',
+            company_size: item.company_size || '',
+            email: item.email || '',
+            phone: item.phone || '',
+            street: item.street || '',
+            city: item.city || '',
+            postal_code: item.postal_code || '',
+            sector_level1: item.sector_level1 || '',
+            sector_level2: item.sector_level2 || '',
+            sector_level3: item.sector_level3 || '',
+            region_level1: item.region_level1 || '',
+            region_level2: item.region_level2 || '',
+            region_level3: item.region_level3 || '',
+            region_level4: item.region_level4 || '',
+            linkedin_company_url: item.linkedin_company_url || '',
+            legal_form: item.legal_form || '',
             sectors: item.sectors,
             experience_years: item.experience_years,
             similarity: item.similarity,
@@ -767,7 +816,7 @@ export function Dashboard() {
             description: 'Please sign in to export selections',
             variant: 'destructive',
           });
-          router.push('/login');
+          router.push(getLocalePath(locale, '/login'));
           return;
         }
 
@@ -978,11 +1027,23 @@ export function Dashboard() {
             p_selection_id: savedSelectionId,
             p_items: uniqueItems.map((item) => ({
               doc_id: item.doc_id,
-              name: item.name,
-              email: item.email,
-              phone: item.phone,
-              city: item.city,
-              street: item.street,
+              name: item.name || '',
+              domain: item.domain || '',
+              company_size: item.company_size || '',
+              email: item.email || '',
+              phone: item.phone || '',
+              street: item.street || '',
+              city: item.city || '',
+              postal_code: item.postal_code || '',
+              sector_level1: item.sector_level1 || '',
+              sector_level2: item.sector_level2 || '',
+              sector_level3: item.sector_level3 || '',
+              region_level1: item.region_level1 || '',
+              region_level2: item.region_level2 || '',
+              region_level3: item.region_level3 || '',
+              region_level4: item.region_level4 || '',
+              linkedin_company_url: item.linkedin_company_url || '',
+              legal_form: item.legal_form || '',
               sectors: item.sectors,
               experience_years: item.experience_years,
               similarity: item.similarity,
@@ -1007,11 +1068,23 @@ export function Dashboard() {
           p_criteria_json: criteria,
           p_items: uniqueItems.map((item) => ({
             doc_id: item.doc_id,
-            name: item.name,
-            email: item.email,
-            phone: item.phone,
-            city: item.city,
-            street: item.street,
+            name: item.name || '',
+            domain: item.domain || '',
+            company_size: item.company_size || '',
+            email: item.email || '',
+            phone: item.phone || '',
+            street: item.street || '',
+            city: item.city || '',
+            postal_code: item.postal_code || '',
+            sector_level1: item.sector_level1 || '',
+            sector_level2: item.sector_level2 || '',
+            sector_level3: item.sector_level3 || '',
+            region_level1: item.region_level1 || '',
+            region_level2: item.region_level2 || '',
+            region_level3: item.region_level3 || '',
+            region_level4: item.region_level4 || '',
+            linkedin_company_url: item.linkedin_company_url || '',
+            legal_form: item.legal_form || '',
             sectors: item.sectors,
             experience_years: item.experience_years,
             similarity: item.similarity,
@@ -1071,7 +1144,7 @@ export function Dashboard() {
             description: 'Please sign in to use Q&A features',
             variant: 'destructive',
           });
-          router.push('/login');
+          router.push(getLocalePath(locale, '/login'));
           return;
         }
 
@@ -1153,7 +1226,7 @@ export function Dashboard() {
       });
 
       // Navigate to Q&A page
-      router.push(`/selections/${selectionId}/qa/${data.qaSessionId}`);
+      router.push(getLocalePath(locale, `/selections/${selectionId}/qa/${data.qaSessionId}`));
     } catch (error: any) {
       console.error('Q&A error:', error);
       toast({

@@ -2,7 +2,7 @@
 
 import { ArrowLeft, Download } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { type UserPlan } from '@/libs/plan-config';
 import { useQAResultQuery, useUsageStatsQuery } from '@/libs/queries';
@@ -12,6 +12,7 @@ import { FullPageLoader } from '@/components/full-page-loader';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/components/ui/use-toast';
+import { getLocalePath } from '@/utils/get-locale-path';
 import { normalizeValue } from '@/utils/normalize-value';
 
 interface CandidateAnswer {
@@ -58,6 +59,7 @@ interface QAResult {
 export function QaResults() {
   const params = useParams();
   const router = useRouter();
+  const locale = (params?.locale as string) || 'uk';
   const { toast } = useToast();
   const supabase = createSupabaseBrowserClient();
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
@@ -101,45 +103,13 @@ export function QaResults() {
     }
   }, [qaResult, refetch]);
 
-  // Column configuration for Q&A results - all 17 required fields + answer + status
-  const REQUIRED_FIELDS = [
-    'name',
-    'domain',
-    'company_size',
-    'email',
-    'phone',
-    'street',
-    'city',
-    'postal_code',
-    'sector_level1',
-    'sector_level2',
-    'sector_level3',
-    'region_level1',
-    'region_level2',
-    'region_level3',
-    'region_level4',
-    'linkedin_company_url',
-    'legal_form',
-  ] as const;
+  // Column configuration for Q&A results - only essential fields
+  const DISPLAY_FIELDS = ['name', 'email', 'city'] as const;
 
   const FIELD_LABELS: Record<string, string> = {
     name: 'Name',
-    domain: 'Domain',
-    company_size: 'Company Size',
     email: 'Email',
-    phone: 'Phone',
-    street: 'Street',
     city: 'City',
-    postal_code: 'Postal Code',
-    sector_level1: 'Sector Level 1',
-    sector_level2: 'Sector Level 2',
-    sector_level3: 'Sector Level 3',
-    region_level1: 'Region Level 1',
-    region_level2: 'Region Level 2',
-    region_level3: 'Region Level 3',
-    region_level4: 'Region Level 4',
-    linkedin_company_url: 'LinkedIn URL',
-    legal_form: 'Legal Form',
     answer: 'Answer',
     status: 'Status',
   };
@@ -150,7 +120,7 @@ export function QaResults() {
         data: { user },
       } = await supabase.auth.getUser();
       if (!user) {
-        router.push('/login');
+        router.push(getLocalePath(locale, '/login'));
         return;
       }
       setIsCheckingAuth(false);
@@ -275,7 +245,7 @@ export function QaResults() {
           <Button
             variant='ghost'
             className='-ml-2 mb-4 hover:bg-gray-100'
-            onClick={() => router.push(`/selections/${params.id}`)}
+            onClick={() => router.push(getLocalePath(locale, `/selections/${params.id}`))}
           >
             <ArrowLeft className='mr-2 h-4 w-4' />
             Back to Selection
@@ -310,7 +280,7 @@ export function QaResults() {
               {result.status === 'failed' && (
                 <Button
                   className='rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700'
-                  onClick={() => router.push(`/selections/${params.id}`)}
+                  onClick={() => router.push(getLocalePath(locale, `/selections/${params.id}`))}
                 >
                   Generate Answers Again
                 </Button>
@@ -372,11 +342,9 @@ export function QaResults() {
             <Table>
               <TableHeader className='bg-gray-50'>
                 <TableRow className='hover:bg-transparent'>
-                  {REQUIRED_FIELDS.map((field) => (
-                    <TableHead key={field} className='px-4 py-3 font-semibold text-gray-700'>
-                      {FIELD_LABELS[field]}
-                    </TableHead>
-                  ))}
+                  <TableHead className='px-4 py-3 font-semibold text-gray-700'>Name</TableHead>
+                  <TableHead className='px-4 py-3 font-semibold text-gray-700'>Email</TableHead>
+                  <TableHead className='px-4 py-3 font-semibold text-gray-700'>City</TableHead>
                   <TableHead className='px-4 py-3 font-semibold text-gray-700'>Answer</TableHead>
                   <TableHead className='px-4 py-3 font-semibold text-gray-700'>Status</TableHead>
                 </TableRow>
@@ -388,32 +356,15 @@ export function QaResults() {
 
                   return (
                     <TableRow key={answer.id || answer.doc_id || `answer-${index}`} className='hover:bg-gray-50'>
-                      {REQUIRED_FIELDS.map((field) => {
-                        let cellContent: React.ReactNode = '-';
-                        const value = (answer as any)[field];
-                        const normalizedValue = normalizeValue(value);
-
-                        if (field === 'linkedin_company_url' && normalizedValue) {
-                          cellContent = (
-                            <a
-                              href={normalizedValue}
-                              target='_blank'
-                              rel='noopener noreferrer'
-                              className='text-blue-600 hover:underline'
-                            >
-                              {normalizedValue}
-                            </a>
-                          );
-                        } else {
-                          cellContent = normalizedValue || '-';
-                        }
-
-                        return (
-                          <TableCell key={field} className='px-4 py-3 text-sm text-gray-700'>
-                            {cellContent}
-                          </TableCell>
-                        );
-                      })}
+                      <TableCell className='px-4 py-3 text-sm font-medium text-gray-900'>
+                        {normalizeValue(answer.name) || '-'}
+                      </TableCell>
+                      <TableCell className='px-4 py-3 text-sm text-gray-700'>
+                        {normalizeValue(answer.email) || '-'}
+                      </TableCell>
+                      <TableCell className='px-4 py-3 text-sm text-gray-700'>
+                        {normalizeValue(answer.city) || '-'}
+                      </TableCell>
                       <TableCell className='px-4 py-3 text-sm text-gray-700'>
                         {isSuccess ? (
                           <div className='max-w-md whitespace-pre-wrap'>{normalizeValue(answer.answer)}</div>
