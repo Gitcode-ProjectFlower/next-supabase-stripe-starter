@@ -1,4 +1,4 @@
-// Auto-generated from filters_sectors_and_region2.csv
+// Auto-generated from filters_sectors_and_region_UK_and_DE.xlsx (UK worksheet)
 // Do not edit manually
 
 export type TreeNode = {
@@ -6,7 +6,6 @@ export type TreeNode = {
   name: string;
   children?: TreeNode[];
 };
-
 
 export const SECTORS_TREE_UK: TreeNode[] = [
   {

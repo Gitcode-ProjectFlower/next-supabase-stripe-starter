@@ -11,8 +11,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
 
-import { REGIONS_TREE_UK } from '@/data/regions-tree-uk';
-import { SECTORS_TREE_UK } from '@/data/sectors-tree-uk';
+import { getRegionsTree, getSectorsTree } from '@/data/tree-loader';
 import { trackEvent } from '@/libs/analytics/posthog';
 import { getCollectionFromLocale } from '@/libs/collection-mapping';
 import { getTopKLimit, type UserPlan } from '@/libs/plan-config';
@@ -41,7 +40,7 @@ export function Dashboard() {
   const [names, setNames] = useState<string[]>([]);
   const [sectors, setSectors] = useState<Set<string>>(new Set());
   const [regions, setRegions] = useState<Set<string>>(new Set());
-  const [experience, setExperience] = useState<string[]>([]);
+  const [companySize, setCompanySize] = useState<string[]>([]);
   const [topK, setTopK] = useState<number>(3);
 
   // State for selection metadata
@@ -95,11 +94,11 @@ export function Dashboard() {
     if (names.length > 0) return true;
     if (sectors.size > 0) return true;
     if (regions.size > 0) return true;
-    if (experience.length > 0) return true;
+    if (companySize.length > 0) return true;
     // Check if user has search results
     if (results.length > 0) return true;
     return false;
-  }, [selectedIds.size, names.length, sectors.size, regions.size, experience.length, results.length]);
+  }, [selectedIds.size, names.length, sectors.size, regions.size, companySize.length, results.length]);
 
   useEffect(() => {
     if (usageStats?.plan) {
@@ -236,42 +235,25 @@ export function Dashboard() {
     return result;
   };
 
-  const buildExperienceYears = () => {
-    const experienceYears: number[] = [];
-    experience.forEach((range) => {
-      if (range === '26+') {
-        for (let year = 26; year <= 100; year++) {
-          experienceYears.push(year);
-        }
-      } else {
-        const [start, end] = range.split('-').map((n) => parseInt(n, 10));
-        if (!isNaN(start) && !isNaN(end)) {
-          for (let year = start; year <= end; year++) {
-            experienceYears.push(year);
-          }
-        }
-      }
-    });
-    return experienceYears;
-  };
-
   const handleSearch = async () => {
     setIsLoading(true);
     // Clear selection on new search to avoid stale IDs
     setSelectedIds(new Set());
 
     try {
-      const experienceYears = buildExperienceYears();
+      // Get locale-specific trees
+      const sectorsTree = getSectorsTree(locale);
+      const regionsTree = getRegionsTree(locale);
 
-      // Get hierarchical values for sectors and regions
-      const sectorHierarchy = sectors.size > 0 ? getHierarchicalValuesFromIds(sectors, SECTORS_TREE_UK, false) : null;
-      const regionHierarchy = regions.size > 0 ? getHierarchicalValuesFromIds(regions, REGIONS_TREE_UK, true) : null;
+      // Get hierarchical values using locale-specific trees
+      const sectorHierarchy = sectors.size > 0 ? getHierarchicalValuesFromIds(sectors, sectorsTree, false) : null;
+      const regionHierarchy = regions.size > 0 ? getHierarchicalValuesFromIds(regions, regionsTree, true) : null;
 
       // Prepare request body with hierarchical filters
       // Backend expects sector_level1, sector_level2, sector_level3, region_level1, etc.
       const requestBody: Record<string, any> = {
         names: names.length > 0 ? names : [''],
-        experience_years: experienceYears.length > 0 ? experienceYears : [],
+        company_size: companySize.length > 0 ? companySize : [],
         top_k: topK,
         locale: locale, // Send locale to API
         collection: collection, // Send collection to API
@@ -358,7 +340,7 @@ export function Dashboard() {
       trackEvent.searchCompleted({
         namesCount: names.length,
         topK,
-        filterCount: sectors.size + regions.size + experience.length,
+        filterCount: sectors.size + regions.size + companySize.length,
         resultsCount: data.data?.total || 0,
       });
 
@@ -418,14 +400,16 @@ export function Dashboard() {
           ...item,
           similarity: item.similarity ?? 0, // Ensure similarity is always present, default to 0
         }));
-      const experienceYears = buildExperienceYears();
-      const sectorNames = sectors.size > 0 ? getNamesFromIds(sectors, SECTORS_TREE_UK) : [];
-      const regionNames = regions.size > 0 ? getNamesFromIds(regions, REGIONS_TREE_UK) : [];
+      // Get locale-specific trees
+      const sectorsTree = getSectorsTree(locale);
+      const regionsTree = getRegionsTree(locale);
+      const sectorNames = sectors.size > 0 ? getNamesFromIds(sectors, sectorsTree) : [];
+      const regionNames = regions.size > 0 ? getNamesFromIds(regions, regionsTree) : [];
       const criteria = {
         names,
         sectors: sectorNames,
         regions: regionNames,
-        experience_years: experienceYears,
+        company_size: companySize,
         collection: collection, // Store collection with selection
       };
 
@@ -569,7 +553,7 @@ export function Dashboard() {
         trackEvent.selectionCreated({
           selectionId,
           itemCount: selectedItems.length,
-          hasFilters: sectors.size > 0 || regions.size > 0 || experience.length > 0,
+          hasFilters: sectors.size > 0 || regions.size > 0 || companySize.length > 0,
         });
       }
 
@@ -658,14 +642,16 @@ export function Dashboard() {
         throw new Error('Unauthorized. Please sign in to export.');
       }
 
-      const experienceYears = buildExperienceYears();
-      const sectorNames = sectors.size > 0 ? getNamesFromIds(sectors, SECTORS_TREE_UK) : [];
-      const regionNames = regions.size > 0 ? getNamesFromIds(regions, REGIONS_TREE_UK) : [];
+      // Get locale-specific trees
+      const sectorsTree = getSectorsTree(locale);
+      const regionsTree = getRegionsTree(locale);
+      const sectorNames = sectors.size > 0 ? getNamesFromIds(sectors, sectorsTree) : [];
+      const regionNames = regions.size > 0 ? getNamesFromIds(regions, regionsTree) : [];
       const criteria = {
         names,
         sectors: sectorNames,
         regions: regionNames,
-        experience_years: experienceYears,
+        company_size: companySize,
         collection: collection, // Store collection with selection
       };
 
@@ -876,7 +862,7 @@ export function Dashboard() {
       trackEvent.selectionCreated({
         selectionId,
         itemCount: selectedItems.length,
-        hasFilters: sectors.size > 0 || regions.size > 0 || experience.length > 0,
+        hasFilters: sectors.size > 0 || regions.size > 0 || companySize.length > 0,
       });
 
       // Optionally redirect to the selection detail page
@@ -976,14 +962,16 @@ export function Dashboard() {
         throw new Error('Unauthorized. Please sign in to use Q&A features.');
       }
 
-      const experienceYears = buildExperienceYears();
-      const sectorNames = sectors.size > 0 ? getNamesFromIds(sectors, SECTORS_TREE_UK) : [];
-      const regionNames = regions.size > 0 ? getNamesFromIds(regions, REGIONS_TREE_UK) : [];
+      // Get locale-specific trees
+      const sectorsTree = getSectorsTree(locale);
+      const regionsTree = getRegionsTree(locale);
+      const sectorNames = sectors.size > 0 ? getNamesFromIds(sectors, sectorsTree) : [];
+      const regionNames = regions.size > 0 ? getNamesFromIds(regions, regionsTree) : [];
       const criteria = {
         names,
         sectors: sectorNames,
         regions: regionNames,
-        experience_years: experienceYears,
+        company_size: companySize,
         collection: collection, // Store collection with selection
       };
 
@@ -1246,8 +1234,8 @@ export function Dashboard() {
     setSectors(new Set());
     // Clear region filters
     setRegions(new Set());
-    // Clear experience years filters
-    setExperience([]);
+    // Clear company size filters
+    setCompanySize([]);
     // Clear selected candidates list
     setSelectedIds(new Set());
     // Clear results list
@@ -1350,8 +1338,9 @@ export function Dashboard() {
             setSectors={setSectors}
             regions={regions}
             setRegions={setRegions}
-            experience={experience}
-            setExperience={setExperience}
+            companySize={companySize}
+            setCompanySize={setCompanySize}
+            locale={locale}
             topK={topK}
             setTopK={setTopK}
             onSearch={handleSearch}
@@ -1390,14 +1379,14 @@ export function Dashboard() {
             </div>
 
             {/* Filters Summary */}
-            {(names.length > 0 || sectors.size > 0 || regions.size > 0 || experience.length > 0) && (
+            {(names.length > 0 || sectors.size > 0 || regions.size > 0 || companySize.length > 0) && (
               <div className='rounded-lg border border-gray-200 bg-white p-3 text-sm'>
                 <div className='mb-2 font-semibold text-gray-900'>Filters applied:</div>
                 <ul className='space-y-1 text-gray-700'>
                   {names.length > 0 && <li>• Names: {names.join(', ')}</li>}
                   {sectors.size > 0 && <li>• Sectors: {sectors.size} selected</li>}
                   {regions.size > 0 && <li>• Regions: {regions.size} selected</li>}
-                  {experience.length > 0 && <li>• Experience: {experience.join(', ')} years</li>}
+                  {companySize.length > 0 && <li>• Company Size: {companySize.join(', ')}</li>}
                   <li>• Top-K: {topK}</li>
                 </ul>
               </div>

@@ -7,8 +7,7 @@ import { TreeMultiSelect } from '@/components/selection/tree-multi-select';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { REGIONS_TREE_UK } from '@/data/regions-tree-uk';
-import { SECTORS_TREE_UK } from '@/data/sectors-tree-uk';
+import { getRegionsTree, getSectorsTree } from '@/data/tree-loader';
 import { getTopKLimit, type UserPlan } from '@/libs/plan-config';
 
 interface FilterSidebarProps {
@@ -18,17 +17,18 @@ interface FilterSidebarProps {
   setSectors: (sectors: Set<string>) => void;
   regions: Set<string>;
   setRegions: (regions: Set<string>) => void;
-  experience: string[];
-  setExperience: (experience: string[]) => void;
+  companySize: string[];
+  setCompanySize: (companySize: string[]) => void;
   topK: number;
   setTopK: (topK: number) => void;
   onSearch: () => void;
   isLoading: boolean;
   resultsCount: number;
   userPlan?: UserPlan | null;
+  locale?: string;
 }
 
-const EXPERIENCE_OPTIONS = ['1-5', '6-10', '11-15', '16-20', '21-25', '26+'];
+const COMPANY_SIZE_OPTIONS = ['0-9', '10-49', '50-249', '+250'];
 
 export function FilterSidebar({
   names,
@@ -37,17 +37,22 @@ export function FilterSidebar({
   setSectors,
   regions,
   setRegions,
-  experience,
-  setExperience,
+  companySize,
+  setCompanySize,
   topK,
   setTopK,
   onSearch,
   isLoading,
   resultsCount,
   userPlan,
+  locale = 'uk',
 }: FilterSidebarProps) {
   const [nameInput, setNameInput] = useState('');
   const [localTopK, setLocalTopK] = useState(topK.toString());
+
+  // Get locale-specific trees
+  const sectorsTree = getSectorsTree(locale);
+  const regionsTree = getRegionsTree(locale);
 
   // Get plan limit for Top-K
   const planLimit = getTopKLimit(userPlan || 'anonymous');
@@ -96,11 +101,11 @@ export function FilterSidebar({
     setNames(names.filter((_, i) => i !== index));
   };
 
-  const toggleExperience = (value: string) => {
-    if (experience.includes(value)) {
-      setExperience(experience.filter((e) => e !== value));
+  const toggleCompanySize = (value: string) => {
+    if (companySize.includes(value)) {
+      setCompanySize(companySize.filter((size) => size !== value));
     } else {
-      setExperience([...experience, value]);
+      setCompanySize([...companySize, value]);
     }
   };
 
@@ -151,7 +156,7 @@ export function FilterSidebar({
         <div className='relative mt-4'>
           <label className='mb-1 block text-sm text-gray-600'>Sector</label>
           <TreeMultiSelect
-            data={SECTORS_TREE_UK}
+            data={sectorsTree}
             selected={sectors}
             onChange={setSectors}
             placeholder='Select sectors...'
@@ -162,28 +167,28 @@ export function FilterSidebar({
         <div className='relative mt-4'>
           <label className='mb-1 block text-sm text-gray-600'>Region</label>
           <TreeMultiSelect
-            data={REGIONS_TREE_UK}
+            data={regionsTree}
             selected={regions}
             onChange={setRegions}
             placeholder='Select regions...'
           />
         </div>
 
-        {/* Years experience */}
+        {/* Company Size */}
         <div className='mt-4'>
-          <label className='mb-1 block text-sm text-gray-600'>Years experience</label>
+          <label className='mb-1 block text-sm text-gray-600'>Company Size</label>
           <div className='flex flex-wrap gap-2'>
-            {EXPERIENCE_OPTIONS.map((sz) => (
+            {COMPANY_SIZE_OPTIONS.map((size) => (
               <button
-                key={sz}
-                onClick={() => toggleExperience(sz)}
+                key={size}
+                onClick={() => toggleCompanySize(size)}
                 className={`rounded-full border px-3 py-1.5 text-sm transition-colors ${
-                  experience.includes(sz)
+                  companySize.includes(size)
                     ? 'border-gray-900 bg-gray-900 text-white'
                     : 'bg-white text-gray-700 hover:bg-gray-50'
                 }`}
               >
-                {sz}
+                {size}
               </button>
             ))}
           </div>
