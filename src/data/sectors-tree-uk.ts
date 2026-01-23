@@ -8,7 +8,7 @@ export type TreeNode = {
 };
 
 
-export const SECTORS_TREE: TreeNode[] = [
+export const SECTORS_TREE_UK: TreeNode[] = [
   {
     "id": "agriculture-forestry-and-fishing",
     "name": "AGRICULTURE, FORESTRY AND FISHING",

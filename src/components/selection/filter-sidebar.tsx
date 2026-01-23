@@ -7,8 +7,8 @@ import { TreeMultiSelect } from '@/components/selection/tree-multi-select';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { REGIONS_TREE } from '@/data/regions-tree';
-import { SECTORS_TREE } from '@/data/sectors-tree';
+import { REGIONS_TREE_UK } from '@/data/regions-tree-uk';
+import { SECTORS_TREE_UK } from '@/data/sectors-tree-uk';
 import { getTopKLimit, type UserPlan } from '@/libs/plan-config';
 
 interface FilterSidebarProps {
@@ -151,7 +151,7 @@ export function FilterSidebar({
         <div className='relative mt-4'>
           <label className='mb-1 block text-sm text-gray-600'>Sector</label>
           <TreeMultiSelect
-            data={SECTORS_TREE}
+            data={SECTORS_TREE_UK}
             selected={sectors}
             onChange={setSectors}
             placeholder='Select sectors...'
@@ -162,7 +162,7 @@ export function FilterSidebar({
         <div className='relative mt-4'>
           <label className='mb-1 block text-sm text-gray-600'>Region</label>
           <TreeMultiSelect
-            data={REGIONS_TREE}
+            data={REGIONS_TREE_UK}
             selected={regions}
             onChange={setRegions}
             placeholder='Select regions...'

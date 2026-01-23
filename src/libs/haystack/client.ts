@@ -1,6 +1,6 @@
 export interface QARequest {
   question: string;
-  email: string;
+  domain: string;
   doc_id: string;
 }
 
@@ -100,7 +100,7 @@ export class HaystackClient {
   }
 
   async askBatch(
-    items: Array<{ doc_id: string; name?: string; email?: string; city?: string; [key: string]: any }>,
+    items: Array<{ doc_id: string; name?: string; domain?: string; email?: string; city?: string; [key: string]: any }>,
     prompt: string,
     collection?: string,
     customTimeout?: number
@@ -135,7 +135,8 @@ export class HaystackClient {
       // Format items for backend - backend expects QACandidate model:
       // - doc_id: str (required)
       // - name: str (required)
-      // - email: str (required) - backend uses email to find resume chunks via pipeline.ask()
+      // - domain: str (required) - backend uses domain to find resume chunks via pipeline.ask()
+      // - email: str (required) - temporarily required for backward compatibility until backend is fully updated
       // - city: Optional[str] = None
       const formattedItems = items
         .map((item) => {
@@ -145,11 +146,11 @@ export class HaystackClient {
             return null;
           }
 
-          // Ensure email is present - backend uses email to find resume chunks
-          // If email is missing, we can't process this candidate
-          if (!item.email || item.email.trim() === '') {
+          // Ensure domain is present - backend uses domain to find resume chunks
+          // If domain is missing, we can't process this candidate
+          if (!item.domain || item.domain.trim() === '') {
             console.warn(
-              `Item with doc_id ${item.doc_id} has no email, skipping (backend requires email to find resume)`
+              `Item with doc_id ${item.doc_id} has no domain, skipping (backend requires domain to find resume)`
             );
             return null;
           }
@@ -157,7 +158,8 @@ export class HaystackClient {
           return {
             doc_id: item.doc_id,
             name: item.name.trim(),
-            email: item.email.trim(), // Backend uses email to find resume chunks
+            domain: item.domain.trim(), // Backend uses domain to find resume chunks
+            email: item.email?.trim() || '', // Temporarily required for backward compatibility
             city: item.city?.trim() || undefined, // Optional field - send undefined if not available (not empty string)
           };
         })
@@ -187,7 +189,8 @@ export class HaystackClient {
       //     {
       //       "doc_id": "string",
       //       "name": "string",
-      //       "email": "string",  // Required - backend uses email to find resume chunks
+      //       "domain": "string",  // Required - backend uses domain to find resume chunks
+      //       "email": "string",   // Temporarily required for backward compatibility
       //       "city": "string"     // Optional
       //     }
       //   ],
@@ -209,6 +212,7 @@ export class HaystackClient {
         formattedItems: formattedItems.map((item) => ({
           doc_id: item.doc_id,
           name: item.name,
+          domain: item.domain,
           email: item.email,
           city: item.city,
         })),

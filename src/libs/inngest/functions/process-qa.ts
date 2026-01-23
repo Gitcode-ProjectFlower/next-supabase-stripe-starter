@@ -75,8 +75,8 @@ export const processQAJob = inngest.createFunction(
         items: itemsData?.map((item: any) => ({
           doc_id: item.doc_id,
           name: item.name,
-          email: item.email,
-          hasEmail: !!item.email,
+          domain: item.domain,
+          hasDomain: !!item.domain,
         })),
       });
 
@@ -181,8 +181,8 @@ export const processQAJob = inngest.createFunction(
               console.warn(`[Inngest processQAJob] Skipping item ${item.doc_id} - missing name`);
               return false;
             }
-            if (!item.email || item.email.trim() === '') {
-              console.warn(`[Inngest processQAJob] Skipping item ${item.doc_id} - missing email`);
+            if (!item.domain || item.domain.trim() === '') {
+              console.warn(`[Inngest processQAJob] Skipping item ${item.doc_id} - missing domain`);
               return false;
             }
             return true;
@@ -190,7 +190,8 @@ export const processQAJob = inngest.createFunction(
           .map((item: any) => ({
             doc_id: item.doc_id,
             name: item.name.trim(),
-            email: item.email.trim(),
+            domain: item.domain.trim(),
+            email: item.email?.trim() || '', // Temporarily required for backward compatibility
             city: item.city?.trim() || undefined,
           }));
 
@@ -214,6 +215,7 @@ export const processQAJob = inngest.createFunction(
           items: batchItems.map((i) => ({
             doc_id: i.doc_id,
             name: i.name,
+            domain: i.domain,
             email: i.email,
             city: i.city,
           })),
@@ -232,7 +234,7 @@ export const processQAJob = inngest.createFunction(
             responses: qaResponses.map((r: any) => ({
               doc_id: r.doc_id,
               name: r.name,
-              email: r.email,
+              domain: r.domain,
               status: r.status,
               hasAnswer: !!r.answer,
               answerLength: r.answer?.length || 0,
@@ -285,7 +287,7 @@ export const processQAJob = inngest.createFunction(
           }
 
           const responseName = haystackResponse.name || '';
-          const responseEmail = haystackResponse.email || '';
+          const responseDomain = haystackResponse.domain || '';
           const responseCity = haystackResponse.city || null;
           const answerText = haystackResponse.answer || null;
 
@@ -318,9 +320,9 @@ export const processQAJob = inngest.createFunction(
               doc_id: item.doc_id,
               // All 17 required fields
               name: normalizeValue(item.name || responseName),
-              domain: normalizeValue(item.domain),
+              domain: normalizeValue(item.domain || responseDomain),
               company_size: normalizeValue(item.company_size),
-              email: normalizeValue(item.email || responseEmail),
+              email: normalizeValue(item.email),
               phone: normalizeValue(item.phone),
               street: normalizeValue(item.street),
               city: normalizeValue(item.city || responseCity),
@@ -354,9 +356,9 @@ export const processQAJob = inngest.createFunction(
           return {
             doc_id: haystackResponse.doc_id || batchItems[index]?.doc_id || 'unknown',
             name: normalizeValue(responseName),
-            domain: normalizeValue(''),
+            domain: normalizeValue(responseDomain),
             company_size: normalizeValue(''),
-            email: normalizeValue(responseEmail),
+            email: normalizeValue(''),
             phone: normalizeValue(''),
             street: normalizeValue(''),
             city: normalizeValue(responseCity),

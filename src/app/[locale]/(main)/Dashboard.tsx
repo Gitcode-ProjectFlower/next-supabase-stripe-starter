@@ -11,8 +11,8 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
 
-import { REGIONS_TREE } from '@/data/regions-tree';
-import { SECTORS_TREE } from '@/data/sectors-tree';
+import { REGIONS_TREE_UK } from '@/data/regions-tree-uk';
+import { SECTORS_TREE_UK } from '@/data/sectors-tree-uk';
 import { trackEvent } from '@/libs/analytics/posthog';
 import { getCollectionFromLocale } from '@/libs/collection-mapping';
 import { getTopKLimit, type UserPlan } from '@/libs/plan-config';
@@ -264,8 +264,8 @@ export function Dashboard() {
       const experienceYears = buildExperienceYears();
 
       // Get hierarchical values for sectors and regions
-      const sectorHierarchy = sectors.size > 0 ? getHierarchicalValuesFromIds(sectors, SECTORS_TREE, false) : null;
-      const regionHierarchy = regions.size > 0 ? getHierarchicalValuesFromIds(regions, REGIONS_TREE, true) : null;
+      const sectorHierarchy = sectors.size > 0 ? getHierarchicalValuesFromIds(sectors, SECTORS_TREE_UK, false) : null;
+      const regionHierarchy = regions.size > 0 ? getHierarchicalValuesFromIds(regions, REGIONS_TREE_UK, true) : null;
 
       // Prepare request body with hierarchical filters
       // Backend expects sector_level1, sector_level2, sector_level3, region_level1, etc.
@@ -419,8 +419,8 @@ export function Dashboard() {
           similarity: item.similarity ?? 0, // Ensure similarity is always present, default to 0
         }));
       const experienceYears = buildExperienceYears();
-      const sectorNames = sectors.size > 0 ? getNamesFromIds(sectors, SECTORS_TREE) : [];
-      const regionNames = regions.size > 0 ? getNamesFromIds(regions, REGIONS_TREE) : [];
+      const sectorNames = sectors.size > 0 ? getNamesFromIds(sectors, SECTORS_TREE_UK) : [];
+      const regionNames = regions.size > 0 ? getNamesFromIds(regions, REGIONS_TREE_UK) : [];
       const criteria = {
         names,
         sectors: sectorNames,
@@ -659,8 +659,8 @@ export function Dashboard() {
       }
 
       const experienceYears = buildExperienceYears();
-      const sectorNames = sectors.size > 0 ? getNamesFromIds(sectors, SECTORS_TREE) : [];
-      const regionNames = regions.size > 0 ? getNamesFromIds(regions, REGIONS_TREE) : [];
+      const sectorNames = sectors.size > 0 ? getNamesFromIds(sectors, SECTORS_TREE_UK) : [];
+      const regionNames = regions.size > 0 ? getNamesFromIds(regions, REGIONS_TREE_UK) : [];
       const criteria = {
         names,
         sectors: sectorNames,
@@ -977,8 +977,8 @@ export function Dashboard() {
       }
 
       const experienceYears = buildExperienceYears();
-      const sectorNames = sectors.size > 0 ? getNamesFromIds(sectors, SECTORS_TREE) : [];
-      const regionNames = regions.size > 0 ? getNamesFromIds(regions, REGIONS_TREE) : [];
+      const sectorNames = sectors.size > 0 ? getNamesFromIds(sectors, SECTORS_TREE_UK) : [];
+      const regionNames = regions.size > 0 ? getNamesFromIds(regions, REGIONS_TREE_UK) : [];
       const criteria = {
         names,
         sectors: sectorNames,
