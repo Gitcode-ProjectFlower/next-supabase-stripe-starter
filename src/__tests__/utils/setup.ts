@@ -13,48 +13,48 @@ process.env.UPSTASH_REDIS_REST_TOKEN = 'test-token';
 
 // Mock Next.js router
 vi.mock('next/navigation', () => ({
-    useRouter: () => ({
-        push: vi.fn(),
-        replace: vi.fn(),
-        prefetch: vi.fn(),
-        back: vi.fn(),
-    }),
-    usePathname: () => '/',
-    useSearchParams: () => new URLSearchParams(),
+  useRouter: () => ({
+    push: vi.fn(),
+    replace: vi.fn(),
+    prefetch: vi.fn(),
+    back: vi.fn(),
+  }),
+  usePathname: () => '/',
+  useSearchParams: () => new URLSearchParams(),
 }));
 
 // Mock Supabase client
 vi.mock('@/libs/supabase/client', () => ({
-    createClient: vi.fn(() => ({
-        auth: {
-            getUser: vi.fn(),
-            getSession: vi.fn(),
-            signIn: vi.fn(),
-            signOut: vi.fn(),
-        },
-        from: vi.fn(() => ({
-            select: vi.fn().mockReturnThis(),
-            insert: vi.fn().mockReturnThis(),
-            update: vi.fn().mockReturnThis(),
-            delete: vi.fn().mockReturnThis(),
-            eq: vi.fn().mockReturnThis(),
-            single: vi.fn(),
-        })),
+  createClient: vi.fn(() => ({
+    auth: {
+      getUser: vi.fn(),
+      getSession: vi.fn(),
+      signIn: vi.fn(),
+      signOut: vi.fn(),
+    },
+    from: vi.fn(() => ({
+      select: vi.fn().mockReturnThis(),
+      insert: vi.fn().mockReturnThis(),
+      update: vi.fn().mockReturnThis(),
+      delete: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      single: vi.fn(),
     })),
+  })),
 }));
 
 // Mock PostHog
 vi.mock('posthog-js', () => ({
-    default: {
-        init: vi.fn(),
-        capture: vi.fn(),
-        identify: vi.fn(),
-    },
+  default: {
+    init: vi.fn(),
+    capture: vi.fn(),
+    identify: vi.fn(),
+  },
 }));
 
 // Mock Sentry
 vi.mock('@sentry/nextjs', () => ({
-    captureException: vi.fn(),
-    captureMessage: vi.fn(),
-    setUser: vi.fn(),
+  captureException: vi.fn(),
+  captureMessage: vi.fn(),
+  setUser: vi.fn(),
 }));

@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect,useState } from 'react';
 import Head from 'next/head';
+import { useEffect, useState } from 'react';
 
 import * as Sentry from '@sentry/nextjs';
 

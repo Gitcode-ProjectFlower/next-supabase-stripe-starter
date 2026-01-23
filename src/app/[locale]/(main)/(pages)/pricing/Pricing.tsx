@@ -1,8 +1,8 @@
-import { Check } from 'lucide-react'
+import { Check } from 'lucide-react';
 
-import { Button } from '@/components/ui/button'
-import { createCheckoutAction } from '@/features/pricing/actions/create-checkout-action'
-import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client'
+import { Button } from '@/components/ui/button';
+import { createCheckoutAction } from '@/features/pricing/actions/create-checkout-action';
+import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
 
 const PLANS = [
   {

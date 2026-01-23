@@ -50,8 +50,7 @@ type SelectionItem = {
   legal_form: string;
   // Optional fields
   similarity?: number;
-}
-
+};
 
 type SelectionDetailResponse = {
   selection: SelectionListItem & {

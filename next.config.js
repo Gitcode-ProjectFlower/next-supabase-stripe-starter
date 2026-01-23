@@ -4,7 +4,6 @@ const nextConfig = {
     // Exclude test files and scripts from build type checking
     ignoreBuildErrors: false,
   },
-
 };
 
 module.exports = nextConfig;

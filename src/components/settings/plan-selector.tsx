@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react';
 
-import { Button } from '@/components/ui/button'
-import type { Price, ProductWithPrices } from '@/features/pricing/types'
-import { PLAN_CONFIGS, type UserPlan } from '@/libs/plan-config'
+import { Button } from '@/components/ui/button';
+import type { Price, ProductWithPrices } from '@/features/pricing/types';
+import { PLAN_CONFIGS, type UserPlan } from '@/libs/plan-config';
 
 type PlanChoice = {
   productId: string;

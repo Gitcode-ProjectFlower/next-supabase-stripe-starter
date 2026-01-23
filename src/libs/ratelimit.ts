@@ -20,12 +20,9 @@ export const askRateLimiter = new Ratelimit({
   prefix: 'ratelimit:ask',
 });
 
-export async function checkRateLimit(
-  identifier: string,
-  limiter: Ratelimit
-) {
+export async function checkRateLimit(identifier: string, limiter: Ratelimit) {
   const result = await limiter.limit(identifier);
-  
+
   return {
     success: result.success,
     limit: result.limit,

@@ -1,7 +1,7 @@
 'use client';
 
-import { useMemo, useState } from 'react';
 import Link from 'next/link';
+import { useMemo, useState } from 'react';
 import { IoCheckmark } from 'react-icons/io5';
 
 import { SexyBoarder } from '@/components/sexy-boarder';
@@ -66,8 +66,8 @@ export function PricingCard({
               {yearPrice && isBillingIntervalYearly
                 ? '$' + yearPrice / 100
                 : monthPrice
-                  ? '$' + monthPrice / 100
-                  : 'Custom'}
+                ? '$' + monthPrice / 100
+                : 'Custom'}
             </span>
             <span>{yearPrice && isBillingIntervalYearly ? '/year' : monthPrice ? '/month' : null}</span>
           </div>
@@ -87,12 +87,8 @@ export function PricingCard({
         <div className='py-4'>
           {currentPrice && (
             <form action={createCheckoutAction}>
-              <input type="hidden" name="priceId" value={currentPrice.id} />
-              <Button
-                type="submit"
-                variant={buttonVariantMap[metadata.priceCardVariant]}
-                className='w-full'
-              >
+              <input type='hidden' name='priceId' value={currentPrice.id} />
+              <Button type='submit' variant={buttonVariantMap[metadata.priceCardVariant]} className='w-full'>
                 Get Started
               </Button>
             </form>
