@@ -57,6 +57,7 @@ export function getVisibleColumns(plan: UserPlan): readonly string[] {
   // All 17 required fields (always displayed, in order)
   const requiredColumns = [
     'name',
+    'similarity', // Second column as requested
     'domain',
     'company_size',
     'email',
@@ -73,7 +74,6 @@ export function getVisibleColumns(plan: UserPlan): readonly string[] {
     'region_level4',
     'linkedin_company_url',
     'legal_form',
-    'similarity', // Optional but commonly shown
   ] as const;
 
   return requiredColumns;

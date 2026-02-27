@@ -1,3 +1,5 @@
+import * as XLSX from 'xlsx';
+
 import { inngest } from '@/libs/inngest/client';
 import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
 import { normalizeValue } from '@/utils/normalize-value';
@@ -5,7 +7,7 @@ import { normalizeValue } from '@/utils/normalize-value';
 export const exportLookalikesJob = inngest.createFunction(
   {
     id: 'export-lookalikes-job',
-    name: 'Export Lookalikes to CSV',
+    name: 'Export Lookalikes to Excel',
     retries: 1,
   },
   { event: 'lookalikes/export' },
@@ -29,7 +31,7 @@ export const exportLookalikesJob = inngest.createFunction(
         throw error;
       }
 
-      console.log(`[Inngest exportLookalikesJob] Starting Lookalikes CSV export for selection ${selectionId}`);
+      console.log(`[Inngest exportLookalikesJob] Starting Lookalikes Excel export for selection ${selectionId}`);
 
       const items = await step.run('fetch-selection-items', async () => {
         const supabase = supabaseAdminClient;
@@ -56,10 +58,10 @@ export const exportLookalikesJob = inngest.createFunction(
         throw error;
       }
 
-      const downloadUrl = await step.run('generate-and-upload-csv', async () => {
+      const downloadUrl = await step.run('generate-and-upload-excel', async () => {
         const supabase = supabaseAdminClient;
 
-        // Required CSV headers (always in this order - 17 required fields)
+        // Required headers (always in this order - 17 required fields)
         const headers = [
           'Name',
           'Domain',
@@ -80,7 +82,7 @@ export const exportLookalikesJob = inngest.createFunction(
           'Legal Form',
         ];
 
-        // Generate CSV row (always include all fields, even if empty)
+        // Generate rows (always include all fields, even if empty)
         // Use type assertion since database types may not be updated yet after migration
         const rows = items.map((item: any) => [
           normalizeValue(item.name),
@@ -102,22 +104,24 @@ export const exportLookalikesJob = inngest.createFunction(
           normalizeValue(item.legal_form),
         ]);
 
-        const csvContent = [headers.join(','), ...rows.map((row) => row.map((cell) => `"${cell}"`).join(','))].join(
-          '\n'
-        );
+        // Build Excel workbook — cells are structured data so commas/newlines in values are safe
+        const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Lookalikes');
+        // Use 'array' (Uint8Array) which is universally compatible, then convert to Buffer for Supabase upload
+        const xlsxArray = XLSX.write(wb, { type: 'array', bookType: 'xlsx' }) as Uint8Array;
+        const xlsxBuffer = Buffer.from(xlsxArray);
 
-        const csvWithBOM = '\uFEFF' + csvContent;
-
-        const fileName = `lookalikes_${selectionId}_${Date.now()}.csv`;
+        const fileName = `lookalikes_${selectionId}_${Date.now()}.xlsx`;
         const filePath = `${userId}/${selectionId}/${fileName}`;
 
-        const { error: uploadError } = await supabase.storage.from('exports').upload(filePath, csvWithBOM, {
-          contentType: 'text/csv',
+        const { error: uploadError } = await supabase.storage.from('exports').upload(filePath, xlsxBuffer, {
+          contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
           upsert: false,
         });
 
         if (uploadError) {
-          throw new Error(`Failed to upload CSV: ${uploadError.message}`);
+          throw new Error(`Failed to upload Excel file: ${uploadError.message}`);
         }
 
         const { data: urlData } = await supabase.storage.from('exports').createSignedUrl(filePath, 60 * 60 * 24 * 7);
@@ -223,7 +227,7 @@ export const exportLookalikesJob = inngest.createFunction(
         }
       });
 
-      console.log(`[Inngest exportLookalikesJob] Lookalikes CSV export completed. Download URL: ${downloadUrl}`);
+      console.log(`[Inngest exportLookalikesJob] Lookalikes Excel export completed. Download URL: ${downloadUrl}`);
 
       return {
         selectionId,

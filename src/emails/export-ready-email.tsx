@@ -21,7 +21,7 @@ export const ExportReadyEmail = ({
   return (
     <Html>
       <Head />
-      <Preview>Your CSV export for &quot;{selectionName}&quot; is ready to download!</Preview>
+      <Preview>Your Excel export for &quot;{selectionName}&quot; is ready to download!</Preview>
       <Body style={main}>
         <Container style={container}>
           <Heading style={h1}>Your Export is Ready! 📊</Heading>
@@ -29,7 +29,7 @@ export const ExportReadyEmail = ({
           <Text style={text}>Hi {displayName},</Text>
 
           <Text style={text}>
-            Great news! Your CSV export for <strong>&quot;{selectionName}&quot;</strong> has been generated and is ready
+            Great news! Your Excel export for <strong>&quot;{selectionName}&quot;</strong> has been generated and is ready
             to download.
           </Text>
 
@@ -43,7 +43,7 @@ export const ExportReadyEmail = ({
 
           <Section style={buttonContainer}>
             <Button style={button} href={downloadUrl}>
-              Download CSV
+              Download Excel
             </Button>
           </Section>
 

@@ -42,25 +42,31 @@ export async function POST(request: NextRequest) {
     const isAnonymous = !user || authError;
 
     if (!isAnonymous) {
-      const rateLimitResult = await checkRateLimit(user.id, searchRateLimiter);
+      try {
+        const rateLimitResult = await checkRateLimit(user.id, searchRateLimiter);
 
-      if (!rateLimitResult.success) {
-        return NextResponse.json(
-          {
-            error: 'Rate limit exceeded. Please try again later.',
-            limit: rateLimitResult.limit,
-            remaining: rateLimitResult.remaining,
-            reset: rateLimitResult.reset,
-          },
-          {
-            status: 429,
-            headers: {
-              'X-RateLimit-Limit': rateLimitResult.limit.toString(),
-              'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
-              'X-RateLimit-Reset': rateLimitResult.reset.toISOString(),
+        if (!rateLimitResult.success) {
+          return NextResponse.json(
+            {
+              error: 'Rate limit exceeded. Please try again later.',
+              limit: rateLimitResult.limit,
+              remaining: rateLimitResult.remaining,
+              reset: rateLimitResult.reset,
             },
-          }
-        );
+            {
+              status: 429,
+              headers: {
+                'X-RateLimit-Limit': rateLimitResult.limit.toString(),
+                'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
+                'X-RateLimit-Reset': rateLimitResult.reset.toISOString(),
+              },
+            }
+          );
+        }
+      } catch (rlError) {
+        // Redis is unavailable — log and allow the request through (fail-open)
+        // This prevents a Redis outage from blocking all authenticated searches
+        console.error('[Search] Rate limit check failed, proceeding without limit:', rlError);
       }
     }
 
