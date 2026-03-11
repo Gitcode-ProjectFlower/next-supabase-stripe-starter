@@ -1,3 +1,4 @@
+import * as XLSX from 'xlsx';
 import { inngest } from '@/libs/inngest/client';
 import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
 import { normalizeValue } from '@/utils/normalize-value';
@@ -471,11 +472,11 @@ export const processQAJob = inngest.createFunction(
       console.log(`[Inngest processQAJob] Batch ${batchNumber} completed. Total results so far: ${results.length}`);
     }
 
-    // Step 5: Generate CSV and update session
-    const downloadUrl = await step.run('generate-csv', async () => {
-      console.log('[Inngest processQAJob] Generating CSV...');
+    // Step 5: Generate Excel and update session
+    const downloadUrl = await step.run('generate-excel', async () => {
+      console.log('[Inngest processQAJob] Generating Excel...');
 
-      // Required CSV headers (17 required fields + Q&A specific fields)
+      // Required headers (17 required fields + Q&A specific fields)
       const headers = [
         'Name',
         'Domain',
@@ -522,20 +523,23 @@ export const processQAJob = inngest.createFunction(
         normalizeValue(r.error_message),
       ]);
 
-      const csvContent = [headers.join(','), ...rows.map((row) => row.map((cell) => `"${cell}"`).join(','))].join('\n');
-      const csvWithBOM = '\uFEFF' + csvContent;
+      const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Q&A Results');
+      const xlsxArray = XLSX.write(wb, { type: 'array', bookType: 'xlsx' }) as Uint8Array;
+      const xlsxBuffer = Buffer.from(xlsxArray);
 
-      const fileName = `qa_${selectionId}_${Date.now()}.csv`;
+      const fileName = `qa_${selectionId}_${Date.now()}.xlsx`;
       const filePath = `${userId}/${selectionId}/${fileName}`;
 
-      const { error: uploadError } = await supabaseAdminClient.storage.from('exports').upload(filePath, csvWithBOM, {
-        contentType: 'text/csv',
+      const { error: uploadError } = await supabaseAdminClient.storage.from('exports').upload(filePath, xlsxBuffer, {
+        contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         upsert: false,
       });
 
       if (uploadError) {
-        console.error('[Inngest processQAJob] Failed to upload CSV:', uploadError);
-        throw new Error(`Failed to upload CSV: ${uploadError.message}`);
+        console.error('[Inngest processQAJob] Failed to upload Excel:', uploadError);
+        throw new Error(`Failed to upload Excel: ${uploadError.message}`);
       }
 
       const { data: urlData } = await supabaseAdminClient.storage
@@ -558,7 +562,7 @@ export const processQAJob = inngest.createFunction(
         expires_at: expiresAt.toISOString(),
       });
 
-      console.log('[Inngest processQAJob] CSV generated and uploaded:', {
+      console.log('[Inngest processQAJob] Excel generated and uploaded:', {
         fileName,
         filePath,
         downloadUrl: urlData.signedUrl,
@@ -610,7 +614,7 @@ export const processQAJob = inngest.createFunction(
             progress: 100,
             completed_at: new Date().toISOString(),
             error_message: errorMessage,
-            csv_url: downloadUrl, // Still save CSV even if failed
+            csv_url: downloadUrl, // Still save Excel even if failed
           })
           .eq('id', qaSessionId);
 
@@ -621,9 +625,9 @@ export const processQAJob = inngest.createFunction(
 
         console.log('[Inngest processQAJob] Session marked as failed due to low success rate');
 
-        // Still log record_download usage even if session failed, since CSV was generated
+        // Still log record_download usage even if session failed, since Excel was generated
         // This ensures the download appears in recent activity
-        console.log('[Inngest processQAJob] Logging record_download usage for Q&A CSV (failed session)...', {
+        console.log('[Inngest processQAJob] Logging record_download usage for Q&A Excel (failed session)...', {
           userId,
           rowCount: results.length,
         });
@@ -701,9 +705,9 @@ export const processQAJob = inngest.createFunction(
         // Don't fail the job if usage logging fails - it's not critical
       }
 
-      // Log record_download usage for Q&A CSV (similar to lookalikes export)
+      // Log record_download usage for Q&A Excel (similar to lookalikes export)
       // This ensures the download appears in recent activity
-      console.log('[Inngest processQAJob] Logging record_download usage for Q&A CSV...', {
+      console.log('[Inngest processQAJob] Logging record_download usage for Q&A Excel...', {
         userId,
         rowCount: results.length,
       });

@@ -6,37 +6,46 @@ export const PLAN_CONFIGS = {
     maxDownloadsPer30Days: 3, // Anonymous users get 3 results max
     maxAiCallsPer30Days: 0, // No AI calls for anonymous users
     topKLimit: 3,
-    visibleColumns: ['name', 'city', 'sectors', 'experience_years'],
+    visibleColumns: ['name', 'similarity', 'city', 'sectors', 'experience_years'],
   },
   free_tier: {
     maxDownloadsPer30Days: 100,
     maxAiCallsPer30Days: 5,
     topKLimit: 20,
-    visibleColumns: ['name', 'city', 'sectors', 'experience_years'],
+    visibleColumns: ['name', 'similarity', 'city', 'sectors', 'experience_years'],
   },
   small: {
     maxDownloadsPer30Days: 300,
     maxAiCallsPer30Days: 150,
     topKLimit: 100,
-    visibleColumns: ['name', 'city', 'street', 'sectors', 'experience_years'],
+    visibleColumns: ['name', 'similarity', 'city', 'street', 'sectors', 'experience_years'],
   },
   medium: {
     maxDownloadsPer30Days: 2000,
     maxAiCallsPer30Days: 1000,
     topKLimit: 500,
-    visibleColumns: ['name', 'email', 'phone', 'city', 'street', 'sectors', 'experience_years'],
+    visibleColumns: ['name', 'similarity', 'email', 'phone', 'city', 'street', 'sectors', 'experience_years'],
   },
   large: {
     maxDownloadsPer30Days: 8000,
     maxAiCallsPer30Days: 5000,
     topKLimit: 5000,
-    visibleColumns: ['name', 'email', 'phone', 'city', 'street', 'sectors', 'experience_years', 'similarity'],
+    visibleColumns: [
+      'name',
+      'similarity',
+      'email',
+      'phone',
+      'city',
+      'street',
+      'sectors',
+      'experience_years',
+    ],
   },
   promo_medium: {
     maxDownloadsPer30Days: 2000,
     maxAiCallsPer30Days: 1000,
     topKLimit: 500,
-    visibleColumns: ['name', 'email', 'phone', 'city', 'street', 'sectors', 'experience_years'],
+    visibleColumns: ['name', 'similarity', 'email', 'phone', 'city', 'street', 'sectors', 'experience_years'],
   },
 } as const;
 

@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 
 /**
  * GET /api/downloads
- * Fetch user's available downloads (CSV exports)
+ * Fetch user's available downloads (Excel exports)
  */
 export async function GET() {
   try {
@@ -53,7 +53,7 @@ export async function GET() {
 
         return {
           id: download.id,
-          type: download.type === 'lookalike' ? 'Lookalike CSV' : 'Q&A CSV',
+          type: download.type === 'lookalike' ? 'Lookalike Excel' : 'Q&A Excel',
           selectionId: download.selection_id,
           selectionName,
           createdAt: download.created_at,

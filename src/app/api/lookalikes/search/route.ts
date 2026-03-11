@@ -43,15 +43,19 @@ export async function POST(request: NextRequest) {
 
     if (!isAnonymous) {
       try {
-        const rateLimitResult = await checkRateLimit(user.id, searchRateLimiter);
-
-        if (!rateLimitResult.success) {
+        const rateLimitResult = await checkRateLimit(user.id, 'search');
+        if (!rateLimitResult.allowed) {
+          console.log('[Search API] Rate limit reached for user:', {
+            userId: user.id,
+            current: rateLimitResult.current,
+            limit: rateLimitResult.limit,
+            reset: rateLimitResult.reset,
+          });
           return NextResponse.json(
             {
-              error: 'Rate limit exceeded. Please try again later.',
-              limit: rateLimitResult.limit,
-              remaining: rateLimitResult.remaining,
-              reset: rateLimitResult.reset,
+              error: 'Rate limit exceeded',
+              message: `You have reached your search limit (${rateLimitResult.current}/${rateLimitResult.limit}). Please try again later or upgrade your plan.`,
+              retryAfter: rateLimitResult.reset,
             },
             {
               status: 429,

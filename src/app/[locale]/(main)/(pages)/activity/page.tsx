@@ -7,7 +7,7 @@ import { Activity } from './Activity';
 
 export const metadata: Metadata = {
   title: 'Activity',
-  description: 'View your recent searches, Q&A runs, and CSV exports',
+  description: 'View your recent searches, Q&A runs, and Excel exports',
   ...NO_INDEX_PAGE,
 };
 

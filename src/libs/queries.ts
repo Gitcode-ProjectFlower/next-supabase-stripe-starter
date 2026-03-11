@@ -60,7 +60,7 @@ type SelectionDetailResponse = {
 
 type DownloadItem = {
   id: string;
-  type: 'Lookalike CSV' | 'Q&A CSV';
+  type: 'Lookalike Excel' | 'Q&A Excel';
   selectionId: string;
   selectionName?: string;
   createdAt: string;
@@ -165,7 +165,7 @@ export function useDownloadsQuery(
           const estimatedSizeKB = Math.round((download.row_count * 200) / 1024);
           const size = estimatedSizeKB > 0 ? `${estimatedSizeKB} KB` : '< 1 KB';
 
-          const type: 'Lookalike CSV' | 'Q&A CSV' = download.type === 'lookalike' ? 'Lookalike CSV' : 'Q&A CSV';
+          const type: 'Lookalike Excel' | 'Q&A Excel' = download.type === 'lookalike' ? 'Lookalike Excel' : 'Q&A Excel';
 
           return {
             id: download.id,
@@ -335,9 +335,8 @@ export function useRecentActivityQuery(
                 type: 'qa',
                 status: statusMap[qaSessions.status] || 'queued',
                 timestamp: log.created_at || new Date().toISOString(),
-                label: `${selectionName} - ${qaSessions.prompt.substring(0, 50)}${
-                  qaSessions.prompt.length > 50 ? '...' : ''
-                }`,
+                label: `${selectionName} - ${qaSessions.prompt.substring(0, 50)}${qaSessions.prompt.length > 50 ? '...' : ''
+                  }`,
                 link: `/selections/${qaSessions.selection_id}/qa/${qaSessions.id}`,
                 metadata: {
                   selectionId: qaSessions.selection_id,
@@ -412,7 +411,7 @@ export function useRecentActivityQuery(
               }
 
               const isExpired = downloads.expires_at ? new Date(downloads.expires_at) < new Date() : false;
-              const typeLabel = downloads.type === 'lookalike' ? 'Lookalike CSV' : 'Q&A CSV';
+              const typeLabel = downloads.type === 'lookalike' ? 'Lookalike Excel' : 'Q&A Excel';
 
               return {
                 id: log.id,
@@ -432,7 +431,7 @@ export function useRecentActivityQuery(
 
           // If no related record found, return basic activity
           let activityType: 'search' | 'qa' | 'export' = 'export';
-          let activityLabel = `Export CSV - ${log.count} records`;
+          let activityLabel = `Export Excel - ${log.count} records`;
 
           if (log.action === 'ai_question') {
             activityType = 'qa';

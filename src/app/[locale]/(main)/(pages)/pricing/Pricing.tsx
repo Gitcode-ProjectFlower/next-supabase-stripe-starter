@@ -15,7 +15,7 @@ const PLANS = [
       'Up to 100 results per search',
       'Basic similarity search',
       'Q&A on selected candidates',
-      'CSV export',
+      'Excel export',
       'Email support',
     ],
   },
@@ -29,7 +29,7 @@ const PLANS = [
       'Up to 500 results per search',
       'Advanced similarity search',
       'Q&A on selected candidates',
-      'CSV export',
+      'Excel export',
       'Priority email support',
       'Advanced filters',
     ],
@@ -44,7 +44,7 @@ const PLANS = [
       'Up to 5,000 results per search',
       'Premium similarity search',
       'Q&A on selected candidates',
-      'CSV export',
+      'Excel export',
       'Priority support',
       'Advanced filters',
       'API access',
@@ -128,9 +128,8 @@ export async function Pricing() {
           return (
             <div
               key={plan.name}
-              className={`relative flex flex-col rounded-2xl border bg-white p-6 shadow-sm ${
-                plan.popular ? 'border-blue-600 ring-2 ring-blue-600' : ''
-              }`}
+              className={`relative flex flex-col rounded-2xl border bg-white p-6 shadow-sm ${plan.popular ? 'border-blue-600 ring-2 ring-blue-600' : ''
+                }`}
             >
               {plan.popular && (
                 <div className='absolute -top-4 left-1/2 -translate-x-1/2'>

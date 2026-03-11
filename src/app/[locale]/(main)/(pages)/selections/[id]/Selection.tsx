@@ -479,9 +479,8 @@ export function Selection() {
 
               toast({
                 title: 'Success',
-                description: `Q&A completed! Found ${answersCount} answer${
-                  answersCount !== 1 ? 's' : ''
-                }. Redirecting...`,
+                description: `Q&A completed! Found ${answersCount} answer${answersCount !== 1 ? 's' : ''
+                  }. Redirecting...`,
               });
               // Small delay before navigation to show completion
               setTimeout(() => {
@@ -683,7 +682,7 @@ export function Selection() {
               disabled={isExporting}
             >
               <Download className='mr-2 h-4 w-4' />
-              {isExporting ? 'Exporting...' : 'Export CSV'}
+              {isExporting ? 'Exporting...' : 'Export Excel'}
             </Button>
           </div>
         </div>
@@ -752,8 +751,8 @@ export function Selection() {
                         key === 'email'
                           ? normalizeValue(item.email) || ''
                           : key === 'city' || key === 'street' || key === 'linkedin_company_url'
-                          ? normalizeValue((item as any)[key]) || ''
-                          : undefined
+                            ? normalizeValue((item as any)[key]) || ''
+                            : undefined
                       }
                     >
                       {COLUMN_CONFIG[key].render(item)}
@@ -793,16 +792,15 @@ export function Selection() {
                     {qaStatus === 'completed'
                       ? 'Q&A Completed!'
                       : qaStatus === 'failed'
-                      ? 'Q&A Failed'
-                      : 'Processing Q&A...'}
+                        ? 'Q&A Failed'
+                        : 'Processing Q&A...'}
                   </span>
                   <span>{qaProgress}%</span>
                 </div>
                 <div className='h-2 w-full overflow-hidden rounded-full bg-gray-200'>
                   <div
-                    className={`h-full transition-all duration-500 ${
-                      qaStatus === 'completed' ? 'bg-green-600' : qaStatus === 'failed' ? 'bg-red-600' : 'bg-blue-600'
-                    }`}
+                    className={`h-full transition-all duration-500 ${qaStatus === 'completed' ? 'bg-green-600' : qaStatus === 'failed' ? 'bg-red-600' : 'bg-blue-600'
+                      }`}
                     style={{ width: `${qaProgress}%` }}
                   />
                 </div>
@@ -810,8 +808,8 @@ export function Selection() {
                   {qaStatus === 'completed'
                     ? 'Redirecting to results page...'
                     : qaStatus === 'failed'
-                    ? 'An error occurred during processing. Please try again.'
-                    : 'This may take a few minutes depending on the number of candidates...'}
+                      ? 'An error occurred during processing. Please try again.'
+                      : 'This may take a few minutes depending on the number of candidates...'}
                 </p>
                 {qaStatus === 'completed' && qaSessionId && (
                   <Button

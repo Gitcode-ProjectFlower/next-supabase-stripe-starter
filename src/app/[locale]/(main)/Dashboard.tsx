@@ -74,9 +74,9 @@ export function Dashboard() {
 
   const exportUnavailableReason = useMemo(() => {
     if (results.length === 0) return 'Run a search before exporting.';
-    if (selectedIds.size === 0) return 'Select candidates to include in the CSV export.';
-    if (!userPlan || userPlan === 'anonymous') return 'Sign in to export CSV.';
-    if (userPlan && requiresUpgrade(userPlan, 'export')) return 'Upgrade your plan to export CSV.';
+    if (selectedIds.size === 0) return 'Select candidates to include in the Excel export.';
+    if (!userPlan || userPlan === 'anonymous') return 'Sign in to export Excel.';
+    if (userPlan && requiresUpgrade(userPlan, 'export')) return 'Upgrade your plan to export Excel.';
     return null;
   }, [results.length, selectedIds.size, userPlan]);
 
@@ -855,7 +855,7 @@ export function Dashboard() {
       toast({
         title: 'Export Started',
         description:
-          'Your selection has been saved and the export has been started. You will receive an email when your CSV is ready.',
+          'Your selection has been saved and the export has been started. You will receive an email when your Excel is ready.',
       });
 
       // Track selection created event
@@ -1308,7 +1308,7 @@ export function Dashboard() {
               onClick={() => handleExportClick(exportUnavailableReason)}
               disabled={isExporting}
             >
-              {isExporting ? 'Exporting...' : 'Export CSV'}
+              {isExporting ? 'Exporting...' : 'Export Excel'}
             </Button>
             {/* <Button
               variant='outline'

@@ -61,9 +61,10 @@ export const exportLookalikesJob = inngest.createFunction(
       const downloadUrl = await step.run('generate-and-upload-excel', async () => {
         const supabase = supabaseAdminClient;
 
-        // Required headers (always in this order - 17 required fields)
+        // Required headers (always in this order - 18 fields including Fit Score)
         const headers = [
           'Name',
+          'Fit Score', // Second column as requested
           'Domain',
           'Company Size',
           'Email',
@@ -83,9 +84,9 @@ export const exportLookalikesJob = inngest.createFunction(
         ];
 
         // Generate rows (always include all fields, even if empty)
-        // Use type assertion since database types may not be updated yet after migration
         const rows = items.map((item: any) => [
           normalizeValue(item.name),
+          item.similarity ? `${Math.round(item.similarity * 100)}%` : '-', // Fit Score formatting
           normalizeValue(item.domain),
           normalizeValue(item.company_size),
           normalizeValue(item.email),

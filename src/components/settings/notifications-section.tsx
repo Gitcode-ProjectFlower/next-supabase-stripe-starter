@@ -192,7 +192,7 @@ export function NotificationsSection({ initialEmailNotifications }: Notification
         <div>
           <div className='font-medium text-gray-900'>Email notifications</div>
           <div className='text-sm text-gray-600'>
-            Receive an email when a CSV export is ready or a Q&A run finishes.
+            Receive an email when an Excel export is ready or a Q&A run finishes.
           </div>
         </div>
 
@@ -203,14 +203,12 @@ export function NotificationsSection({ initialEmailNotifications }: Notification
           aria-checked={emailNotifications}
           onClick={handleToggle}
           disabled={isSaving}
-          className={`relative inline-flex h-[25px] w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 ${
-            emailNotifications ? 'bg-blue-600' : 'bg-gray-300'
-          }`}
+          className={`relative inline-flex h-[25px] w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 ${emailNotifications ? 'bg-blue-600' : 'bg-gray-300'
+            }`}
         >
           <span
-            className={`block h-5 w-5 transform rounded-full bg-white transition-transform ${
-              emailNotifications ? 'translate-x-[22px]' : 'translate-x-0.5'
-            }`}
+            className={`block h-5 w-5 transform rounded-full bg-white transition-transform ${emailNotifications ? 'translate-x-[22px]' : 'translate-x-0.5'
+              }`}
           />
         </button>
       </div>

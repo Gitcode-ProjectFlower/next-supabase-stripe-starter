@@ -133,9 +133,8 @@ export function Help() {
             <CollapsibleTrigger className='flex w-full items-center justify-between rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-left font-semibold text-gray-900 transition-colors hover:bg-gray-100'>
               <span>General Questions</span>
               <ChevronDown
-                className={`h-5 w-5 text-gray-500 transition-transform duration-200 ${
-                  openSections.has('general') ? 'rotate-180' : ''
-                }`}
+                className={`h-5 w-5 text-gray-500 transition-transform duration-200 ${openSections.has('general') ? 'rotate-180' : ''
+                  }`}
               />
             </CollapsibleTrigger>
             <CollapsibleContent className='space-y-4 px-4 pt-4'>
@@ -178,9 +177,8 @@ export function Help() {
             <CollapsibleTrigger className='flex w-full items-center justify-between rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-left font-semibold text-gray-900 transition-colors hover:bg-gray-100'>
               <span>Lookalike Search</span>
               <ChevronDown
-                className={`h-5 w-5 text-gray-500 transition-transform duration-200 ${
-                  openSections.has('lookalike') ? 'rotate-180' : ''
-                }`}
+                className={`h-5 w-5 text-gray-500 transition-transform duration-200 ${openSections.has('lookalike') ? 'rotate-180' : ''
+                  }`}
               />
             </CollapsibleTrigger>
             <CollapsibleContent className='space-y-4 px-4 pt-4'>
@@ -214,9 +212,8 @@ export function Help() {
             <CollapsibleTrigger className='flex w-full items-center justify-between rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-left font-semibold text-gray-900 transition-colors hover:bg-gray-100'>
               <span>Filtering & Search</span>
               <ChevronDown
-                className={`h-5 w-5 text-gray-500 transition-transform duration-200 ${
-                  openSections.has('filtering') ? 'rotate-180' : ''
-                }`}
+                className={`h-5 w-5 text-gray-500 transition-transform duration-200 ${openSections.has('filtering') ? 'rotate-180' : ''
+                  }`}
               />
             </CollapsibleTrigger>
             <CollapsibleContent className='space-y-4 px-4 pt-4'>
@@ -241,9 +238,8 @@ export function Help() {
             <CollapsibleTrigger className='flex w-full items-center justify-between rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-left font-semibold text-gray-900 transition-colors hover:bg-gray-100'>
               <span>Q&A Feature</span>
               <ChevronDown
-                className={`h-5 w-5 text-gray-500 transition-transform duration-200 ${
-                  openSections.has('qa') ? 'rotate-180' : ''
-                }`}
+                className={`h-5 w-5 text-gray-500 transition-transform duration-200 ${openSections.has('qa') ? 'rotate-180' : ''
+                  }`}
               />
             </CollapsibleTrigger>
             <CollapsibleContent className='space-y-4 px-4 pt-4'>
@@ -262,7 +258,7 @@ export function Help() {
                   <li>Enter your question(s) in the prompt field</li>
                   <li>Click "Generate answers"</li>
                   <li>Wait for processing to complete</li>
-                  <li>View the answers in the results table or download them as CSV</li>
+                  <li>View the answers in the results table or download them as Excel</li>
                 </ol>
               </div>
               <div>
@@ -303,9 +299,8 @@ export function Help() {
             <CollapsibleTrigger className='flex w-full items-center justify-between rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-left font-semibold text-gray-900 transition-colors hover:bg-gray-100'>
               <span>Selections & Saving</span>
               <ChevronDown
-                className={`h-5 w-5 text-gray-500 transition-transform duration-200 ${
-                  openSections.has('selections') ? 'rotate-180' : ''
-                }`}
+                className={`h-5 w-5 text-gray-500 transition-transform duration-200 ${openSections.has('selections') ? 'rotate-180' : ''
+                  }`}
               />
             </CollapsibleTrigger>
             <CollapsibleContent className='space-y-4 px-4 pt-4'>
@@ -340,7 +335,7 @@ export function Help() {
               <div>
                 <h3 className='mb-2 font-semibold text-gray-900'>Can I edit a saved selection?</h3>
                 <p className='text-gray-600'>
-                  Currently, selections cannot be edited. You can view the selection, export it as CSV, ask questions to
+                  Currently, selections cannot be edited. You can view the selection, export it as Excel, ask questions to
                   the companies in the selection, or create a new selection with different companies.
                 </p>
               </div>
@@ -351,29 +346,28 @@ export function Help() {
             </CollapsibleContent>
           </Collapsible>
 
-          {/* CSV Export */}
+          {/* Excel Export */}
           <Collapsible open={openSections.has('csv')} onOpenChange={() => toggleSection('csv')}>
             <CollapsibleTrigger className='flex w-full items-center justify-between rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-left font-semibold text-gray-900 transition-colors hover:bg-gray-100'>
-              <span>CSV Export</span>
+              <span>Excel Export</span>
               <ChevronDown
-                className={`h-5 w-5 text-gray-500 transition-transform duration-200 ${
-                  openSections.has('csv') ? 'rotate-180' : ''
-                }`}
+                className={`h-5 w-5 text-gray-500 transition-transform duration-200 ${openSections.has('csv') ? 'rotate-180' : ''
+                  }`}
               />
             </CollapsibleTrigger>
             <CollapsibleContent className='space-y-4 px-4 pt-4'>
               <div>
-                <h3 className='mb-2 font-semibold text-gray-900'>How do I export results to CSV?</h3>
+                <h3 className='mb-2 font-semibold text-gray-900'>How do I export results to Excel?</h3>
                 <p className='mb-2 text-gray-600'>There are two ways to export:</p>
                 <ol className='ml-4 list-decimal space-y-1 text-gray-600'>
-                  <li>From search results: select companies and click "Export CSV"</li>
-                  <li>From a saved selection: open the selection and click "Export CSV"</li>
+                  <li>From search results: select companies and click "Export Excel"</li>
+                  <li>From a saved selection: open the selection and click "Export Excel"</li>
                 </ol>
               </div>
               <div>
-                <h3 className='mb-2 font-semibold text-gray-900'>What information is included in the CSV?</h3>
+                <h3 className='mb-2 font-semibold text-gray-900'>What information is included in the Excel file?</h3>
                 <p className='mb-2 text-gray-600'>
-                  The CSV includes 17 standard fields per company, included when available:
+                  The Excel file includes 17 standard fields per company, included when available:
                 </p>
                 <ul className='ml-4 list-disc space-y-1 text-gray-600'>
                   <li>Name, Domain, Company Size, Email, Phone</li>
@@ -386,22 +380,22 @@ export function Help() {
                 </ul>
               </div>
               <div>
-                <h3 className='mb-2 font-semibold text-gray-900'>Are there limits on CSV exports?</h3>
+                <h3 className='mb-2 font-semibold text-gray-900'>Are there limits on Excel exports?</h3>
                 <p className='text-gray-600'>
                   Yes. Each plan has monthly download limits. Each export counts toward your limit based on the number
                   of records exported.
                 </p>
               </div>
               <div>
-                <h3 className='mb-2 font-semibold text-gray-900'>How long are CSV download links valid?</h3>
+                <h3 className='mb-2 font-semibold text-gray-900'>How long are Excel download links valid?</h3>
                 <p className='text-gray-600'>
-                  CSV download links are valid for 7 days after generation. After that, a new export must be generated.
+                  Excel download links are valid for 7 days after generation. After that, a new export must be generated.
                 </p>
               </div>
               <div>
-                <h3 className='mb-2 font-semibold text-gray-900'>What format is the CSV file?</h3>
+                <h3 className='mb-2 font-semibold text-gray-900'>What format is the Excel file?</h3>
                 <p className='text-gray-600'>
-                  CSV files are exported in UTF-8 format with BOM for proper Excel compatibility. Files are
+                  Excel files are exported in .xlsx format for full compatibility. Files are
                   comma-separated with quoted fields.
                 </p>
               </div>
@@ -413,9 +407,8 @@ export function Help() {
             <CollapsibleTrigger className='flex w-full items-center justify-between rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-left font-semibold text-gray-900 transition-colors hover:bg-gray-100'>
               <span>Plans & Pricing</span>
               <ChevronDown
-                className={`h-5 w-5 text-gray-500 transition-transform duration-200 ${
-                  openSections.has('plans') ? 'rotate-180' : ''
-                }`}
+                className={`h-5 w-5 text-gray-500 transition-transform duration-200 ${openSections.has('plans') ? 'rotate-180' : ''
+                  }`}
               />
             </CollapsibleTrigger>
             <CollapsibleContent className='space-y-4 px-4 pt-4'>
@@ -431,7 +424,7 @@ export function Help() {
               </div>
               <div>
                 <h3 className='mb-2 font-semibold text-gray-900'>What are the differences between plans?</h3>
-                <p className='text-gray-600'>Plans differ in Top-K limits, monthly CSV downloads, and monthly calls.</p>
+                <p className='text-gray-600'>Plans differ in Top-K limits, monthly Excel downloads, and monthly calls.</p>
               </div>
               <div>
                 <h3 className='mb-2 font-semibold text-gray-900'>Can I upgrade or downgrade my plan?</h3>
@@ -455,9 +448,8 @@ export function Help() {
             <CollapsibleTrigger className='flex w-full items-center justify-between rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-left font-semibold text-gray-900 transition-colors hover:bg-gray-100'>
               <span>Account & Access</span>
               <ChevronDown
-                className={`h-5 w-5 text-gray-500 transition-transform duration-200 ${
-                  openSections.has('account') ? 'rotate-180' : ''
-                }`}
+                className={`h-5 w-5 text-gray-500 transition-transform duration-200 ${openSections.has('account') ? 'rotate-180' : ''
+                  }`}
               />
             </CollapsibleTrigger>
             <CollapsibleContent className='space-y-4 px-4 pt-4'>
@@ -501,9 +493,8 @@ export function Help() {
             <CollapsibleTrigger className='flex w-full items-center justify-between rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-left font-semibold text-gray-900 transition-colors hover:bg-gray-100'>
               <span>Technical Questions</span>
               <ChevronDown
-                className={`h-5 w-5 text-gray-500 transition-transform duration-200 ${
-                  openSections.has('technical') ? 'rotate-180' : ''
-                }`}
+                className={`h-5 w-5 text-gray-500 transition-transform duration-200 ${openSections.has('technical') ? 'rotate-180' : ''
+                  }`}
               />
             </CollapsibleTrigger>
             <CollapsibleContent className='space-y-4 px-4 pt-4'>
@@ -519,7 +510,7 @@ export function Help() {
                 <ul className='ml-4 list-disc space-y-1 text-gray-600'>
                   <li>All data is stored in secured databases with access control and encryption at rest</li>
                   <li>User authentication is handled securely</li>
-                  <li>CSV exports are stored temporarily (7 days) in secure cloud storage</li>
+                  <li>Excel exports are stored temporarily (7 days) in secure cloud storage</li>
                   <li>Industry-standard security practices are followed</li>
                 </ul>
               </div>
@@ -537,9 +528,8 @@ export function Help() {
             <CollapsibleTrigger className='flex w-full items-center justify-between rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-left font-semibold text-gray-900 transition-colors hover:bg-gray-100'>
               <span>Troubleshooting</span>
               <ChevronDown
-                className={`h-5 w-5 text-gray-500 transition-transform duration-200 ${
-                  openSections.has('troubleshooting') ? 'rotate-180' : ''
-                }`}
+                className={`h-5 w-5 text-gray-500 transition-transform duration-200 ${openSections.has('troubleshooting') ? 'rotate-180' : ''
+                  }`}
               />
             </CollapsibleTrigger>
             <CollapsibleContent className='space-y-4 px-4 pt-4'>
@@ -562,7 +552,7 @@ export function Help() {
                 </ul>
               </div>
               <div>
-                <h3 className='mb-2 font-semibold text-gray-900'>The CSV download link expired. What should I do?</h3>
+                <h3 className='mb-2 font-semibold text-gray-900'>The Excel download link expired. What should I do?</h3>
                 <p className='text-gray-600'>
                   Generate a new export from the saved selection. Links are valid for 7 days.
                 </p>
@@ -575,9 +565,8 @@ export function Help() {
             <CollapsibleTrigger className='flex w-full items-center justify-between rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-left font-semibold text-gray-900 transition-colors hover:bg-gray-100'>
               <span>Feature Requests & Feedback</span>
               <ChevronDown
-                className={`h-5 w-5 text-gray-500 transition-transform duration-200 ${
-                  openSections.has('feedback') ? 'rotate-180' : ''
-                }`}
+                className={`h-5 w-5 text-gray-500 transition-transform duration-200 ${openSections.has('feedback') ? 'rotate-180' : ''
+                  }`}
               />
             </CollapsibleTrigger>
             <CollapsibleContent className='space-y-4 px-4 pt-4'>

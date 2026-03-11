@@ -12,7 +12,7 @@ export function canScrollBeyondPreview(plan: UserPlan): boolean {
   return plan !== 'anonymous' && plan !== null;
 }
 
-export function canExportCSV(plan: UserPlan): boolean {
+export function canExportExcel(plan: UserPlan): boolean {
   return plan !== 'anonymous' && plan !== null;
 }
 
@@ -37,7 +37,7 @@ export function requiresUpgrade(plan: UserPlan, feature: 'save' | 'qa' | 'scroll
     case 'scroll':
       return !canScrollBeyondPreview(plan);
     case 'export':
-      return !canExportCSV(plan);
+      return !canExportExcel(plan);
     default:
       return false;
   }

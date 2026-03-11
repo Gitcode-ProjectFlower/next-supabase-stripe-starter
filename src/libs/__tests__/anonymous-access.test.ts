@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { UserPlan } from '../plan-config';
 import { getTopKLimit } from '../plan-config';
 import {
-  canExportCSV,
+  canExportExcel,
   canGenerateQA,
   canSaveSelection,
   canScrollBeyondPreview,
@@ -148,18 +148,18 @@ describe('Anonymous Access', () => {
     });
   });
 
-  describe('canExportCSV for anonymous users', () => {
+  describe('canExportExcel for anonymous users', () => {
     it('should return false for anonymous plan', () => {
-      expect(canExportCSV('anonymous')).toBe(false);
+      expect(canExportExcel('anonymous')).toBe(false);
     });
 
     it('should return false for null plan', () => {
-      expect(canExportCSV(null)).toBe(false);
+      expect(canExportExcel(null)).toBe(false);
     });
 
     it('should return true for authenticated plans', () => {
-      expect(canExportCSV('free_tier')).toBe(true);
-      expect(canExportCSV('medium')).toBe(true);
+      expect(canExportExcel('free_tier')).toBe(true);
+      expect(canExportExcel('medium')).toBe(true);
     });
   });
 
@@ -210,7 +210,7 @@ describe('Anonymous Access', () => {
       expect(canSaveSelection(anonymousPlan)).toBe(false);
       expect(canGenerateQA(anonymousPlan)).toBe(false);
       expect(canScrollBeyondPreview(anonymousPlan)).toBe(false);
-      expect(canExportCSV(anonymousPlan)).toBe(false);
+      expect(canExportExcel(anonymousPlan)).toBe(false);
 
       // All features should require upgrade
       expect(requiresUpgrade(anonymousPlan, 'save')).toBe(true);
@@ -229,7 +229,7 @@ describe('Anonymous Access', () => {
       expect(canSaveSelection(nullPlan)).toBe(canSaveSelection('anonymous'));
       expect(canGenerateQA(nullPlan)).toBe(canGenerateQA('anonymous'));
       expect(canScrollBeyondPreview(nullPlan)).toBe(canScrollBeyondPreview('anonymous'));
-      expect(canExportCSV(nullPlan)).toBe(canExportCSV('anonymous'));
+      expect(canExportExcel(nullPlan)).toBe(canExportExcel('anonymous'));
       expect(getMaxVisibleResults(nullPlan)).toBe(getMaxVisibleResults('anonymous'));
       expect(getTopKLimit(nullPlan)).toBe(getTopKLimit('anonymous'));
     });

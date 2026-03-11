@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 
 interface Download {
   id: string;
-  type: 'Lookalike CSV' | 'Q&A CSV';
+  type: 'Lookalike Excel' | 'Q&A Excel';
   selectionId: string;
   selectionName?: string;
   createdAt: string;
@@ -21,7 +21,7 @@ interface DownloadsSectionProps {
 }
 
 /**
- * Downloads section displaying available CSV exports ready for download
+ * Downloads section displaying available Excel exports ready for download
  * Uses TanStack Query for optimized caching and data management
  */
 export function DownloadsSection({ initialDownloads = [] }: DownloadsSectionProps) {
@@ -105,10 +105,10 @@ export function DownloadsSection({ initialDownloads = [] }: DownloadsSectionProp
     return (
       <>
         <p className='text-sm text-gray-600'>
-          Your CSV exports will appear here. Exports are available for 7 days after generation.
+          Your Excel exports will appear here. Exports are available for 7 days after generation.
         </p>
         <div className='mt-4 text-sm text-gray-500'>
-          <p>• Click &quot;Export CSV&quot; on any selection to generate a download</p>
+          <p>• Click &quot;Export Excel&quot; on any selection to generate a download</p>
           <p>• You&apos;ll receive an email when your export is ready</p>
           <p>• Downloads expire after 7 days</p>
         </div>

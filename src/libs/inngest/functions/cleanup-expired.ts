@@ -7,7 +7,7 @@ import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
  * Runs daily at 3:00 AM to clean up expired data:
  * - Selections older than 7 days (expires_at < NOW())
  * - Downloads older than 7 days (expires_at < NOW())
- * - Associated CSV files from Supabase Storage
+ * - Associated Excel files from Supabase Storage
  */
 export const cleanupExpiredData = inngest.createFunction(
   {

@@ -60,16 +60,16 @@ export function FilterSidebar({
     userPlan === 'anonymous' || !userPlan
       ? 'Anonymous'
       : userPlan === 'free_tier'
-      ? 'Free'
-      : userPlan === 'small'
-      ? 'Small'
-      : userPlan === 'medium'
-      ? 'Medium'
-      : userPlan === 'large'
-      ? 'Large'
-      : userPlan === 'promo_medium'
-      ? 'Promo Medium'
-      : 'Free';
+        ? 'Free'
+        : userPlan === 'small'
+          ? 'Small'
+          : userPlan === 'medium'
+            ? 'Medium'
+            : userPlan === 'large'
+              ? 'Large'
+              : userPlan === 'promo_medium'
+                ? 'Promo Medium'
+                : 'Free';
 
   React.useEffect(() => {
     setLocalTopK(topK.toString());
@@ -182,11 +182,10 @@ export function FilterSidebar({
               <button
                 key={size}
                 onClick={() => toggleCompanySize(size)}
-                className={`rounded-full border px-3 py-1.5 text-sm transition-colors ${
-                  companySize.includes(size)
+                className={`rounded-full border px-3 py-1.5 text-sm transition-colors ${companySize.includes(size)
                     ? 'border-gray-900 bg-gray-900 text-white'
                     : 'bg-white text-gray-700 hover:bg-gray-50'
-                }`}
+                  }`}
               >
                 {size}
               </button>
@@ -261,7 +260,7 @@ export function FilterSidebar({
           <li>
             Lookalikes are sorted by <b>fit score</b>.
           </li>
-          <li>Export to CSV with one click.</li>
+          <li>Export to Excel with one click.</li>
         </ul>
       </div>
     </div>

@@ -69,7 +69,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     // DO NOT log usage here - it will be logged in the Inngest function only when the export completes successfully
     // This ensures failed exports don't count against the user's limit
 
-    // Trigger Inngest background job to generate and upload CSV
+    // Trigger Inngest background job to generate and upload Excel
     try {
       const hasEventKey = !!process.env.INNGEST_EVENT_KEY;
       const hasSigningKey = !!process.env.INNGEST_SIGNING_KEY;

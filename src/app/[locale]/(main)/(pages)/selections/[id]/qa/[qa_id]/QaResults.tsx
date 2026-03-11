@@ -133,7 +133,7 @@ export function QaResults() {
     if (error && !isCheckingAuth) {
       toast({
         title: 'Error Loading Q&A Results',
-        description: `${error.message || 'Failed to load Q&A results'}`,
+        description: error.message || 'Failed to load Q&A results',
         variant: 'destructive',
       });
     }
@@ -162,17 +162,17 @@ export function QaResults() {
     );
   };
 
-  const handleDownloadCSV = async () => {
+  const handleDownloadExcel = async () => {
     if (!result?.csv_url || result.csv_url === '#') {
       toast({
         title: 'Coming soon',
-        description: 'CSV download will be available soon',
+        description: 'Excel download will be available soon',
       });
       return;
     }
 
     // First, find the download record for this Q&A session
-    // We need to get the download ID from the downloads table
+    // Trigger Inngest background job to generate and upload Excel
     try {
       const {
         data: { user },
@@ -271,10 +271,10 @@ export function QaResults() {
               {result.status === 'completed' && (
                 <Button
                   className='rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700'
-                  onClick={handleDownloadCSV}
+                  onClick={handleDownloadExcel}
                 >
                   <Download className='mr-2 h-4 w-4' />
-                  Download CSV
+                  Download Excel
                 </Button>
               )}
               {result.status === 'failed' && (
@@ -374,9 +374,8 @@ export function QaResults() {
                       </TableCell>
                       <TableCell className='px-4 py-3'>
                         <span
-                          className={`rounded-full px-2 py-1 text-xs font-medium ${
-                            isSuccess ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                          }`}
+                          className={`rounded-full px-2 py-1 text-xs font-medium ${isSuccess ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                            }`}
                         >
                           {answer.status || 'unknown'}
                         </span>
