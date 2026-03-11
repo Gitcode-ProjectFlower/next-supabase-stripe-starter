@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { getCollectionFromLocale, getDefaultLocale, getLocaleFromPath } from '@/libs/collection-mapping';
 import { getIdempotencyKey, getRequestId, IdempotencyHandler } from '@/libs/idempotency';
 import { getTopKLimit } from '@/libs/plan-config';
-import { searchRateLimiter } from '@/libs/ratelimit';
+import { checkRateLimit, searchRateLimiter } from '@/libs/ratelimit';
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
 import { logUsage } from '@/libs/usage-tracking';
 import { getUserPlan } from '@/libs/user-plan';
@@ -77,15 +77,15 @@ export async function POST(request: NextRequest) {
     }
 
     const identifier = user.id;
-    const { success, remaining } = await searchRateLimiter.limit(identifier);
+    const rateLimitResult = await checkRateLimit(identifier, 'search');
 
-    if (!success) {
+    if (!rateLimitResult.allowed) {
       return NextResponse.json(
         { error: 'Rate limit exceeded. Please try again later.' },
         {
           status: 429,
           headers: {
-            'X-RateLimit-Remaining': remaining.toString(),
+            'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
             'X-Request-ID': requestId,
           },
         }
@@ -194,7 +194,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(responseData, {
       status: 201,
       headers: {
-        'X-RateLimit-Remaining': remaining.toString(),
+        'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
         'X-Request-ID': requestId,
       },
     });
