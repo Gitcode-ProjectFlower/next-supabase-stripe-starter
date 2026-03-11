@@ -100,7 +100,7 @@ export class HaystackClient {
   }
 
   async askBatch(
-    items: Array<{ doc_id: string; name?: string; domain?: string; email?: string; city?: string; [key: string]: any }>,
+    items: Array<{ doc_id: string; name?: string; domain?: string; email?: string; city?: string;[key: string]: any }>,
     prompt: string,
     collection?: string,
     customTimeout?: number
@@ -114,8 +114,7 @@ export class HaystackClient {
           const itemCount = items.length;
           const calculatedTimeout = Math.max(120000, Math.min(900000, itemCount * 30000)); // 2min to 15min, ~30s per item
           console.log(
-            `[Haystack askBatch] Using timeout: ${calculatedTimeout}ms (${
-              calculatedTimeout / 1000
+            `[Haystack askBatch] Using timeout: ${calculatedTimeout}ms (${calculatedTimeout / 1000
             }s) for ${itemCount} items`
           );
           return calculatedTimeout;
@@ -289,6 +288,131 @@ export class HaystackClient {
       }
 
       // Fallback: return error responses for all items with doc_id attached
+      return items.map((item) => ({
+        doc_id: item.doc_id,
+        status: 'ERROR' as const,
+        answer: null,
+        sources: [],
+        error_message: errorMessage,
+      }));
+    }
+  }
+
+  async askStandardBatch(
+    items: Array<{ doc_id: string; name?: string; domain?: string; email?: string; city?: string;[key: string]: any }>,
+    standardQuestionId: string,
+    prompt: string,
+    formInput?: Record<string, any>,
+    collection?: string,
+    customTimeout?: number
+  ): Promise<QAResponse[]> {
+    try {
+      const batchTimeout =
+        customTimeout ||
+        (() => {
+          const itemCount = items.length;
+          return Math.max(120000, Math.min(900000, itemCount * 30000));
+        })();
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), batchTimeout);
+
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+
+      if (this.apiKey) {
+        headers['Authorization'] = `Bearer ${this.apiKey}`;
+      }
+
+      const formattedItems = items
+        .map((item) => {
+          if (!item.name || item.name.trim() === '') return null;
+          if (!item.domain || item.domain.trim() === '') return null;
+
+          return {
+            doc_id: item.doc_id,
+            name: item.name.trim(),
+            domain: item.domain.trim(),
+            email: item.email?.trim() || '',
+            city: item.city?.trim() || undefined,
+          };
+        })
+        .filter((item): item is NonNullable<typeof item> => item !== null);
+
+      if (formattedItems.length === 0) {
+        throw new Error('No valid items with names to process');
+      }
+
+      const cleanedPrompt = prompt.trim();
+      if (!cleanedPrompt || cleanedPrompt.length === 0) {
+        throw new Error('Prompt cannot be empty');
+      }
+
+      const requestBody = {
+        selection_items: formattedItems,
+        standard_question_id: standardQuestionId,
+        prompt: cleanedPrompt,
+        form_input: formInput,
+        collection: collection || 'collection_uk',
+        top_k: 12, // System specification hard dependency
+      };
+
+      console.log('[Haystack askStandardBatch] Sending request to Haystack API:', {
+        url: `${this.baseUrl}/qa/standard`,
+        method: 'POST',
+        headers,
+        body_keys: Object.keys(requestBody),
+        itemCount: formattedItems.length,
+      });
+
+      const response = await fetch(`${this.baseUrl}/qa/standard`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(requestBody),
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        let errorText = '';
+        try {
+          errorText = await response.text();
+          const errorJson = JSON.parse(errorText);
+          if (errorJson.status?.error) {
+            throw new Error(`Haystack API error: ${errorJson.status.error}`);
+          }
+        } catch (parseError) {
+          // ignore
+        }
+
+        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText || response.statusText}`);
+      }
+
+      const data = await response.json();
+
+      const results = (data.results || []).map((result: any, index: number) => ({
+        ...result,
+        doc_id: result.doc_id || formattedItems[index]?.doc_id || 'unknown',
+      }));
+
+      return results;
+    } catch (error) {
+      console.error('Batch Standard QA Error:', error);
+
+      let errorMessage = 'Unknown error';
+      if (error instanceof Error) {
+        if (error.name === 'AbortError' || error.message.includes('aborted')) {
+          const batchTimeout = customTimeout || Math.max(120000, Math.min(900000, items.length * 30000));
+          errorMessage = `Request timeout after ${Math.round(
+            batchTimeout / 1000
+          )}s. The Q&A processing is taking longer than expected. Please try again.`;
+        } else {
+          errorMessage = error.message;
+        }
+      }
+
       return items.map((item) => ({
         doc_id: item.doc_id,
         status: 'ERROR' as const,

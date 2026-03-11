@@ -9,6 +9,8 @@ import { getUserPlan } from '@/libs/user-plan';
 const qaRequestSchema = z.object({
   prompt: z.string().min(1, 'Prompt is required'),
   resume_ids: z.array(z.string()).optional().default([]),
+  standard_question_id: z.enum(['1', '2', '3', '4']).optional(),
+  form_input: z.record(z.any()).optional(),
 });
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -47,7 +49,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ error: validation.error.errors[0].message }, { status: 400 });
     }
 
-    const { prompt, resume_ids } = validation.data;
+    const { prompt, resume_ids, standard_question_id, form_input } = validation.data;
 
     // Additional validation: ensure prompt is not just whitespace
     const cleanedPrompt = prompt.trim();
@@ -89,6 +91,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       .eq('selection_id', selectionId)
       .eq('prompt', cleanedPrompt)
       .eq('status', 'failed')
+      // If standard_question_id is provided, match it; otherwise, explicitly check for null to avoid mixing legacy and standard questions
+      // .eq(standard_question_id ? 'standard_question_id' : 'standard_question_id', standard_question_id ? standard_question_id : null)  // TODO we need to add standard_question_id column to supabase first!
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle();
@@ -140,6 +144,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           prompt: cleanedPrompt,
           status: 'processing',
           progress: 0,
+          // standard_question_id: standard_question_id, // TODO add to supabase column
+          // form_input: form_input, // TODO add to supabase column
         })
         .select('id')
         .single();
@@ -183,6 +189,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           prompt: cleanedPrompt,
           resumeIds: resume_ids,
           qaSessionId,
+          standardQuestionId: standard_question_id,
+          formInput: form_input,
         },
       });
 

@@ -20,7 +20,7 @@ export const processQAJob = inngest.createFunction(
       eventData: event.data,
     });
 
-    const { selectionId, prompt, userId, qaSessionId } = event.data;
+    const { selectionId, prompt, userId, qaSessionId, standardQuestionId, formInput } = event.data;
 
     if (!selectionId || !prompt || !userId || !qaSessionId) {
       const error = new Error('Missing required parameters');
@@ -39,6 +39,8 @@ export const processQAJob = inngest.createFunction(
       userId,
       promptLength: prompt?.length || 0,
       promptPreview: prompt?.substring(0, 100) || '',
+      isStandardQuestion: !!standardQuestionId,
+      standardQuestionId,
     });
 
     // Step 1: Fetch selection and items from Supabase
@@ -227,7 +229,22 @@ export const processQAJob = inngest.createFunction(
         // Call Haystack API with collection parameter
         let qaResponses: any[];
         try {
-          qaResponses = await haystackClient.askBatch(batchItems, cleanedPrompt, collection);
+          if (standardQuestionId) {
+            console.log(`[Inngest processQAJob] ===== BATCH ${batchNumber} - CALLING HAYSTACK STANDARD API =====`);
+            // Standard questions use askStandardBatch
+            qaResponses = await haystackClient.askStandardBatch(
+              batchItems,
+              standardQuestionId,
+              cleanedPrompt,
+              formInput,
+              collection
+            );
+          } else {
+            console.log(`[Inngest processQAJob] ===== BATCH ${batchNumber} - CALLING HAYSTACK API =====`);
+            // Legacy QA logic
+            qaResponses = await haystackClient.askBatch(batchItems, cleanedPrompt, collection);
+          }
+
           console.log(`[Inngest processQAJob] ===== BATCH ${batchNumber} - HAYSTACK RESPONSE RECEIVED =====`);
           console.log('[Inngest processQAJob] Response details:', {
             batchNumber,

@@ -1,0 +1,20 @@
+[FORM_INPUT]
+{{ form_input }}
+
+[WEBSITE_DATA]
+{{ website_data }}
+
+[INSTRUCTIONS]
+You are an Account-Based Marketing (ABM) analyst. Generate a comprehensive Account Intelligence Brief for this company based on [WEBSITE_DATA] and the context in [FORM_INPUT].
+The brief must follow this structure exactly in JSON:
+{
+  "Company Snapshot": "One paragraph overview",
+  "Target Customers & Markets": ["List core markets"],
+  "Organizational Buying Context": ["Key signals about how they buy"],
+  "Strategic Focus Indicators": ["Current priorities found on site"],
+  "Positioning & Differentiation Signals": ["How they stand out"],
+  "Commercial Entry Points": ["Best ways to start a conversation"],
+  "Suggested Conversation Angle": "A specific outreach hook",
+  "Key Website Evidence": ["Direct quotes or specific proof points"]
+}
+Ensure the output is ONLY a valid JSON object.
