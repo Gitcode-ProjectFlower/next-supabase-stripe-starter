@@ -304,7 +304,8 @@ export class HaystackClient {
     prompt: string,
     formInput?: Record<string, any>,
     collection?: string,
-    customTimeout?: number
+    customTimeout?: number,
+    retrievalQuery?: string
   ): Promise<QAResponse[]> {
     try {
       const batchTimeout =
@@ -349,7 +350,7 @@ export class HaystackClient {
         throw new Error('Prompt cannot be empty');
       }
 
-      const requestBody = {
+      const requestBody: Record<string, unknown> = {
         selection_items: formattedItems,
         standard_question_id: standardQuestionId,
         prompt: cleanedPrompt,
@@ -357,6 +358,11 @@ export class HaystackClient {
         collection: collection || 'collection_uk',
         top_k: 12, // System specification hard dependency
       };
+      // Send retrieval_query separately when provided so VPS can use it for Qdrant
+      // while using the full prompt template only for the LLM call
+      if (retrievalQuery && retrievalQuery !== cleanedPrompt) {
+        requestBody.retrieval_query = retrievalQuery;
+      }
 
       console.log('[Haystack askStandardBatch] Sending request to Haystack API:', {
         url: `${this.baseUrl}/qa/standard`,

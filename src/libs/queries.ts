@@ -194,6 +194,7 @@ type QAResultResponse = {
   selection_id: string;
   selection_name: string;
   prompt: string;
+  standard_question_id?: string | null;
   status: 'processing' | 'completed' | 'failed';
   progress: number;
   created_at: string;

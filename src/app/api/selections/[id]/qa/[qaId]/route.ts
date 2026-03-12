@@ -65,6 +65,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       selection_id: session.selection_id,
       selection_name: (session.selections as any)?.name || 'Unknown Selection',
       prompt: session.prompt,
+      standard_question_id: session.standard_question_id || null,
       status: session.status,
       progress: session.progress || 0,
       created_at: session.created_at,

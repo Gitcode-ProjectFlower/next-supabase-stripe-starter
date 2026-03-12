@@ -209,6 +209,33 @@ export const processQAJob = inngest.createFunction(
           throw new Error('Prompt is empty or contains only whitespace');
         }
 
+        // For standard questions: build the full LLM prompt from the .txt template
+        // serializeFormInput converts the formInput object into formatted text for the template
+        // buildRetrievalQuery extracts concise keywords for Qdrant vector search
+        let llmPrompt = cleanedPrompt;
+        let retrievalQuery: string | undefined;
+        if (standardQuestionId) {
+          try {
+            const { buildPrompt } = await import('@/libs/prompt-manager');
+            const { StandardQuestionRunner } = await import('@/libs/haystack/standard-runner');
+            const runner = new StandardQuestionRunner({ haystackClient });
+            const formInputText = runner.serializeFormInput(formInput, standardQuestionId);
+            llmPrompt = buildPrompt(standardQuestionId, { form_input: formInputText });
+            retrievalQuery = runner.buildRetrievalQuery(cleanedPrompt, formInput, standardQuestionId);
+            console.log(`[Inngest processQAJob] SQ${standardQuestionId} prompt built:`, {
+              promptLength: llmPrompt.length,
+              formInputLength: formInputText.length,
+              retrievalQuery,
+              hasUnreplacedPlaceholders: /\{\{.*?\}\}/.test(llmPrompt),
+            });
+          } catch (promptErr) {
+            console.warn(
+              `[Inngest processQAJob] Failed to build SQ${standardQuestionId} prompt from template, falling back to cleanedPrompt:`,
+              promptErr instanceof Error ? promptErr.message : promptErr
+            );
+          }
+        }
+
         console.log(`[Inngest processQAJob] ===== BATCH ${batchNumber} - CALLING HAYSTACK API =====`);
         console.log('[Inngest processQAJob] Request details:', {
           batchNumber,
@@ -222,8 +249,8 @@ export const processQAJob = inngest.createFunction(
             email: i.email,
             city: i.city,
           })),
-          promptLength: cleanedPrompt.length,
-          promptPreview: cleanedPrompt.substring(0, 100),
+          promptLength: llmPrompt.length,
+          promptPreview: llmPrompt.substring(0, 100),
         });
 
         // Call Haystack API with collection parameter
@@ -231,13 +258,16 @@ export const processQAJob = inngest.createFunction(
         try {
           if (standardQuestionId) {
             console.log(`[Inngest processQAJob] ===== BATCH ${batchNumber} - CALLING HAYSTACK STANDARD API =====`);
-            // Standard questions use askStandardBatch
+            // Standard questions use askStandardBatch with the template-built llm_prompt
+            // and a separate, concise retrieval_query for Qdrant vector search
             qaResponses = await haystackClient.askStandardBatch(
               batchItems,
               standardQuestionId,
-              cleanedPrompt,
+              llmPrompt,
               formInput,
-              collection
+              collection,
+              undefined, // customTimeout — use default
+              retrievalQuery
             );
           } else {
             console.log(`[Inngest processQAJob] ===== BATCH ${batchNumber} - CALLING HAYSTACK API =====`);
@@ -307,7 +337,7 @@ export const processQAJob = inngest.createFunction(
           const responseName = haystackResponse.name || '';
           const responseDomain = haystackResponse.domain || '';
           const responseCity = haystackResponse.city || null;
-          const answerText = haystackResponse.answer || null;
+          let answerText = haystackResponse.answer || null;
 
           // Check response status - handle TIMEOUT, ERROR, and other failure statuses
           const responseStatus = haystackResponse.status?.toUpperCase() || '';

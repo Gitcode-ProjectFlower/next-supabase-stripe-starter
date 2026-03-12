@@ -10,6 +10,6 @@ The score should be between 1 and 5, where 1 is "Poor fit" and 5 is "Excellent f
 Provide your answer in the following JSON format:
 {
   "SCORE_TEXT": "Your detailed reasoning here, referring to points from the website data and form input.",
-  "SCORE_VALUE": "4"
+  "SCORE_VALUE": 4
 }
 Ensure the output is ONLY a valid JSON object.
