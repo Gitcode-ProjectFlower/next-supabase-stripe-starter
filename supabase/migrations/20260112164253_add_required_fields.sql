@@ -69,7 +69,7 @@ ALTER COLUMN sector_level3 SET DEFAULT '',
 ALTER COLUMN region_level1 SET DEFAULT '',
 ALTER COLUMN region_level2 SET DEFAULT '',
 ALTER COLUMN region_level3 SET DEFAULT '',
-ALTER COLUMN region_level4 SET DEFAULT;
+ALTER COLUMN region_level4 SET DEFAULT '';
 
 -- Ensure existing columns also default to empty string
 ALTER TABLE selection_items 

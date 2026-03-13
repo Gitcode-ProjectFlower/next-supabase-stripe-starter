@@ -251,17 +251,32 @@ export async function POST(request: NextRequest) {
       formatted: JSON.stringify(haystackPayload, null, 2),
     });
 
-    const haystackResponse = await fetch(`${haystackUrl}/similarity`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(haystackApiKey ? { 'X-API-Key': haystackApiKey } : {}),
-      },
-      body: JSON.stringify(haystackPayload),
-    });
+    const searchController = new AbortController();
+    const searchTimeoutId = setTimeout(() => searchController.abort(), 30000);
+
+    let haystackResponse: Response;
+    try {
+      haystackResponse = await fetch(`${haystackUrl}/similarity`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(haystackApiKey ? { 'X-API-Key': haystackApiKey } : {}),
+        },
+        body: JSON.stringify(haystackPayload),
+        signal: searchController.signal,
+      });
+    } catch (fetchErr) {
+      clearTimeout(searchTimeoutId);
+      if (fetchErr instanceof Error && (fetchErr.name === 'AbortError' || fetchErr.message.includes('aborted'))) {
+        return NextResponse.json({ error: 'Search request timed out. Please try again.' }, { status: 504 });
+      }
+      throw fetchErr;
+    }
+    clearTimeout(searchTimeoutId);
 
     if (!haystackResponse.ok) {
-      throw new Error(`Haystack API error: ${haystackResponse.statusText}`);
+      const errText = await haystackResponse.text().catch(() => haystackResponse.statusText);
+      throw new Error(`Haystack API error: ${errText}`);
     }
 
     const haystackData = await haystackResponse.json();
@@ -301,7 +316,7 @@ export async function POST(request: NextRequest) {
       success: true,
       data: {
         preview: limitedResults,
-        total: isAnonymous ? limitedResults.length : limitedResults.length,
+        total: limitedResults.length,
         plan: userPlan || 'anonymous',
         limit: planLimit,
         isAnonymous,

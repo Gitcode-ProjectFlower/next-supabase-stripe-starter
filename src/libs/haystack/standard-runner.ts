@@ -1,4 +1,4 @@
-import { HaystackClient, QAResponse } from './client';
+import { HaystackClient } from './client';
 
 // Per ТЗ §3.3: stop-words to strip from retrieval keywords
 const STOP_WORDS = new Set([
@@ -75,14 +75,20 @@ export class StandardQuestionRunner {
                 if (formInput.scoringFocus) lines.push(`Scoring Focus (Fit Mode | Revenue Mode): ${formInput.scoringFocus}`);
                 break;
 
-            case '2':
-                // Marketing Segmentation
-                if (formInput.primaryCustomerType) lines.push(`Primary Customer Type: ${formInput.primaryCustomerType}`);
-                if (formInput.targetCustomerSegment) lines.push(`Target Customer Segment: ${formInput.targetCustomerSegment}`);
-                if (formInput.geographicScope) lines.push(`Geographic Scope: ${formInput.geographicScope}`);
-                if (formInput.organizationalSophistication) lines.push(`Organizational Sophistication: ${formInput.organizationalSophistication}`);
-                if (formInput.marketPositioning) lines.push(`Market Positioning: ${formInput.marketPositioning}`);
-                if (formInput.operationalCriticality) lines.push(`Operational Criticality: ${formInput.operationalCriticality}`);
+            case '2': {
+                // Marketing Segmentation — dimensions is a list of fields to extract
+                const DEFAULT_DIMS = [
+                    'Primary Customer Type',
+                    'Target Customer Segment',
+                    'Geographic Scope',
+                    'Organizational Sophistication',
+                    'Market Positioning',
+                    'Operational Criticality',
+                ];
+                const dims: string[] = Array.isArray(formInput.dimensions)
+                    ? formInput.dimensions
+                    : DEFAULT_DIMS;
+                lines.push(`Dimensions to extract: ${dims.join(', ')}`);
 
                 if (formInput.customDimensionName) {
                     lines.push(`Custom Dimension Name: ${formInput.customDimensionName}`);
@@ -91,6 +97,7 @@ export class StandardQuestionRunner {
                     }
                 }
                 break;
+            }
 
             case '3':
                 // Account Intelligence Brief
@@ -156,9 +163,7 @@ export class StandardQuestionRunner {
                 break;
             case '2':
                 rawTexts = [
-                    formInput.primaryCustomerType,
-                    formInput.targetCustomerSegment,
-                    formInput.geographicScope,
+                    ...(Array.isArray(formInput.dimensions) ? formInput.dimensions : []),
                     formInput.customDimensionName,
                 ];
                 break;
@@ -185,25 +190,4 @@ export class StandardQuestionRunner {
         return result || prompt;
     }
 
-    /**
-     * Run the standard question via the API.
-     * Under the hood, this will need a new API endpoint on the Haystack side,
-     * or we will modify the existing `/qa` endpoint payload to support structured standard questions.
-     */
-    public async runStandardQuestion(
-        items: StandardQuestionItem[],
-        standardQuestionId: string,
-        prompt: string, // This will be the llm_prompt (loaded from .txt file)
-        formInput?: Record<string, any>,
-        collection?: string,
-        timeout?: number
-    ): Promise<QAResponse[]> {
-
-        const formInputText = this.serializeFormInput(formInput, standardQuestionId);
-        const retrievalQuery = this.buildRetrievalQuery(prompt, formInput);
-
-        // Call the haystack client with the specific parameters
-        // We might need to add `askStandardBatch` to HaystackClient to support separate llm_prompt vs retrieval_query
-        return []; // TODO implement implementation
-    }
 }

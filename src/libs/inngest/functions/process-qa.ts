@@ -2,6 +2,7 @@ import * as XLSX from 'xlsx';
 import { inngest } from '@/libs/inngest/client';
 import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
 import { normalizeValue } from '@/utils/normalize-value';
+import { parseStandardOutput, type SQId, SCHEMA_VERSION } from '@/libs/qa-output-schemas';
 
 export const processQAJob = inngest.createFunction(
   {
@@ -141,9 +142,41 @@ export const processQAJob = inngest.createFunction(
       return maxProfiles;
     });
 
-    const batchSize = 10;
+    // Step 2b: Create qa_standard_runs record (only for standard questions)
+    let standardRunId: string | null = null;
+    if (standardQuestionId) {
+      standardRunId = await step.run('create-standard-run', async () => {
+        const { data, error } = await (supabaseAdminClient as any)
+          .from('qa_standard_runs')
+          .insert({
+            session_id: qaSessionId,
+            user_id: userId,
+            selection_id: selectionId,
+            sq_id: standardQuestionId,
+            form_input: formInput || null,
+            status: 'processing',
+            total_count: maxProfiles,
+            success_count: 0,
+            schema_version: SCHEMA_VERSION,
+            validation_status: 'raw',
+          })
+          .select('id')
+          .single();
+
+        if (error) {
+          console.error('[Inngest processQAJob] Failed to create qa_standard_runs record:', error);
+          return null; // non-critical, continue
+        }
+
+        console.log('[Inngest processQAJob] Created qa_standard_runs record:', data.id);
+        return data.id;
+      });
+    }
+
+    const batchSize = 5;
     const itemsToProcess = items.slice(0, maxProfiles);
     const results: any[] = [];
+    let sqParseFailures = 0;
 
     console.log('[Inngest processQAJob] Starting batch processing:', {
       totalItems: items.length,
@@ -343,6 +376,20 @@ export const processQAJob = inngest.createFunction(
           const responseStatus = haystackResponse.status?.toUpperCase() || '';
           const isSuccess =
             (responseStatus === 'SUCCESS' || responseStatus === 'OK') && answerText && answerText.trim().length > 0;
+
+          // For standard questions: validate and normalise the JSON answer
+          if (isSuccess && answerText && standardQuestionId) {
+            try {
+              const parsed = parseStandardOutput(standardQuestionId as SQId, answerText);
+              answerText = JSON.stringify(parsed);
+            } catch (parseErr) {
+              console.warn(
+                `[Inngest processQAJob] Failed to parse SQ${standardQuestionId} answer for doc_id ${haystackResponse.doc_id}:`,
+                parseErr instanceof Error ? parseErr.message : parseErr
+              );
+              sqParseFailures++;
+            }
+          }
 
           // Get error message - handle "operation was aborted" specifically
           let errorMessage = haystackResponse.error_message || null;
@@ -672,6 +719,27 @@ export const processQAJob = inngest.createFunction(
 
         console.log('[Inngest processQAJob] Session marked as failed due to low success rate');
 
+        // Update qa_standard_runs record if exists
+        if (standardRunId) {
+          let failedPromptVersion: string | null = null;
+          if (standardQuestionId) {
+            try {
+              const { getPromptVersion } = await import('@/libs/prompt-manager');
+              failedPromptVersion = getPromptVersion(standardQuestionId);
+            } catch { /* non-critical */ }
+          }
+          await (supabaseAdminClient as any)
+            .from('qa_standard_runs')
+            .update({
+              status: 'failed',
+              success_count: successCount,
+              completed_at: new Date().toISOString(),
+              prompt_version: failedPromptVersion,
+              validation_status: 'failed',
+            })
+            .eq('id', standardRunId);
+        }
+
         // Still log record_download usage even if session failed, since Excel was generated
         // This ensures the download appears in recent activity
         console.log('[Inngest processQAJob] Logging record_download usage for Q&A Excel (failed session)...', {
@@ -739,6 +807,27 @@ export const processQAJob = inngest.createFunction(
       }
 
       console.log('[Inngest processQAJob] Session updated to completed');
+
+      // Update qa_standard_runs record if exists
+      if (standardRunId) {
+        let resolvedPromptVersion: string | null = null;
+        if (standardQuestionId) {
+          try {
+            const { getPromptVersion } = await import('@/libs/prompt-manager');
+            resolvedPromptVersion = getPromptVersion(standardQuestionId);
+          } catch { /* non-critical */ }
+        }
+        await (supabaseAdminClient as any)
+          .from('qa_standard_runs')
+          .update({
+            status: 'completed',
+            success_count: successCount,
+            completed_at: new Date().toISOString(),
+            prompt_version: resolvedPromptVersion,
+            validation_status: sqParseFailures > 0 ? 'repaired' : 'valid',
+          })
+          .eq('id', standardRunId);
+      }
 
       // Log usage only if session was marked as completed (not failed)
       console.log('[Inngest processQAJob] Logging usage for successful Q&A job...');
