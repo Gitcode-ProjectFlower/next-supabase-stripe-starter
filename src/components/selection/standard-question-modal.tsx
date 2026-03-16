@@ -178,7 +178,7 @@ function SQ2Form({
   const update = (key: string, val: unknown) => onChange({ ...value, [key]: val });
 
   const toggleDimension = (dim: string) => {
-    const arr = (value.dimensions as string[]) || SQ2_DIMENSIONS;
+    const arr = (value.dimensions as string[]) ?? SQ2_DIMENSIONS;
     const next = arr.includes(dim) ? arr.filter((v) => v !== dim) : [...arr, dim];
     update('dimensions', next);
   };

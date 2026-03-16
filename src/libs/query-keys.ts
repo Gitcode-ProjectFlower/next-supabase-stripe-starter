@@ -8,6 +8,7 @@ export const QUERY_KEYS = {
   },
   qa: {
     result: (selectionId: string, qaId: string) => ['qa', 'result', selectionId, qaId] as const,
+    list: (selectionId: string) => ['qa', 'list', selectionId] as const,
   },
   lookalikes: {
     search: (fingerprint: string) => ['lookalikes', 'search', fingerprint] as const,

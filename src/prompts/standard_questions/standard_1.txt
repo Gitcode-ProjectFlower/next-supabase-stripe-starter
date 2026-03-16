@@ -1,11 +1,8 @@
 [FORM_INPUT]
 {{ form_input }}
 
-[WEBSITE_DATA]
-{{ website_data }}
-
 [INSTRUCTIONS]
-You are an expert Sales Development Representative. Your task is to analyze the [WEBSITE_DATA] and the [FORM_INPUT] to provide a Sales Priority Score for this company.
+You are an expert Sales Development Representative. Your task is to analyze the Target Company Found Information and the [FORM_INPUT] to provide a Sales Priority Score for this company.
 The score should be between 1 and 5, where 1 is "Poor fit" and 5 is "Excellent fit".
 Provide your answer in the following JSON format:
 {

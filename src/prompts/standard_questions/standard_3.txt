@@ -1,11 +1,8 @@
 [FORM_INPUT]
 {{ form_input }}
 
-[WEBSITE_DATA]
-{{ website_data }}
-
 [INSTRUCTIONS]
-You are an Account-Based Marketing (ABM) analyst. Generate a comprehensive Account Intelligence Brief for this company based on [WEBSITE_DATA] and the context in [FORM_INPUT].
+You are an Account-Based Marketing (ABM) analyst. Generate a comprehensive Account Intelligence Brief for this company based on the Target Company Found Information and the context in [FORM_INPUT].
 The brief must follow this structure exactly in JSON:
 {
   "Company Snapshot": "One paragraph overview",

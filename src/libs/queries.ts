@@ -145,40 +145,41 @@ export function useDownloadsQuery(
         throw new ApiError('Failed to fetch downloads', 500, error);
       }
 
+      // Batch-fetch all selection names in a single query
+      const selectionIds = (downloads || []).map((d: any) => d.selection_id).filter(Boolean);
+      const selectionNameMap: Record<string, string> = {};
+      if (selectionIds.length > 0) {
+        const { data: selectionRows } = await supabase
+          .from('selections')
+          .select('id, name')
+          .in('id', selectionIds);
+        for (const row of selectionRows || []) {
+          // @ts-ignore - Supabase type inference issue with select queries
+          selectionNameMap[row.id] = row.name;
+        }
+      }
+
       // Format downloads with selection names if available
-      const formattedDownloads: DownloadItem[] = await Promise.all(
-        (downloads || []).map(async (download: any): Promise<DownloadItem> => {
-          let selectionName: string | undefined;
+      const formattedDownloads: DownloadItem[] = (downloads || []).map((download: any): DownloadItem => {
+        const selectionName = download.selection_id ? selectionNameMap[download.selection_id] : undefined;
 
-          if (download.selection_id) {
-            const { data: selection } = await supabase
-              .from('selections')
-              .select('name')
-              .eq('id', download.selection_id)
-              .single();
+        // Calculate file size (rough estimate: ~200 bytes per row)
+        const estimatedSizeKB = Math.round((download.row_count * 200) / 1024);
+        const size = estimatedSizeKB > 0 ? `${estimatedSizeKB} KB` : '< 1 KB';
 
-            // @ts-ignore - Supabase type inference issue with select queries
-            selectionName = selection?.name;
-          }
+        const type: 'Lookalike Excel' | 'Q&A Excel' = download.type === 'lookalike' ? 'Lookalike Excel' : 'Q&A Excel';
 
-          // Calculate file size (rough estimate: ~200 bytes per row)
-          const estimatedSizeKB = Math.round((download.row_count * 200) / 1024);
-          const size = estimatedSizeKB > 0 ? `${estimatedSizeKB} KB` : '< 1 KB';
-
-          const type: 'Lookalike Excel' | 'Q&A Excel' = download.type === 'lookalike' ? 'Lookalike Excel' : 'Q&A Excel';
-
-          return {
-            id: download.id,
-            type,
-            selectionId: download.selection_id || '',
-            selectionName,
-            createdAt: download.created_at,
-            expiresAt: download.expires_at,
-            size,
-            downloadUrl: download.url,
-          };
-        })
-      );
+        return {
+          id: download.id,
+          type,
+          selectionId: download.selection_id || '',
+          selectionName,
+          createdAt: download.created_at,
+          expiresAt: download.expires_at,
+          size,
+          downloadUrl: download.url,
+        };
+      });
 
       return { downloads: formattedDownloads };
     },
@@ -195,10 +196,12 @@ type QAResultResponse = {
   selection_name: string;
   prompt: string;
   standard_question_id?: string | null;
+  total_items?: number;
   status: 'processing' | 'completed' | 'failed';
   progress: number;
   created_at: string;
   completed_at?: string;
+  error_message?: string;
   csv_url?: string;
   answers: Array<{
     id?: string;
@@ -229,6 +232,34 @@ export function useQAResultQuery(
     staleTime: 0, // Always consider stale for polling
     gcTime: 5 * 60 * 1000, // 5 minutes
     refetchOnWindowFocus: false,
+    ...options,
+  });
+}
+
+type QASessionListItem = {
+  id: string;
+  prompt: string;
+  standard_question_id: string | null;
+  status: 'processing' | 'completed' | 'failed';
+  progress: number;
+  created_at: string;
+  completed_at?: string | null;
+  error_message?: string | null;
+};
+
+export function useQASessionListQuery(
+  selectionId: string,
+  options?: Omit<UseQueryOptions<{ sessions: QASessionListItem[] }, ApiError>, 'queryKey' | 'queryFn'>
+) {
+  return useQuery<{ sessions: QASessionListItem[] }, ApiError>({
+    queryKey: QUERY_KEYS.qa.list(selectionId),
+    queryFn: () => apiFetch<{ sessions: QASessionListItem[] }>(`/api/selections/${selectionId}/qa`),
+    enabled: !!selectionId && options?.enabled !== false,
+    staleTime: 10 * 1000,
+    refetchInterval: (query) => {
+      const sessions = query.state.data?.sessions || [];
+      return sessions.some((s) => s.status === 'processing') ? 3000 : false;
+    },
     ...options,
   });
 }

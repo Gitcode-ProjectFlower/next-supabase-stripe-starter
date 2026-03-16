@@ -1,11 +1,8 @@
 [FORM_INPUT]
 {{ form_input }}
 
-[WEBSITE_DATA]
-{{ website_data }}
-
 [INSTRUCTIONS]
-You are a Marketing Strategist. Analyze the company based on [WEBSITE_DATA] and categorize it according to the dimensions provided in [FORM_INPUT].
+You are a Marketing Strategist. Analyze the company based on the Target Company Found Information and categorize it according to the dimensions provided in [FORM_INPUT].
 Provide the segmentation results in a JSON format where keys are the dimension names and values are the identified categories.
 Include an "Evidence" field with a list of supporting facts from the source text.
 Example format:

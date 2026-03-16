@@ -6,6 +6,30 @@ import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-clie
 import { checkUsageLimit } from '@/libs/usage-tracking';
 import { getUserPlan } from '@/libs/user-plan';
 
+export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const { id: selectionId } = await params;
+    const supabase = await createSupabaseServerClient();
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+    const { data, error } = await supabase
+      .from('qa_sessions')
+      .select('id, prompt, standard_question_id, status, progress, created_at, completed_at, error_message')
+      .eq('selection_id', selectionId)
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(20);
+
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+    return NextResponse.json({ sessions: data || [] });
+  } catch (error) {
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
 const qaRequestSchema = z.object({
   prompt: z.string().min(1, 'Prompt is required'),
   resume_ids: z.array(z.string()).optional().default([]),
@@ -84,15 +108,23 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     // This ensures failed jobs don't count against the user's limit
 
     // Check if there's an existing failed QA session for this selection and prompt (for regeneration)
-    const { data: existingFailedSessionData } = await supabase
+    let existingFailedSessionQuery = supabase
       .from('qa_sessions')
       .select('id')
       .eq('user_id', user.id)
       .eq('selection_id', selectionId)
       .eq('prompt', cleanedPrompt)
-      .eq('status', 'failed')
-      // If standard_question_id is provided, match it; otherwise, explicitly check for null to avoid mixing legacy and standard questions
-      // .eq(standard_question_id ? 'standard_question_id' : 'standard_question_id', standard_question_id ? standard_question_id : null)  // TODO we need to add standard_question_id column to supabase first!
+      .eq('status', 'failed');
+
+    // Match on standard_question_id to avoid mixing legacy QA sessions with standard question sessions.
+    // Use `is(..., null)` for the null case to keep TypeScript happy with Supabase query typings.
+    if (standard_question_id) {
+      existingFailedSessionQuery = existingFailedSessionQuery.eq('standard_question_id', standard_question_id);
+    } else {
+      existingFailedSessionQuery = existingFailedSessionQuery.is('standard_question_id', null);
+    }
+
+    const { data: existingFailedSessionData } = await existingFailedSessionQuery
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle();
@@ -144,8 +176,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           prompt: cleanedPrompt,
           status: 'processing',
           progress: 0,
-          // standard_question_id: standard_question_id, // TODO add to supabase column
-          // form_input: form_input, // TODO add to supabase column
+          standard_question_id: standard_question_id ?? null,
+          form_input: form_input ?? null,
         })
         .select('id')
         .single();

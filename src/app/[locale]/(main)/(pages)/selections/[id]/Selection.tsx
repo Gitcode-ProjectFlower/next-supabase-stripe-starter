@@ -6,11 +6,13 @@ import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { getVisibleColumns, type UserPlan } from '@/libs/plan-config';
-import { useSelectionDetailQuery, useUsageStatsQuery } from '@/libs/queries';
+import { useSelectionDetailQuery, useUsageStatsQuery, useQASessionListQuery } from '@/libs/queries';
 import { QUERY_KEYS } from '@/libs/query-keys';
 import { createSupabaseBrowserClient } from '@/libs/supabase/supabase-browser-client';
 
 import { FullPageLoader } from '@/components/full-page-loader';
+import { STANDARD_QUESTIONS, StandardQuestionTile } from '@/components/selection/standard-question-tile';
+import { StandardQuestionModal } from '@/components/selection/standard-question-modal';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -209,6 +211,11 @@ export function Selection() {
   const [qaSessionId, setQaSessionId] = useState<string | null>(null);
   const [qaStatus, setQaStatus] = useState<'processing' | 'completed' | 'failed' | null>(null);
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  // Standard Question state
+  const [activeSqId, setActiveSqId] = useState<'1' | '2' | '3' | '4' | null>(null);
+  const [isSqModalOpen, setIsSqModalOpen] = useState(false);
+  const [isProcessingSq, setIsProcessingSq] = useState(false);
+  const [sqError, setSqError] = useState<string | null>(null);
   const [isExporting, setIsExporting] = useState(false);
   const [userPlan, setUserPlan] = useState<UserPlan>('anonymous');
   const { data: usageStats, error: usageError } = useUsageStatsQuery({ retry: 0 });
@@ -219,6 +226,10 @@ export function Selection() {
   } = useSelectionDetailQuery(params.id as string, {
     enabled: !isCheckingAuth && !!params.id,
     retry: 0,
+  });
+
+  const { data: qaSessionsData } = useQASessionListQuery(params.id as string, {
+    enabled: !isCheckingAuth && !!params.id,
   });
 
   const visibleColumns = useMemo<ColumnKey[]>(() => {
@@ -252,7 +263,7 @@ export function Selection() {
       setIsCheckingAuth(false);
     };
     checkAuth();
-  }, [router, supabase]);
+  }, [router, supabase, locale]);
 
   useEffect(() => {
     if (selectionError) {
@@ -291,7 +302,7 @@ export function Selection() {
   const isLoading = isCheckingAuth || isSelectionLoading;
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-GB', {
+    return new Date(dateString).toLocaleString('en-GB', {
       day: 'numeric',
       month: 'short',
       year: 'numeric',
@@ -637,6 +648,44 @@ export function Selection() {
     }
   };
 
+  const handleRunSQ = async (sqId: '1' | '2' | '3' | '4', formInput: Record<string, unknown>) => {
+    if (!params.id) return;
+
+    setSqError(null);
+    setIsProcessingSq(true);
+    try {
+      const response = await fetch(`/api/selections/${params.id}/qa`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt: STANDARD_QUESTIONS.find((sq) => sq.id === sqId)?.title ?? `Standard Question ${sqId}`,
+          standard_question_id: sqId,
+          form_input: formInput,
+        }),
+      });
+
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        setSqError(err.error || err.message || 'Failed to start Standard Question job');
+        setIsProcessingSq(false);
+        return;
+      }
+
+      const data = await response.json();
+
+      if (data.qaSessionId) {
+        setIsSqModalOpen(false);
+        setActiveSqId(null);
+        setIsProcessingSq(false);
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.qa.list(params.id as string) });
+        router.push(getLocalePath(locale, `/selections/${params.id}/qa/${data.qaSessionId}`));
+      }
+    } catch (error: any) {
+      setSqError(error.message || 'Failed to start Standard Question');
+      setIsProcessingSq(false);
+    }
+  };
+
   if (isLoading) return <FullPageLoader text='Loading selection...' />;
 
   if (!selection) {
@@ -721,6 +770,64 @@ export function Selection() {
         </div>
       )}
 
+      {/* Standard Questions Section */}
+      <div className='mb-6'>
+        <h2 className='mb-3 font-semibold text-gray-900'>AI Analysis</h2>
+        <div className='grid grid-cols-2 gap-3 sm:grid-cols-4'>
+          {STANDARD_QUESTIONS.map((sq) => (
+            <StandardQuestionTile
+              key={sq.id}
+              config={sq}
+              onRun={(sqId) => {
+                setActiveSqId(sqId);
+                setIsSqModalOpen(true);
+              }}
+              disabled={isProcessingSq}
+            />
+          ))}
+        </div>
+
+        {qaSessionsData && qaSessionsData.sessions.length > 0 && (
+          <div className='mt-4 space-y-2'>
+            <h3 className='text-sm font-medium text-gray-600'>Previous runs</h3>
+            {qaSessionsData.sessions.map((session) => {
+              const sqConfig = STANDARD_QUESTIONS.find((sq) => sq.id === session.standard_question_id);
+              const label = sqConfig ? sqConfig.title : session.prompt;
+              return (
+                <div
+                  key={session.id}
+                  className='flex items-center justify-between rounded-xl border bg-white px-4 py-3'
+                >
+                  <div className='flex items-center gap-3'>
+                    <span
+                      className={cn(
+                        'rounded-full px-2 py-0.5 text-xs font-medium',
+                        session.status === 'completed' && 'bg-green-100 text-green-800',
+                        session.status === 'processing' && 'bg-blue-100 text-blue-800',
+                        session.status === 'failed' && 'bg-red-100 text-red-800'
+                      )}
+                    >
+                      {session.status}
+                    </span>
+                    <span className='text-sm font-medium text-gray-900'>{label}</span>
+                    <span className='text-xs text-gray-400'>
+                      {new Date(session.created_at).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </div>
+                  <Button
+                    variant='outline'
+                    className='h-8 px-3 text-sm'
+                    onClick={() => router.push(getLocalePath(locale, `/selections/${params.id}/qa/${session.id}`))}
+                  >
+                    View Results
+                  </Button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
       {/* Candidates Table */}
       <div className='overflow-hidden rounded-2xl border bg-white shadow-sm'>
         <div className='overflow-auto'>
@@ -764,6 +871,20 @@ export function Selection() {
           </Table>
         </div>
       </div>
+
+      {/* Standard Question Modal */}
+      <StandardQuestionModal
+        sqId={activeSqId}
+        open={isSqModalOpen}
+        onClose={() => {
+          setIsSqModalOpen(false);
+          setActiveSqId(null);
+          setSqError(null);
+        }}
+        onSubmit={handleRunSQ}
+        isProcessing={isProcessingSq}
+        error={sqError}
+      />
 
       {/* Q&A Modal */}
       <Dialog open={isQAModalOpen} onOpenChange={setIsQAModalOpen}>
@@ -834,12 +955,13 @@ export function Selection() {
               variant='outline'
               onClick={() => {
                 if (qaSessionId && qaStatus === 'processing') {
-                  // If processing, navigate to results page instead of canceling
+                  // Capture before clearing state to avoid race condition
+                  const sessionId = qaSessionId;
                   setIsQAModalOpen(false);
                   setQaPrompt('');
                   setQaSessionId(null);
                   setQaStatus(null);
-                  router.push(`/selections/${params.id}/qa/${qaSessionId}`);
+                  router.push(getLocalePath(locale, `/selections/${params.id}/qa/${sessionId}`));
                 } else {
                   setIsQAModalOpen(false);
                   setQaPrompt('');

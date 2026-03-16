@@ -378,9 +378,10 @@ export const processQAJob = inngest.createFunction(
             (responseStatus === 'SUCCESS' || responseStatus === 'OK') && answerText && answerText.trim().length > 0;
 
           // For standard questions: validate and normalise the JSON answer
-          if (isSuccess && answerText && standardQuestionId) {
+          const isValidSQId = (id: string): id is SQId => id === '1' || id === '2' || id === '3' || id === '4';
+          if (isSuccess && answerText && standardQuestionId && isValidSQId(standardQuestionId)) {
             try {
-              const parsed = parseStandardOutput(standardQuestionId as SQId, answerText);
+              const parsed = parseStandardOutput(standardQuestionId, answerText);
               answerText = JSON.stringify(parsed);
             } catch (parseErr) {
               console.warn(

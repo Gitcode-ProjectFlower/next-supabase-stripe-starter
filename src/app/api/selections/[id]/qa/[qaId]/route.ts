@@ -21,7 +21,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         `
                 *,
                 selections (
-                    name
+                    name,
+                    item_count
                 )
             `
       )
@@ -64,6 +65,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       id: session.id,
       selection_id: session.selection_id,
       selection_name: (session.selections as any)?.name || 'Unknown Selection',
+      total_items: (session.selections as any)?.item_count || 0,
       prompt: session.prompt,
       standard_question_id: session.standard_question_id || null,
       status: session.status,
