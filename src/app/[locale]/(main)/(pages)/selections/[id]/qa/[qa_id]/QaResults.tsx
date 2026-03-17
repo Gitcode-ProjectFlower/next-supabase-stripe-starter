@@ -283,18 +283,32 @@ export function QaResults() {
     if (!firstSuccess?.answer) return [];
     try {
       const parsed = JSON.parse(firstSuccess.answer);
-      return Object.keys(parsed);
+      const keys = Object.keys(parsed);
+      // SQ1: put SCORE_VALUE first (score column right after Name), then SCORE_TEXT
+      if (sqId === '1') {
+        const ordered = ['SCORE_VALUE', 'SCORE_TEXT'].filter((k) => keys.includes(k));
+        const rest = keys.filter((k) => !ordered.includes(k));
+        return [...ordered, ...rest];
+      }
+      return keys;
     } catch {
       return [];
     }
   })();
 
   // Render a single dynamic cell value
-  const renderCellValue = (value: unknown): React.ReactNode => {
+  const renderCellValue = (value: unknown, key?: string): React.ReactNode => {
     if (value === null || value === undefined) return <span className='text-gray-300'>—</span>;
     if (Array.isArray(value)) {
       if (value.length === 0) return <span className='text-gray-300'>—</span>;
       return <ExpandableList items={value.map(String)} />;
+    }
+    // SQ1 score badge
+    if (key === 'SCORE_VALUE') {
+      const v = String(value);
+      return v === 'NULL' || v === 'null'
+        ? <span className='text-gray-400 italic text-xs'>N/A</span>
+        : <span className='rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-bold text-blue-800'>{v}/5</span>;
     }
     return <span className='text-sm text-gray-700'>{String(value)}</span>;
   };
@@ -376,8 +390,8 @@ export function QaResults() {
           </div>
         )}
 
-        {/* §5.4 Loading component — shown while processing and no answers yet */}
-        {result.status === 'processing' && !(result.answers && result.answers.length > 0) && (
+        {/* §5.4 Loading component — shown while processing (until status changes to completed/failed) */}
+        {result.status === 'processing' && (
           <div className='mb-6'>
             <SQLoader sqId={result.standard_question_id} progress={result.progress} startedAt={result.created_at} totalItems={result.total_items} />
           </div>
@@ -395,9 +409,13 @@ export function QaResults() {
                   <TableHead className='px-4 py-3 font-semibold text-gray-700'>Name</TableHead>
                   {showEmail && <TableHead className='px-4 py-3 font-semibold text-gray-700'>Email</TableHead>}
                   {showCity && <TableHead className='px-4 py-3 font-semibold text-gray-700'>City</TableHead>}
-                  {dynamicKeys.map((key) => (
-                    <TableHead key={key} className={`px-4 py-3 font-semibold text-gray-700${key === 'Evidence' ? ' min-w-[260px]' : ''}`}>{key}</TableHead>
-                  ))}
+                  {dynamicKeys.map((key) => {
+                    const label = key === 'SCORE_VALUE' ? 'Score' : key === 'SCORE_TEXT' ? 'Rationale' : key;
+                    const extraClass = key === 'Evidence' || key === 'SCORE_TEXT' ? ' min-w-[260px]' : key === 'SCORE_VALUE' ? ' w-20' : '';
+                    return (
+                      <TableHead key={key} className={`px-4 py-3 font-semibold text-gray-700${extraClass}`}>{label}</TableHead>
+                    );
+                  })}
                   {dynamicKeys.length === 0 && (
                     <TableHead className='px-4 py-3 font-semibold text-gray-700'>Answer</TableHead>
                   )}
@@ -434,7 +452,7 @@ export function QaResults() {
                         dynamicKeys.map((key) => (
                           <TableCell key={key} className='px-4 py-3 align-top'>
                             {isSuccess && parsedAnswer
-                              ? renderCellValue(parsedAnswer[key])
+                              ? renderCellValue(parsedAnswer[key], key)
                               : <span className='text-xs text-red-500'>{answer.error_message || 'failed'}</span>}
                           </TableCell>
                         ))

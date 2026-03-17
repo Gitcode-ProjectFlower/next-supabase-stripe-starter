@@ -242,28 +242,18 @@ export const processQAJob = inngest.createFunction(
           throw new Error('Prompt is empty or contains only whitespace');
         }
 
-        // For standard questions: build the full LLM prompt from the .txt template
-        // serializeFormInput converts the formInput object into formatted text for the template
-        // buildRetrievalQuery extracts concise keywords for Qdrant vector search
-        let llmPrompt = cleanedPrompt;
+        // For standard questions: VPS owns all prompt templates and rendering.
+        // Frontend only sends form_input (raw object) + retrieval_query for Qdrant.
         let retrievalQuery: string | undefined;
         if (standardQuestionId) {
           try {
-            const { buildPrompt } = await import('@/libs/prompt-manager');
             const { StandardQuestionRunner } = await import('@/libs/haystack/standard-runner');
             const runner = new StandardQuestionRunner({ haystackClient });
-            const formInputText = runner.serializeFormInput(formInput, standardQuestionId);
-            llmPrompt = buildPrompt(standardQuestionId, { form_input: formInputText });
             retrievalQuery = runner.buildRetrievalQuery(cleanedPrompt, formInput, standardQuestionId);
-            console.log(`[Inngest processQAJob] SQ${standardQuestionId} prompt built:`, {
-              promptLength: llmPrompt.length,
-              formInputLength: formInputText.length,
-              retrievalQuery,
-              hasUnreplacedPlaceholders: /\{\{.*?\}\}/.test(llmPrompt),
-            });
+            console.log(`[Inngest processQAJob] SQ${standardQuestionId} retrieval query:`, { retrievalQuery });
           } catch (promptErr) {
             console.warn(
-              `[Inngest processQAJob] Failed to build SQ${standardQuestionId} prompt from template, falling back to cleanedPrompt:`,
+              `[Inngest processQAJob] Failed to build SQ${standardQuestionId} retrieval query:`,
               promptErr instanceof Error ? promptErr.message : promptErr
             );
           }
@@ -282,8 +272,8 @@ export const processQAJob = inngest.createFunction(
             email: i.email,
             city: i.city,
           })),
-          promptLength: llmPrompt.length,
-          promptPreview: llmPrompt.substring(0, 100),
+          promptLength: cleanedPrompt.length,
+          promptPreview: cleanedPrompt.substring(0, 100),
         });
 
         // Call Haystack API with collection parameter
@@ -296,7 +286,7 @@ export const processQAJob = inngest.createFunction(
             qaResponses = await haystackClient.askStandardBatch(
               batchItems,
               standardQuestionId,
-              llmPrompt,
+              cleanedPrompt,
               formInput,
               collection,
               undefined, // customTimeout — use default
@@ -722,20 +712,12 @@ export const processQAJob = inngest.createFunction(
 
         // Update qa_standard_runs record if exists
         if (standardRunId) {
-          let failedPromptVersion: string | null = null;
-          if (standardQuestionId) {
-            try {
-              const { getPromptVersion } = await import('@/libs/prompt-manager');
-              failedPromptVersion = getPromptVersion(standardQuestionId);
-            } catch { /* non-critical */ }
-          }
           await (supabaseAdminClient as any)
             .from('qa_standard_runs')
             .update({
               status: 'failed',
               success_count: successCount,
               completed_at: new Date().toISOString(),
-              prompt_version: failedPromptVersion,
               validation_status: 'failed',
             })
             .eq('id', standardRunId);
@@ -811,20 +793,12 @@ export const processQAJob = inngest.createFunction(
 
       // Update qa_standard_runs record if exists
       if (standardRunId) {
-        let resolvedPromptVersion: string | null = null;
-        if (standardQuestionId) {
-          try {
-            const { getPromptVersion } = await import('@/libs/prompt-manager');
-            resolvedPromptVersion = getPromptVersion(standardQuestionId);
-          } catch { /* non-critical */ }
-        }
         await (supabaseAdminClient as any)
           .from('qa_standard_runs')
           .update({
             status: 'completed',
             success_count: successCount,
             completed_at: new Date().toISOString(),
-            prompt_version: resolvedPromptVersion,
             validation_status: sqParseFailures > 0 ? 'repaired' : 'valid',
           })
           .eq('id', standardRunId);

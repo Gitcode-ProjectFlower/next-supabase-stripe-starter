@@ -81,6 +81,21 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ error: 'Prompt cannot be empty or contain only whitespace' }, { status: 400 });
     }
 
+    // §7.1 Required field validation for Standard Questions
+    if (standard_question_id === '1') {
+      if (!form_input?.productName?.trim() && !form_input?.productDescription?.trim()) {
+        return NextResponse.json({ error: 'Product/Service name or description is required for Sales Priority Score', type: 'missing_required_input' }, { status: 400 });
+      }
+      if (!form_input?.icpCharacteristics?.trim()) {
+        return NextResponse.json({ error: 'Ideal Customer Profile Characteristics is required for Sales Priority Score', type: 'missing_required_input' }, { status: 400 });
+      }
+    }
+    if (standard_question_id === '3') {
+      if (!form_input?.productContext?.trim()) {
+        return NextResponse.json({ error: 'Product / Service Context is required for Account Intelligence Brief', type: 'missing_required_input' }, { status: 400 });
+      }
+    }
+
     // Calculate AI calls: each resume counts as 1 AI call
     const aiCallCount = resume_ids.length > 0 ? resume_ids.length : selection.item_count || 1;
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { cn } from '@/utils/cn';
 
@@ -13,6 +13,7 @@ interface LoaderStep {
 
 interface SQConfig {
   title: string;
+  subtitle: string;
   color: string;
   progressColor: string;
   steps: LoaderStep[];
@@ -22,47 +23,51 @@ interface SQConfig {
 
 const SQ_CONFIGS: Record<string, SQConfig> = {
   '1': {
-    title: 'Sales Priority Score',
+    title: 'Generating Sales Priority Scores',
+    subtitle: 'This may take a few moments, depending on the number of companies selected. The Sales Priority Scores will be available in Downloads when the analysis is complete.',
     color: 'text-blue-600',
     progressColor: 'bg-blue-500',
     steps: [
-      { label: 'Fetching company data', threshold: 20 },
-      { label: 'Analysing ICP fit signals', threshold: 50 },
-      { label: 'Calculating priority score', threshold: 80 },
-      { label: 'Finalising results', threshold: 100 },
+      { label: 'Input received', threshold: 10 },
+      { label: 'Collecting company data', threshold: 40 },
+      { label: 'Evaluating commercial fit', threshold: 75 },
+      { label: 'Generating scores and evidence', threshold: 100 },
     ],
   },
   '2': {
-    title: 'Market Segmentation',
+    title: 'Classifying companies by selected dimensions',
+    subtitle: 'This may take a few moments, depending on the number of companies selected. The segmentation results will be available in Downloads when the analysis is complete.',
     color: 'text-purple-600',
     progressColor: 'bg-purple-500',
     steps: [
-      { label: 'Retrieving company profiles', threshold: 20 },
-      { label: 'Identifying customer segments', threshold: 45 },
-      { label: 'Mapping geographic scope', threshold: 70 },
-      { label: 'Building segmentation matrix', threshold: 100 },
+      { label: 'Input received', threshold: 10 },
+      { label: 'Analyzing companies', threshold: 40 },
+      { label: 'Classifying selected dimensions', threshold: 75 },
+      { label: 'Generating segmentation output', threshold: 100 },
     ],
   },
   '3': {
-    title: 'Account Intelligence Brief',
+    title: 'Generating account brief',
+    subtitle: 'This may take a short moment. The Account Intelligence Brief will be available in Downloads when ready.',
     color: 'text-emerald-600',
     progressColor: 'bg-emerald-500',
     steps: [
-      { label: 'Scanning company website data', threshold: 15 },
-      { label: 'Extracting strategic indicators', threshold: 40 },
-      { label: 'Identifying commercial entry points', threshold: 65 },
-      { label: 'Composing intelligence brief', threshold: 100 },
+      { label: 'Input received', threshold: 10 },
+      { label: 'Reviewing company data', threshold: 40 },
+      { label: 'Identifying key signals', threshold: 75 },
+      { label: 'Creating account intelligence brief', threshold: 100 },
     ],
   },
   '4': {
-    title: 'Personalised Outreach',
+    title: 'Creating outreach message',
+    subtitle: 'This may take a short moment. The generated message will be available in Downloads when complete.',
     color: 'text-orange-500',
     progressColor: 'bg-orange-400',
     steps: [
-      { label: 'Reading company context', threshold: 20 },
-      { label: 'Matching tone and channel', threshold: 45 },
-      { label: 'Drafting personalised message', threshold: 75 },
-      { label: 'Reviewing and finalising copy', threshold: 100 },
+      { label: 'Input received', threshold: 10 },
+      { label: 'Analyzing company positioning', threshold: 40 },
+      { label: 'Aligning message direction', threshold: 75 },
+      { label: 'Writing personalized message', threshold: 100 },
     ],
   },
 };
@@ -136,83 +141,60 @@ interface SQLoaderProps {
   totalItems?: number;
 }
 
-export function SQLoader({ sqId, progress, startedAt, totalItems }: SQLoaderProps) {
-  const config = sqId ? SQ_CONFIGS[sqId] : null;
-  const [displayProgress, setDisplayProgress] = useState(progress);
-  const fakeRef = useRef<ReturnType<typeof setInterval> | null>(null);
+// How many seconds each step holds before advancing (total ~48s for 4 steps)
+const STEP_DURATION_S = 12;
+
+// Returns index of the last step that should be shown as done.
+// The final step is never marked done by the timer — only when completed=true.
+function useTimedProgress(startedAt?: string, totalSteps = 4): number {
+  const getElapsedStepIndex = () => {
+    if (!startedAt) return 0;
+    const elapsedS = (Date.now() - new Date(startedAt).getTime()) / 1000;
+    // Cap at totalSteps - 2 so the last step never ticks to done via timer
+    return Math.min(Math.floor(elapsedS / STEP_DURATION_S), totalSteps - 2);
+  };
+
+  const [stepIndex, setStepIndex] = useState(getElapsedStepIndex);
 
   useEffect(() => {
-    if (fakeRef.current) clearInterval(fakeRef.current);
+    const tick = () => setStepIndex(getElapsedStepIndex());
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [startedAt]); // eslint-disable-line react-hooks/exhaustive-deps
 
-    if (progress >= 100) {
-      setDisplayProgress(100);
-      return;
-    }
+  return stepIndex;
+}
 
-    // Target ceiling: random 90-99%, reached quickly then slows down.
-    // Speed adapts to totalItems: fewer items → faster crawl.
-    const ceiling = Math.floor(Math.random() * 10) + 90; // 90–99
-    const items = totalItems && totalItems > 0 ? totalItems : 10;
-    // Aim to hit ceiling in ~(items * 1.5) seconds. Tick every 600ms.
-    const ticksToReach = (items * 1.5 * 1000) / 600;
-    const stepPerTick = ceiling / ticksToReach;
-
-    const startTimeout = setTimeout(() => {
-      fakeRef.current = setInterval(() => {
-        setDisplayProgress((prev) => {
-          if (prev >= ceiling) {
-            clearInterval(fakeRef.current!);
-            return prev;
-          }
-          // Fast at start, slow near ceiling (ease-out)
-          const remaining = ceiling - prev;
-          const step = Math.max(stepPerTick * (remaining / ceiling), 0.05);
-          return Math.min(prev + step, ceiling);
-        });
-      }, 600);
-    }, 1000);
-
-    return () => {
-      clearTimeout(startTimeout);
-      if (fakeRef.current) clearInterval(fakeRef.current);
-    };
-  }, [progress, totalItems]);
+export function SQLoader({ sqId, startedAt }: SQLoaderProps) {
+  const config = sqId ? SQ_CONFIGS[sqId] : null;
+  const stepIndex = useTimedProgress(startedAt, config?.steps.length ?? 4);
 
   if (!config) return null;
 
   return (
     <div className='space-y-4 rounded-2xl border bg-white p-6 shadow-sm'>
-      <div className='flex items-center justify-between'>
-        <div className='flex items-center gap-2'>
-          <Spinner className={cn('h-5 w-5', config.color)} />
-          <span className='font-semibold text-gray-900'>{config.title}</span>
+      <div className='flex items-start justify-between gap-4'>
+        <div>
+          <div className='flex items-center gap-2'>
+            <Spinner className={cn('h-5 w-5 shrink-0', config.color)} />
+            <span className='font-semibold text-gray-900'>{config.title}</span>
+          </div>
+          <p className='mt-1 text-xs text-gray-500'>{config.subtitle}</p>
         </div>
-        <ElapsedTimer running={progress < 100} startedAt={startedAt} />
+        <ElapsedTimer running={true} startedAt={startedAt} />
       </div>
 
       <div className='space-y-2'>
-        {config.steps.map((step) => (
+        {config.steps.map((step, i) => (
           <div key={step.label} className='flex items-center gap-3'>
-            <AnimatedCheck done={displayProgress >= step.threshold} />
-            <span className={cn('text-sm transition-colors duration-300', displayProgress >= step.threshold ? 'text-gray-900' : 'text-gray-400')}>
+            <AnimatedCheck done={i <= stepIndex} />
+            <span className={cn('text-sm transition-colors duration-300', i <= stepIndex ? 'text-gray-900' : 'text-gray-400')}>
               {step.label}
             </span>
           </div>
         ))}
       </div>
 
-      <div>
-        <div className='mb-1 flex justify-between text-xs text-gray-500'>
-          <span>Progress</span>
-          <span>{Math.round(displayProgress)}%</span>
-        </div>
-        <div className='h-1.5 w-full overflow-hidden rounded-full bg-gray-100'>
-          <div
-            className={cn('h-full rounded-full transition-all duration-700', config.progressColor)}
-            style={{ width: `${displayProgress}%` }}
-          />
-        </div>
-      </div>
     </div>
   );
 }

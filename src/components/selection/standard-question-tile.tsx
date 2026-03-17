@@ -2,7 +2,6 @@
 
 import { BarChart2, FileText, MessageSquare, Target } from 'lucide-react';
 
-import { Button } from '@/components/ui/button';
 import { cn } from '@/utils/cn';
 
 export interface StandardQuestionConfig {
@@ -18,15 +17,15 @@ export const STANDARD_QUESTIONS: StandardQuestionConfig[] = [
   {
     id: '1',
     title: 'Sales Priority Score',
-    description: 'Score each company 1-5 based on how well it fits your Ideal Customer Profile.',
+    description: 'Ranks companies based on fit and commercial potential.',
     icon: Target,
     color: 'text-blue-600',
     bgColor: 'bg-blue-50',
   },
   {
     id: '2',
-    title: 'Market Segmentation',
-    description: 'Automatically segment companies by customer type, geography, and other dimensions.',
+    title: 'Marketing Segmentation',
+    description: 'Standardized company segmentation.',
     icon: BarChart2,
     color: 'text-purple-600',
     bgColor: 'bg-purple-50',
@@ -34,15 +33,15 @@ export const STANDARD_QUESTIONS: StandardQuestionConfig[] = [
   {
     id: '3',
     title: 'Account Intelligence Brief',
-    description: 'Generate a full ABM brief with buying signals, entry points, and outreach hooks.',
+    description: 'Get prepared for your first sales conversation – in one click.',
     icon: FileText,
     color: 'text-emerald-600',
     bgColor: 'bg-emerald-50',
   },
   {
     id: '4',
-    title: 'Personalised Outreach',
-    description: 'Write a personalised cold email or LinkedIn message for each company.',
+    title: 'Personalized Outreach Draft Message',
+    description: 'Create a tailored first message based on the company\'s positioning and priorities.',
     icon: MessageSquare,
     color: 'text-orange-600',
     bgColor: 'bg-orange-50',
@@ -59,25 +58,23 @@ export function StandardQuestionTile({ config, onRun, disabled }: StandardQuesti
   const Icon = config.icon;
 
   return (
-    <div className='flex flex-col justify-between gap-3 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md'>
-      <div className='flex items-start gap-3'>
-        <div className={cn('flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl', config.bgColor)}>
-          <Icon className={cn('h-5 w-5', config.color)} />
-        </div>
-        <div>
-          <p className='text-sm font-semibold text-gray-900'>{config.title}</p>
-          <p className='mt-0.5 text-xs text-gray-500'>{config.description}</p>
-        </div>
+    <button
+      type='button'
+      disabled={disabled}
+      onClick={() => onRun(config.id)}
+      className={cn(
+        'flex flex-col gap-3 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm text-left transition-all',
+        'hover:shadow-md hover:bg-gray-50 cursor-pointer',
+        disabled && 'cursor-not-allowed opacity-50'
+      )}
+    >
+      <div className={cn('flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl', config.bgColor)}>
+        <Icon className={cn('h-5 w-5', config.color)} />
       </div>
-      <Button
-        size='sm'
-        variant='outline'
-        className='w-full rounded-lg border-gray-200 text-gray-700 hover:bg-gray-50'
-        onClick={() => onRun(config.id)}
-        disabled={disabled}
-      >
-        Run
-      </Button>
-    </div>
+      <div>
+        <p className='text-sm font-semibold text-gray-900 truncate'>{config.title}</p>
+        <p className='mt-0.5 text-xs text-gray-500 line-clamp-2'>{config.description}</p>
+      </div>
+    </button>
   );
 }

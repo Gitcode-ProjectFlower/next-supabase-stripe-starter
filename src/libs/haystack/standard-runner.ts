@@ -22,7 +22,7 @@ function extractKeywords(texts: string[], maxTerms = 8): string {
       .toLowerCase()
       .replace(/[^a-z0-9\s]/g, ' ')
       .split(/\s+/)
-      .filter((w) => w.length > 1 && !STOP_WORDS.has(w));
+      .filter((w) => w.length >= 3 && !STOP_WORDS.has(w));
     terms.push(...words);
     if (terms.length >= maxTerms) break;
   }
@@ -50,99 +50,6 @@ export class StandardQuestionRunner {
     }
 
     /**
-     * Serializes the form_input dictionary into the target FORM_INPUT textual format
-     * using the template specified in System Spec 0.6.
-     */
-    public serializeFormInput(formInput?: Record<string, any>, standardQuestionId?: string): string {
-        if (!formInput || !standardQuestionId) return '';
-
-        const lines: string[] = [];
-
-        switch (standardQuestionId) {
-            case '1':
-                // Sales Priority Score
-                if (formInput.productName) lines.push(`Product/Service Name: ${formInput.productName}`);
-                if (formInput.productDescription) lines.push(`Product/Service Description: ${formInput.productDescription}`);
-                if (formInput.icpCharacteristics) lines.push(`Ideal Customer Profile Characteristics (free text): ${formInput.icpCharacteristics}`);
-                if (formInput.icpSignals && Array.isArray(formInput.icpSignals)) {
-                    lines.push(`Ideal Customer Profile Signals (checkboxes ticked): ${formInput.icpSignals.join(', ')}`);
-                }
-                if (formInput.commercialSignals && Array.isArray(formInput.commercialSignals)) {
-                    lines.push(`Commercial Attractiveness Signals (checkboxes ticked): ${formInput.commercialSignals.join(', ')}`);
-                }
-                if (formInput.otherCommercialSignal) lines.push(`Other Commercial Signal (free text): ${formInput.otherCommercialSignal}`);
-                if (formInput.exclusions) lines.push(`Exclusions / Red Flags (free text): ${formInput.exclusions}`);
-                if (formInput.scoringFocus) lines.push(`Scoring Focus (Fit Mode | Revenue Mode): ${formInput.scoringFocus}`);
-                break;
-
-            case '2': {
-                // Marketing Segmentation — dimensions is a list of fields to extract
-                const DEFAULT_DIMS = [
-                    'Primary Customer Type',
-                    'Target Customer Segment',
-                    'Geographic Scope',
-                    'Organizational Sophistication',
-                    'Market Positioning',
-                    'Operational Criticality',
-                ];
-                const dims: string[] = Array.isArray(formInput.dimensions)
-                    ? formInput.dimensions
-                    : DEFAULT_DIMS;
-                lines.push(`Dimensions to extract: ${dims.join(', ')}`);
-
-                if (formInput.customDimensionName) {
-                    lines.push(`Custom Dimension Name: ${formInput.customDimensionName}`);
-                    if (formInput.customDimensionValues && Array.isArray(formInput.customDimensionValues)) {
-                        lines.push(`Allowed Values: ${formInput.customDimensionValues.join(', ')}`);
-                    }
-                }
-                break;
-            }
-
-            case '3':
-                // Account Intelligence Brief
-                if (formInput.productContext) lines.push(`Product / Service Context: ${formInput.productContext}`);
-                if (formInput.conversationPerspective) lines.push(`Intended Conversation Perspective: ${formInput.conversationPerspective}`);
-                if (formInput.salesObjective) lines.push(`Sales Objective: ${formInput.salesObjective}`);
-                if (formInput.primaryFocusPreference) lines.push(`Primary Focus Preference: ${formInput.primaryFocusPreference}`);
-                if (formInput.conversationTonePreference) lines.push(`Conversation Tone Preference: ${formInput.conversationTonePreference}`);
-                break;
-
-            case '4':
-                // Personalized Outreach Draft Message
-                if (formInput.whatYouSell) lines.push(`What do you sell?: ${formInput.whatYouSell}`);
-                if (formInput.whoIsItFor) lines.push(`Who is it for?: ${formInput.whoIsItFor}`);
-                if (formInput.coreOutcome) lines.push(`What is the core outcome?: ${formInput.coreOutcome}`);
-
-                if (formInput.usps && Array.isArray(formInput.usps)) {
-                    formInput.usps.forEach((usp: string, index: number) => {
-                        lines.push(`USP ${index + 1}: ${usp}`);
-                    });
-                }
-
-                if (formInput.channel) lines.push(`Channel: ${formInput.channel}`);
-                if (formInput.messageLength) lines.push(`Message Length: ${formInput.messageLength}`);
-                if (formInput.tonePreference) lines.push(`Tone Preference: ${formInput.tonePreference}`);
-                break;
-
-            default:
-                // Generic fallback
-                for (const [key, value] of Object.entries(formInput)) {
-                    if (Array.isArray(value)) {
-                        lines.push(`${key}: ${value.join(', ')}`);
-                    } else if (typeof value === 'object' && value !== null) {
-                        lines.push(`${key}: ${JSON.stringify(value)}`);
-                    } else {
-                        lines.push(`${key}: ${value}`);
-                    }
-                }
-                break;
-        }
-
-        return lines.join('\n');
-    }
-
-    /**
      * Build a concise retrieval query for vector search from the form input.
      * Per ТЗ §3.1 & §3.3: retrieval_query drives Qdrant; llm_prompt drives GPT.
      * Applies toLower, stop-word removal, dedup, max 8 terms.
@@ -152,41 +59,51 @@ export class StandardQuestionRunner {
 
         let rawTexts: string[] = [];
 
+        // Per-SQ term caps from ТЗ retrieval configs
+        // SQ1 §9.5: ICP max 8, Other max 6, total 15
+        // SQ3 §11.5: productContext max 10
+        // SQ4 §12.5: whoIsItFor 8, coreOutcome 8, USPs 12, total 20
+        let maxTerms = 8;
+
         switch (standardQuestionId) {
             case '1':
+                // §9.5: allowed augment = ICP free text + Commercial Other free text
                 rawTexts = [
-                    formInput.productName,
-                    formInput.productDescription,
                     formInput.icpCharacteristics,
-                    ...(Array.isArray(formInput.icpSignals) ? formInput.icpSignals : []),
+                    formInput.icpSignalsOther,
+                    formInput.commercialSignalsOther,
                 ];
+                maxTerms = 15;
                 break;
             case '2':
+                // §10.5: allowed augment = Custom Dimension Name + Allowed Values
                 rawTexts = [
-                    ...(Array.isArray(formInput.dimensions) ? formInput.dimensions : []),
                     formInput.customDimensionName,
+                    ...(Array.isArray(formInput.customDimensionValues) ? formInput.customDimensionValues.filter(Boolean) : []),
                 ];
+                maxTerms = 15;
                 break;
             case '3':
+                // §11.5: allowed augment = Product / Service Context, max 10 terms
                 rawTexts = [
                     formInput.productContext,
-                    formInput.salesObjective,
-                    formInput.primaryFocusPreference,
                 ];
+                maxTerms = 10;
                 break;
             case '4':
+                // §12.5: allowed augment = whoIsItFor + coreOutcome + USPs, total cap 20
                 rawTexts = [
-                    formInput.whatYouSell,
                     formInput.whoIsItFor,
                     formInput.coreOutcome,
-                    ...(Array.isArray(formInput.usps) ? [formInput.usps[0]] : []),
+                    ...(Array.isArray(formInput.usps) ? formInput.usps.filter(Boolean) : []),
                 ];
+                maxTerms = 20;
                 break;
             default:
                 return prompt;
         }
 
-        const result = extractKeywords(rawTexts.filter(Boolean));
+        const result = extractKeywords(rawTexts.filter(Boolean), maxTerms);
         return result || prompt;
     }
 
