@@ -561,15 +561,16 @@ export const processQAJob = inngest.createFunction(
     const downloadUrl = await step.run('generate-excel', async () => {
       console.log('[Inngest processQAJob] Generating Excel...');
 
-      // Required headers (17 required fields + Q&A specific fields)
       const headers = [
         'Name',
+        'City',
+        'Answer',
+        'Status',
         'Domain',
         'Company Size',
         'Email',
         'Phone',
         'Street',
-        'City',
         'Postal Code',
         'Sector Level 1',
         'Sector Level 2',
@@ -580,19 +581,19 @@ export const processQAJob = inngest.createFunction(
         'Region Level 4',
         'LinkedIn Company URL',
         'Legal Form',
-        'Answer',
-        'Status',
         'Error Message',
       ];
 
       const rows = results.map((r) => [
         normalizeValue(r.name),
+        normalizeValue(r.city),
+        normalizeValue(r.answer),
+        normalizeValue(r.status),
         normalizeValue(r.domain),
         normalizeValue(r.company_size),
         normalizeValue(r.email),
         normalizeValue(r.phone),
         normalizeValue(r.street),
-        normalizeValue(r.city),
         normalizeValue(r.postal_code),
         normalizeValue(r.sector_level1),
         normalizeValue(r.sector_level2),
@@ -603,8 +604,6 @@ export const processQAJob = inngest.createFunction(
         normalizeValue(r.region_level4),
         normalizeValue(r.linkedin_company_url),
         normalizeValue(r.legal_form),
-        normalizeValue(r.answer),
-        normalizeValue(r.status),
         normalizeValue(r.error_message),
       ]);
 

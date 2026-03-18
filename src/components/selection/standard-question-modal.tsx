@@ -67,7 +67,7 @@ function SQ1Form({
   return (
     <div className='space-y-4'>
       <div>
-        <Label>Product / Service Name</Label>
+        <Label>Product / Service Name <span className='text-red-500'>*</span></Label>
         <Input
           className='mt-1'
           placeholder='e.g. CRM Pro'
@@ -85,7 +85,7 @@ function SQ1Form({
         />
       </div>
       <div>
-        <Label>Ideal Customer Profile Characteristics</Label>
+        <Label>Ideal Customer Profile Characteristics <span className='text-red-500'>*</span></Label>
         <Textarea
           className='mt-1 min-h-[70px] text-gray-900 placeholder:text-gray-400'
           placeholder='e.g. multi-site, B2B, regulated sector, 24/7 operations, cloud-dependent…'
@@ -425,7 +425,7 @@ function SQ3Form({
       </div>
 
       <div>
-        <Label>Product / Service Context</Label>
+        <Label>Product / Service Context <span className='text-red-500'>*</span></Label>
         <Textarea
           className='mt-1 min-h-[80px]'
           placeholder='Briefly describe what you are offering to this company (recommended max ~300 characters)'
