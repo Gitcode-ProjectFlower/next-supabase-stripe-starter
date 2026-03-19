@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -87,7 +87,7 @@ function SQ1Form({
       <div>
         <Label>Ideal Customer Profile Characteristics <span className='text-red-500'>*</span></Label>
         <Textarea
-          className='mt-1 min-h-[70px] text-gray-900 placeholder:text-gray-400'
+          className='mt-1 min-h-[70px] text-gray-900'
           placeholder='e.g. multi-site, B2B, regulated sector, 24/7 operations, cloud-dependent…'
           value={(value.icpCharacteristics as string) || ''}
           onChange={(e) => update('icpCharacteristics', e.target.value)}
@@ -257,8 +257,8 @@ function SQ2Form({
                 <div className='flex items-start justify-between gap-2'>
                   <div>
                     <p className={`text-xs font-semibold ${selected ? 'text-purple-800' : 'text-gray-500'}`}>{dim.name}</p>
-                    <p className='mt-0.5 text-xs text-gray-400'>{dim.description}</p>
-                    <p className='mt-1 text-xs text-gray-400'>{dim.values.join(' · ')}</p>
+                    <p className='mt-0.5 text-xs text-gray-500'>{dim.description}</p>
+                    <p className='mt-1 text-xs text-gray-500'>{dim.values.join(' · ')}</p>
                   </div>
                   <div className={`mt-0.5 h-4 w-4 shrink-0 rounded border-2 ${selected ? 'border-purple-500 bg-purple-500' : 'border-gray-300'}`}>
                     {selected && (
@@ -549,7 +549,7 @@ function SQ4Form({
   return (
     <div className='space-y-4'>
       <div>
-        <Label>What do you sell?</Label>
+        <Label>What do you sell? <span className='text-red-500'>*</span></Label>
         <Textarea
           className='mt-1 min-h-[70px]'
           placeholder='2 clear, functional sentences. No marketing language.'
@@ -558,7 +558,7 @@ function SQ4Form({
         />
       </div>
       <div>
-        <Label>Who is it for?</Label>
+        <Label>Who is it for? <span className='text-red-500'>*</span></Label>
         <Input
           className='mt-1'
           placeholder='e.g. role, industry, company type, size'
@@ -567,7 +567,7 @@ function SQ4Form({
         />
       </div>
       <div>
-        <Label>Core Outcome</Label>
+        <Label>Core Outcome <span className='text-red-500'>*</span></Label>
         <Input
           className='mt-1'
           placeholder='e.g. Increases [specific result] for [specific audience]'
@@ -670,19 +670,44 @@ export function StandardQuestionModal({
   isProcessing,
   error,
 }: StandardQuestionModalProps) {
-  const [formValue, setFormValue] = useState<Record<string, unknown>>({});
+  const getDefaultFormValue = (id: string | null): Record<string, unknown> => {
+    if (id === '2') return { dimensions: SQ2_DIMENSIONS.map((d) => d.name) };
+    return {};
+  };
+
+  const [formValue, setFormValue] = useState<Record<string, unknown>>(() => getDefaultFormValue(sqId));
+
+  useEffect(() => {
+    setFormValue(getDefaultFormValue(sqId));
+  }, [sqId]);
 
   const config = STANDARD_QUESTIONS.find((q) => q.id === sqId);
   const FormComponent = sqId ? FORM_COMPONENTS[sqId] : null;
 
   const handleSubmit = () => {
     if (!sqId) return;
+    if (sqId === '2') {
+      const selectedDims = (formValue.dimensions as string[]) ?? SQ2_DIMENSIONS.map((d) => d.name);
+      const enriched: Record<string, unknown> = {};
+      for (const dim of SQ2_DIMENSIONS) {
+        if (selectedDims.includes(dim.name)) {
+          enriched[dim.name] = `Allowed values: ${dim.values.join(', ')}`;
+        }
+      }
+      if (formValue.customDimensionName) {
+        enriched['Custom Dimension Name'] = formValue.customDimensionName;
+        const vals = (formValue.customDimensionValues as string[])?.filter(Boolean) ?? [];
+        if (vals.length) enriched['Custom Dimension Allowed Values'] = vals.join(', ');
+      }
+      onSubmit(sqId, enriched);
+      return;
+    }
     onSubmit(sqId, formValue);
   };
 
   const handleOpenChange = (v: boolean) => {
     if (!v) {
-      setFormValue({});
+      setFormValue(getDefaultFormValue(sqId));
       onClose();
     }
   };
@@ -690,8 +715,8 @@ export function StandardQuestionModal({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className='bg-white sm:max-w-[560px]'>
-        <DialogHeader>
-          <DialogTitle>{config?.title ?? 'Standard Question'}</DialogTitle>
+        <DialogHeader className='text-center sm:text-center'>
+          <DialogTitle className='text-xl font-bold'>{config?.title ?? 'Standard Question'}</DialogTitle>
           <DialogDescription className='text-gray-600'>{config?.description}</DialogDescription>
         </DialogHeader>
 

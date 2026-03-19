@@ -193,8 +193,8 @@ export function QaResults() {
   // SQ4: truncated message visible, full text in expand
   const hasExpandableRows = sqId === '1' || sqId === '2' || sqId === '3' || sqId === '4';
 
-  // For SQ2: dynamic dimension keys (excluding Evidence)
-  const sq2DimKeys: string[] = (() => {
+  // For SQ2: all dimension keys (excluding Evidence)
+  const sq2AllDimKeys: string[] = (() => {
     if (sqId !== '2' || !result.answers) return [];
     const first = result.answers.find((a) => a.status === 'success' && a.answer);
     if (!first?.answer) return [];
@@ -204,7 +204,12 @@ export function QaResults() {
     } catch { return []; }
   })();
 
-  const renderExpandPanel = (parsed: Record<string, unknown>, rowSqId: string, colSpan: number) => {
+  // SQ2: show only 3 primary columns in table, rest in expand
+  const SQ2_PRIMARY_KEYS = ['Primary Customer Type', 'Geographic Scope', 'Operational Criticality'];
+  const sq2DimKeys = sq2AllDimKeys.filter((k) => SQ2_PRIMARY_KEYS.includes(k));
+  const sq2ExpandKeys = sq2AllDimKeys.filter((k) => !SQ2_PRIMARY_KEYS.includes(k));
+
+  const renderExpandPanel = (parsed: Record<string, unknown>, rowSqId: string, colSpan: number, extraKeys: string[] = []) => {
     if (rowSqId === '3') {
       return (
         <TableRow>
@@ -215,11 +220,12 @@ export function QaResults() {
       );
     }
     if (rowSqId === '1') {
-      const text = parsed['SCORE_TEXT'];
+      const raw = parsed['SCORE_TEXT'] ? String(parsed['SCORE_TEXT']) : '—';
+      const text = raw.replace(/^Score\s*\d+\s*:\s*/i, '').replace(/^(Score\s*)?(NULL|null)\s*:\s*/i, '');
       return (
         <TableRow>
           <TableCell colSpan={colSpan} className='p-0 bg-gray-50 border-b'>
-            <SimpleExpandPanel label='Rationale' content={text ? String(text) : '—'} />
+            <SimpleExpandPanel label='Rationale' content={text || '—'} />
           </TableCell>
         </TableRow>
       );
@@ -239,11 +245,23 @@ export function QaResults() {
       return (
         <TableRow>
           <TableCell colSpan={colSpan} className='p-0 bg-gray-50 border-b'>
-            <div className='p-4'>
-              <p className='mb-2 text-xs font-semibold text-gray-500 uppercase tracking-wide'>Evidence</p>
-              {Array.isArray(evidence) && evidence.length > 0
-                ? <ul className='list-disc pl-4 text-sm text-gray-700'>{evidence.map((v, i) => <li key={i}>{String(v)}</li>)}</ul>
-                : <span className='text-sm text-gray-400'>—</span>}
+            <div className='divide-y divide-gray-200'>
+              {extraKeys.length > 0 && (
+                <div className='flex divide-x divide-gray-200'>
+                  {extraKeys.map((k) => (
+                    <div key={k} className='flex-1 px-6 py-3'>
+                      <p className='mb-0.5 text-xs font-semibold text-gray-500 uppercase tracking-wide'>{k}</p>
+                      <p className='text-sm text-gray-700'>{String(parsed[k] ?? '—')}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {Array.isArray(evidence) && evidence.length > 0 && (
+                <div className='px-6 py-3'>
+                  <p className='mb-1 text-xs font-semibold text-gray-500 uppercase tracking-wide'>Evidence</p>
+                  <ul className='list-disc pl-4 text-sm text-gray-700'>{evidence.map((v, i) => <li key={i}>{String(v)}</li>)}</ul>
+                </div>
+              )}
             </div>
           </TableCell>
         </TableRow>
@@ -425,7 +443,7 @@ export function QaResults() {
                         </TableCell>
                       </TableRow>
                       {isExpanded && isSuccess && parsedAnswer && sqId &&
-                        renderExpandPanel(parsedAnswer, sqId, colCount)}
+                        renderExpandPanel(parsedAnswer, sqId, colCount, sq2ExpandKeys)}
                     </React.Fragment>
                   );
                 })}
