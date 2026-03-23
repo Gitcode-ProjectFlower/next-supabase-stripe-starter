@@ -3,8 +3,8 @@ import { Metadata } from 'next';
 import { Dashboard } from './Dashboard';
 
 export const metadata: Metadata = {
-  title: 'Dashboard',
-  description: 'Search for candidates and manage selections',
+  title: 'Search',
+  description: 'Search for companies and manage selections',
 };
 
 interface PageProps {

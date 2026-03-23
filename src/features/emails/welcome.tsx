@@ -20,9 +20,9 @@ export function WelcomeEmail() {
               <Heading as='h2' className='m-0 text-[24px] font-bold'>
                 Thanks for signing up.
               </Heading>
-              <Text className='my-6 text-[16px]'>Go to your dashboard to get started.</Text>
+              <Text className='my-6 text-[16px]'>Go to Search to get started.</Text>
               <Button href={baseUrl + '/'} className='rounded-md bg-black px-4 py-2 font-medium text-white'>
-                Dashboard
+                Search
               </Button>
             </Section>
           </Container>

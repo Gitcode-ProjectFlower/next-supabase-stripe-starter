@@ -6,8 +6,8 @@ import { NO_INDEX_PAGE } from '@/constants/seo.constants';
 import { Selections } from './Selections';
 
 export const metadata: Metadata = {
-  title: 'Selections',
-  description: 'Manage your selections',
+  title: 'Saved',
+  description: 'View and manage your saved selections',
   ...NO_INDEX_PAGE,
 };
 

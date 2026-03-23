@@ -6,7 +6,7 @@ import { NO_INDEX_PAGE } from '@/constants/seo.constants';
 import { Activity } from './Activity';
 
 export const metadata: Metadata = {
-  title: 'Activity',
+  title: 'History',
   description: 'View your recent searches, Q&A runs, and Excel exports',
   ...NO_INDEX_PAGE,
 };

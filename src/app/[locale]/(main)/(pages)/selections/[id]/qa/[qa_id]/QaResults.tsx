@@ -36,7 +36,7 @@ const SQ3_MIDDLE_FIELDS = [
   'Key Website Evidence',
 ];
 
-function SQ3FieldValue({ val }: { val: unknown }) {
+function SQ3FieldValue({ val }: { val: string | string[] }) {
   if (Array.isArray(val)) {
     return val.length === 0
       ? <span className='text-sm text-gray-400'>—</span>
@@ -46,8 +46,8 @@ function SQ3FieldValue({ val }: { val: unknown }) {
 }
 
 function SQ3ExpandPanel({ parsed }: { parsed: Record<string, unknown> }) {
-  const snapshot = parsed['Company Snapshot'];
-  const angle = parsed['Suggested Conversation Angle'];
+  const snapshot = parsed['Company Snapshot'] as string | undefined;
+  const angle = parsed['Suggested Conversation Angle'] as string | undefined;
 
   return (
     <div className='divide-y divide-gray-200'>
@@ -64,7 +64,7 @@ function SQ3ExpandPanel({ parsed }: { parsed: Record<string, unknown> }) {
           return (
             <div key={key} className='px-6 py-4 border-b border-gray-200'>
               <p className='mb-1 text-xs font-semibold text-gray-500 uppercase tracking-wide'>{key}</p>
-              <SQ3FieldValue val={val} />
+              <SQ3FieldValue val={val as string | string[]} />
             </div>
           );
         })}
@@ -305,7 +305,7 @@ export function QaResults() {
               )}
               {result.status === 'failed' && (
                 <Button className='rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700' onClick={() => router.push(getLocalePath(locale, `/selections/${params.id}`))}>
-                  Generate Answers Again
+                  Run Again
                 </Button>
               )}
             </div>

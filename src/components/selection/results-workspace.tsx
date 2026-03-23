@@ -305,7 +305,7 @@ export function ResultsWorkspace({
           )}
           onClick={() => setActiveTab('candidates')}
         >
-          Candidates
+          Companies
         </Button>
         <Button
           variant={activeTab === 'selected' ? 'default' : 'outline'}
@@ -388,15 +388,15 @@ export function ResultsWorkspace({
               {isLoading ? (
                 <TableRow className='hover:bg-transparent'>
                   <TableCell colSpan={visibleColumns.length + 1} className='h-24 text-center'>
-                    Loading candidates...
+                    Loading companies...
                   </TableCell>
                 </TableRow>
               ) : displayedResults.length === 0 ? (
                 <TableRow className='hover:bg-transparent'>
                   <TableCell colSpan={visibleColumns.length + 1} className='h-24 text-center text-gray-500'>
                     {activeTab === 'selected'
-                      ? 'No candidates selected yet.'
-                      : 'No candidates found. Try adjusting your filters or adding names.'}
+                      ? 'No companies selected yet.'
+                      : 'No companies found. Try adjusting your filters or adding names.'}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -452,11 +452,11 @@ export function ResultsWorkspace({
         <div className='rounded-2xl border bg-white p-3 shadow-sm'>
           <div className='flex items-start gap-3'>
             <Textarea
-              className='min-h-[72px] flex-1 resize-none rounded-lg border px-3 py-2 text-sm focus-visible:ring-1 focus-visible:ring-gray-900'
+              className='min-h-[48px] flex-1 resize-none rounded-lg border px-3 py-2 text-sm focus-visible:ring-1 focus-visible:ring-gray-900'
               placeholder={
                 selectedIds.size === 0
-                  ? 'Select at least one candidate to ask questions...'
-                  : 'Ask your question here (multiple questions allowed) — each resume gives an answer...'
+                  ? 'Select at least one company to ask a question…'
+                  : 'e.g. What does this company do? Who are their target customers?'
               }
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
@@ -479,7 +479,7 @@ export function ResultsWorkspace({
                           !userPlan
                         }
                       >
-                        {isProcessingQA ? 'Processing...' : 'Generate answers'}
+                        {isProcessingQA ? 'Processing...' : 'Generate insights'}
                       </Button>
                     </div>
                   </TooltipTrigger>

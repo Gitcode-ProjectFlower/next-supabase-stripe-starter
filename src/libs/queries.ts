@@ -402,7 +402,7 @@ export function useRecentActivityQuery(
                 type: 'search',
                 status: 'done',
                 timestamp: log.created_at || new Date().toISOString(),
-                label: `${selections.name} - ${selections.item_count} candidates`,
+                label: `${selections.name} - ${selections.item_count} companies`,
                 link: `/selections/${selections.id}`,
                 metadata: {
                   selectionId: selections.id,
@@ -463,7 +463,7 @@ export function useRecentActivityQuery(
 
           // If no related record found, return basic activity
           let activityType: 'search' | 'qa' | 'export' = 'export';
-          let activityLabel = `Export Excel - ${log.count} records`;
+          let activityLabel = `Download Excel - ${log.count} records`;
 
           if (log.action === 'ai_question') {
             activityType = 'qa';

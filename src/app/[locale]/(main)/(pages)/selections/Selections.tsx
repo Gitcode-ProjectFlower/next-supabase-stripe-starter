@@ -111,7 +111,7 @@ export function Selections() {
           />
         </svg>
         <h2 className='mt-4 text-2xl font-bold text-gray-900'>No selections yet</h2>
-        <p className='mt-2 text-gray-600'>Create your first selection to save and manage candidate lists</p>
+        <p className='mt-2 text-gray-600'>Create your first selection to save and manage company lists</p>
         <Button
           className='mt-6 rounded-lg bg-blue-600 px-6 py-2 text-white hover:bg-blue-700'
           onClick={() => router.push(getLocalePath(locale, '/'))}
@@ -124,8 +124,8 @@ export function Selections() {
     <>
       <div className='mb-6 flex items-center justify-between'>
         <div>
-          <h1 className='text-3xl font-bold text-gray-900'>My Selections</h1>
-          <p className='mt-1 text-gray-600'>Manage your saved candidate selections</p>
+          <h1 className='text-3xl font-bold text-gray-900'>Saved selections</h1>
+          <p className='mt-1 text-gray-600'>View and continue working on your Saved Selections</p>
         </div>
         <Button
           className='rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700'
@@ -140,7 +140,7 @@ export function Selections() {
           <TableHeader className='bg-gray-50'>
             <TableRow className='hover:bg-transparent'>
               <TableHead className='px-4 py-3 font-semibold text-gray-700'>Name</TableHead>
-              <TableHead className='px-4 py-3 font-semibold text-gray-700'>Candidates</TableHead>
+              <TableHead className='px-4 py-3 font-semibold text-gray-700'>Companies</TableHead>
               <TableHead className='px-4 py-3 font-semibold text-gray-700'>Created</TableHead>
               <TableHead className='px-4 py-3 font-semibold text-gray-700'>Expires</TableHead>
               <TableHead className='px-4 py-3 text-right font-semibold text-gray-700'>Actions</TableHead>

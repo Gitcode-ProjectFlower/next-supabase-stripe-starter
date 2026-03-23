@@ -64,7 +64,7 @@ export const PlanChangeEmail = ({
               className='block w-full rounded-lg bg-blue-600 px-6 py-3 text-center font-semibold text-white'
               href={`${process.env.NEXT_PUBLIC_SITE_URL}/`}
             >
-              Go to Dashboard
+              Go to Search
             </Button>
 
             <Hr className='my-8 border-gray-200' />

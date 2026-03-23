@@ -14,7 +14,7 @@ const PLANS = [
     features: [
       'Up to 100 results per search',
       'Basic similarity search',
-      'Q&A on selected candidates',
+      'Q&A on selected companies',
       'Excel export',
       'Email support',
     ],
@@ -28,7 +28,7 @@ const PLANS = [
     features: [
       'Up to 500 results per search',
       'Advanced similarity search',
-      'Q&A on selected candidates',
+      'Q&A on selected companies',
       'Excel export',
       'Priority email support',
       'Advanced filters',
@@ -43,7 +43,7 @@ const PLANS = [
     features: [
       'Up to 5,000 results per search',
       'Premium similarity search',
-      'Q&A on selected candidates',
+      'Q&A on selected companies',
       'Excel export',
       'Priority support',
       'Advanced filters',
@@ -220,7 +220,7 @@ export async function Pricing() {
           <div>
             <h3 className='font-semibold text-gray-900'>What is Top-K?</h3>
             <p className='mt-1 text-sm text-gray-600'>
-              Top-K is the maximum number of candidate results you can retrieve per search. Higher limits allow you to
+              Top-K is the maximum number of results you can retrieve per search. Higher limits allow you to
               cast a wider net.
             </p>
           </div>

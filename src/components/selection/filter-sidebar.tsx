@@ -1,6 +1,6 @@
 'use client';
 
-import { Plus, X } from 'lucide-react';
+import { Info, Plus, X } from 'lucide-react';
 import React, { useState } from 'react';
 
 import { TreeMultiSelect } from '@/components/selection/tree-multi-select';
@@ -49,6 +49,7 @@ export function FilterSidebar({
 }: FilterSidebarProps) {
   const [nameInput, setNameInput] = useState('');
   const [localTopK, setLocalTopK] = useState(topK.toString());
+  const [showInfoTip, setShowInfoTip] = useState(false);
 
   // Get locale-specific trees
   const sectorsTree = getSectorsTree(locale);
@@ -112,10 +113,29 @@ export function FilterSidebar({
   return (
     <div className='space-y-6'>
       <div className='rounded-2xl border bg-white p-4 shadow-sm'>
-        <h3 className='mb-2 text-sm font-semibold uppercase tracking-wide text-gray-700'>Input</h3>
+        <h3 className='mb-2 text-sm font-semibold uppercase tracking-wide text-gray-700'>Build your selection</h3>
 
         {/* Names */}
-        <label className='text-sm text-gray-600'>Names (press Enter to add)</label>
+        <div className='flex items-center gap-1.5'>
+          <label className='text-sm text-gray-600'>Find companies similar</label>
+          <div className='relative'>
+            <button
+              type='button'
+              onClick={() => setShowInfoTip(!showInfoTip)}
+              className='text-gray-400 hover:text-gray-600 transition-colors'
+            >
+              <Info className='h-3.5 w-3.5' />
+            </button>
+            {showInfoTip && (
+              <>
+                <div className='fixed inset-0 z-40' onClick={() => setShowInfoTip(false)} />
+                <div className='absolute left-6 top-0 z-50 w-56 rounded-lg border bg-white p-3 text-xs text-gray-700 shadow-md'>
+                  Advanced similarity engine — finds companies that match in activity, product, and target customers.
+                </div>
+              </>
+            )}
+          </div>
+        </div>
         <div className='mt-2 flex gap-2 overflow-x-auto whitespace-nowrap pb-1'>
           {names.map((name, idx) => (
             <Badge
@@ -135,7 +155,7 @@ export function FilterSidebar({
         </div>
         <div className='mt-2 flex items-center gap-2'>
           <Input
-            placeholder={names.length >= 4 ? 'Max 4 names' : 'e.g. Jordan Lee'}
+            placeholder={names.length >= 4 ? 'Max 4 names' : 'Enter a company name (e.g. santander.co.uk, tesco.co.uk)'}
             value={nameInput}
             onChange={(e) => setNameInput(e.target.value)}
             onKeyDown={handleKeyDown}
@@ -241,11 +261,11 @@ export function FilterSidebar({
             onClick={onSearch}
             disabled={isLoading}
           >
-            {isLoading ? 'Searching...' : names.length > 0 ? 'Find lookalikes' : 'Search candidates'}
+            {isLoading ? 'Searching...' : names.length > 0 ? 'Find lookalikes' : 'Search companies'}
           </Button>
           {resultsCount > 0 && (
             <span className='whitespace-nowrap rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700'>
-              {resultsCount} candidates
+              {resultsCount} companies
             </span>
           )}
         </div>
@@ -260,7 +280,7 @@ export function FilterSidebar({
           <li>
             Lookalikes are sorted by <b>fit score</b>.
           </li>
-          <li>Export to Excel with one click.</li>
+          <li>All selections can be downloaded as an Excel file.</li>
         </ul>
       </div>
     </div>

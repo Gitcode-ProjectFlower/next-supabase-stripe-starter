@@ -174,7 +174,7 @@ export function RecentActivity() {
   if (activities.length === 0) {
     return (
       <div className='rounded-xl border border-gray-200 p-6'>
-        <h3 className='mb-2 text-lg font-semibold text-gray-900'>Recent Activity</h3>
+        <h3 className='mb-2 text-lg font-semibold text-gray-900'>History</h3>
         <p className='text-sm text-gray-600'>No recent activity to display.</p>
         <p className='mt-2 text-xs text-gray-500'>Your recent searches, Q&A runs, and exports will appear here.</p>
       </div>
@@ -186,7 +186,7 @@ export function RecentActivity() {
       <div className='border-b border-gray-200 px-6 py-4'>
         <div className='flex items-center justify-between'>
           <div>
-            <h3 className='text-lg font-semibold text-gray-900'>Recent Activity</h3>
+            <h3 className='text-lg font-semibold text-gray-900'>History</h3>
             <p className='mt-1 text-sm text-gray-600'>Your latest actions and results</p>
           </div>
           <Button

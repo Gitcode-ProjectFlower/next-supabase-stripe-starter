@@ -59,11 +59,11 @@ export function SoftGateModal({
               </li>
               <li className='flex items-start gap-2'>
                 <span className='text-blue-600'>•</span>
-                <span>AI-powered Q&A on candidates</span>
+                <span>AI-powered Q&A on companies</span>
               </li>
               <li className='flex items-start gap-2'>
                 <span className='text-blue-600'>•</span>
-                <span>Access to full candidate details</span>
+                <span>Access to full company details</span>
               </li>
             </ul>
           </div>

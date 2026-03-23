@@ -24,8 +24,8 @@ export const STANDARD_QUESTIONS: StandardQuestionConfig[] = [
   },
   {
     id: '2',
-    title: 'Marketing Segmentation',
-    description: 'Standardized company segmentation.',
+    title: 'Market Segmentation',
+    description: 'Classify companies across key market dimensions.',
     icon: BarChart2,
     color: 'text-purple-600',
     bgColor: 'bg-purple-50',
@@ -41,7 +41,7 @@ export const STANDARD_QUESTIONS: StandardQuestionConfig[] = [
   {
     id: '4',
     title: 'Personalized Outreach Draft Message',
-    description: 'Create a tailored first message based on the company\'s positioning and priorities.',
+    description: 'Create a personalized first message based on the company\'s priorities.',
     icon: MessageSquare,
     color: 'text-orange-600',
     bgColor: 'bg-orange-50',
@@ -52,9 +52,10 @@ interface StandardQuestionTileProps {
   config: StandardQuestionConfig;
   onRun: (sqId: '1' | '2' | '3' | '4') => void;
   disabled?: boolean;
+  secondary?: boolean;
 }
 
-export function StandardQuestionTile({ config, onRun, disabled }: StandardQuestionTileProps) {
+export function StandardQuestionTile({ config, onRun, disabled, secondary }: StandardQuestionTileProps) {
   const Icon = config.icon;
 
   return (
@@ -63,17 +64,23 @@ export function StandardQuestionTile({ config, onRun, disabled }: StandardQuesti
       disabled={disabled}
       onClick={() => onRun(config.id)}
       className={cn(
-        'flex flex-col gap-3 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm text-left transition-all',
-        'hover:shadow-md hover:bg-gray-50 cursor-pointer',
+        'flex flex-col rounded-2xl border bg-white text-left transition-all cursor-pointer',
+        secondary
+          ? 'gap-1.5 p-3 border-gray-100 hover:shadow-sm hover:bg-gray-50'
+          : 'gap-2 p-4 border-gray-200 shadow-sm hover:shadow-md hover:bg-gray-50',
         disabled && 'cursor-not-allowed opacity-50'
       )}
     >
-      <div className={cn('flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl', config.bgColor)}>
-        <Icon className={cn('h-5 w-5', config.color)} />
+      <div className={cn(
+        'flex flex-shrink-0 items-center justify-center rounded-lg',
+        secondary ? 'h-7 w-7' : 'h-9 w-9',
+        config.bgColor
+      )}>
+        <Icon className={cn(secondary ? 'h-3.5 w-3.5' : 'h-4.5 w-4.5', config.color)} />
       </div>
       <div>
-        <p className='text-sm font-semibold text-gray-900 truncate'>{config.title}</p>
-        <p className='mt-0.5 text-xs text-gray-500 line-clamp-2'>{config.description}</p>
+        <p className={cn('font-semibold text-gray-900 truncate', secondary ? 'text-xs' : 'text-sm')}>{config.title}</p>
+        <p className={cn('mt-0.5 text-gray-500 line-clamp-2', secondary ? 'text-[11px]' : 'text-xs')}>{config.description}</p>
       </div>
     </button>
   );

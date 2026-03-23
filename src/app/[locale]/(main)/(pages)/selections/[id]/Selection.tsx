@@ -333,7 +333,7 @@ export function Selection() {
     if (!selection || !selection.items || selection.items.length === 0) {
       toast({
         title: 'Error',
-        description: 'No candidates found in this selection',
+        description: 'No companies found in this selection',
         variant: 'destructive',
       });
       return;
@@ -544,7 +544,7 @@ export function Selection() {
     if (selection && (selection.item_count === 0 || !selection.items || selection.items.length === 0)) {
       toast({
         title: 'Cannot Export',
-        description: 'This selection has no candidates. Please add candidates to the selection before exporting.',
+        description: 'This selection has no companies. Please add companies to the selection before exporting.',
         variant: 'destructive',
       });
       return;
@@ -702,14 +702,14 @@ export function Selection() {
           onClick={() => router.push(getLocalePath(locale, '/selections'))}
         >
           <ArrowLeft className='mr-2 h-4 w-4' />
-          Back to Selections
+          Back to Saved
         </Button>
 
         <div className='flex items-start justify-between'>
           <div>
             <h1 className='text-3xl font-bold text-black'>{selection.name}</h1>
             <div className='mt-2 flex items-center gap-4 text-sm text-gray-600'>
-              <span>{selection.item_count} candidates</span>
+              <span>{selection.item_count} companies</span>
               <span>•</span>
               <span>Created: {formatDate(selection.created_at)}</span>
               <span>•</span>
@@ -723,7 +723,7 @@ export function Selection() {
               onClick={() => setIsQAModalOpen(true)}
             >
               <MessageSquare className='mr-2 h-4 w-4' />
-              Ask Q&A
+              Ask a custom question (advanced)
             </Button>
             <Button
               className='rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700'
@@ -731,7 +731,7 @@ export function Selection() {
               disabled={isExporting}
             >
               <Download className='mr-2 h-4 w-4' />
-              {isExporting ? 'Exporting...' : 'Export Excel'}
+              {isExporting ? 'Preparing...' : 'Prepare Download'}
             </Button>
           </div>
         </div>
@@ -770,14 +770,39 @@ export function Selection() {
         </div>
       )}
 
+      {/* Analyses Applied */}
+      <div className='mb-6'>
+        <h3 className='mb-2 text-sm font-medium text-gray-600'>Analyses applied</h3>
+        {qaSessionsData && qaSessionsData.sessions.filter((s) => s.status === 'completed').length > 0 ? (
+          <div className='flex flex-wrap gap-2'>
+            {qaSessionsData.sessions
+              .filter((s) => s.status === 'completed')
+              .map((session) => {
+                const sqConfig = STANDARD_QUESTIONS.find((sq) => sq.id === session.standard_question_id);
+                return (
+                  <span
+                    key={session.id}
+                    className='rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700'
+                  >
+                    {sqConfig ? sqConfig.title : 'Custom'}
+                  </span>
+                );
+              })}
+          </div>
+        ) : (
+          <p className='text-sm text-gray-400'>No analyses applied yet</p>
+        )}
+      </div>
+
       {/* Standard Questions Section */}
       <div className='mb-6'>
-        <h2 className='mb-3 font-semibold text-gray-900'>AI Analysis</h2>
-        <div className='grid grid-cols-2 gap-3 sm:grid-cols-4'>
+        <h2 className='mb-3 font-semibold text-gray-900'>Run a new analysis on this selection</h2>
+        <div className='grid grid-cols-2 gap-2 sm:grid-cols-4'>
           {STANDARD_QUESTIONS.map((sq) => (
             <StandardQuestionTile
               key={sq.id}
               config={sq}
+              secondary
               onRun={(sqId) => {
                 setActiveSqId(sqId);
                 setIsSqModalOpen(true);
@@ -890,16 +915,15 @@ export function Selection() {
       <Dialog open={isQAModalOpen} onOpenChange={setIsQAModalOpen}>
         <DialogContent className='bg-white sm:max-w-[600px]'>
           <DialogHeader>
-            <DialogTitle>Ask Questions to Candidates</DialogTitle>
+            <DialogTitle>Ask a custom question</DialogTitle>
             <DialogDescription className='text-gray-700'>
-              Enter your question(s) below. Each candidate will be asked the same question(s) and their answers will be
-              generated based on their CV.
+              Apply your question to all selected companies. Results appear in your table.
             </DialogDescription>
           </DialogHeader>
 
           <div className='space-y-4 py-4'>
             <Textarea
-              placeholder='e.g., What is your experience with React? Do you have leadership experience?'
+              placeholder='e.g. What does this company do? Who are their target customers?'
               value={qaPrompt}
               onChange={(e) => setQaPrompt(e.target.value)}
               className='focus:bo min-h-[120px] border-gray-700 placeholder:text-gray-500'
@@ -930,7 +954,7 @@ export function Selection() {
                     ? 'Redirecting to results page...'
                     : qaStatus === 'failed'
                       ? 'An error occurred during processing. Please try again.'
-                      : 'This may take a few minutes depending on the number of candidates...'}
+                      : 'This may take a few minutes depending on the number of companies...'}
                 </p>
                 {qaStatus === 'completed' && qaSessionId && (
                   <Button
@@ -978,7 +1002,7 @@ export function Selection() {
               disabled={isProcessingQA || !qaPrompt.trim()}
               className='bg-blue-600 hover:bg-blue-700'
             >
-              {isProcessingQA ? 'Processing...' : 'Generate Answers'}
+              {isProcessingQA ? 'Processing...' : 'Generate insights'}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -254,7 +254,7 @@ export class HaystackClient {
             );
           } else {
             throw new Error(
-              'Unable to process Q&A: Resume data not found. Please ensure candidate names match the database.'
+              'Unable to process Q&A: Company data not found. Please ensure company names match the database.'
             );
           }
         }
@@ -281,7 +281,7 @@ export class HaystackClient {
           const batchTimeout = customTimeout || Math.max(120000, Math.min(900000, items.length * 30000));
           errorMessage = `Request timeout after ${Math.round(
             batchTimeout / 1000
-          )}s. The Q&A processing is taking longer than expected. Please try again or reduce the number of candidates.`;
+          )}s. The Q&A processing is taking longer than expected. Please try again or reduce the number of companies.`;
         } else {
           errorMessage = error.message;
         }

@@ -108,7 +108,7 @@ export function DownloadsSection({ initialDownloads = [] }: DownloadsSectionProp
           Your Excel exports will appear here. Exports are available for 7 days after generation.
         </p>
         <div className='mt-4 text-sm text-gray-500'>
-          <p>• Click &quot;Export Excel&quot; on any selection to generate a download</p>
+          <p>• Click &quot;Prepare Download&quot; on any selection to generate a download</p>
           <p>• You&apos;ll receive an email when your export is ready</p>
           <p>• Downloads expire after 7 days</p>
         </div>

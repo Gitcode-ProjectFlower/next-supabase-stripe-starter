@@ -33,7 +33,7 @@ export const WelcomeEmail = ({ userName, userEmail }: WelcomeEmailProps) => {
 
           <Section style={buttonContainer}>
             <Button style={button} href={`${process.env.NEXT_PUBLIC_SITE_URL}/`}>
-              Go to Dashboard
+              Go to Search
             </Button>
           </Section>
 

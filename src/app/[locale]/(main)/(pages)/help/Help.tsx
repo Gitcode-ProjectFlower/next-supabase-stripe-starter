@@ -256,7 +256,7 @@ export function Help() {
                   <li>Search for companies using lookalike search or filters</li>
                   <li>Select the companies you want to ask questions to</li>
                   <li>Enter your question(s) in the prompt field</li>
-                  <li>Click "Generate answers"</li>
+                  <li>Click "Generate insights"</li>
                   <li>Wait for processing to complete</li>
                   <li>View the answers in the results table or download them as Excel</li>
                 </ol>
@@ -360,8 +360,8 @@ export function Help() {
                 <h3 className='mb-2 font-semibold text-gray-900'>How do I export results to Excel?</h3>
                 <p className='mb-2 text-gray-600'>There are two ways to export:</p>
                 <ol className='ml-4 list-decimal space-y-1 text-gray-600'>
-                  <li>From search results: select companies and click "Export Excel"</li>
-                  <li>From a saved selection: open the selection and click "Export Excel"</li>
+                  <li>From search results: select companies and click "Prepare Download"</li>
+                  <li>From a saved selection: open the selection and click "Prepare Download"</li>
                 </ol>
               </div>
               <div>

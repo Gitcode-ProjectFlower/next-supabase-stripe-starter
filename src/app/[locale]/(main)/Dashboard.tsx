@@ -6,6 +6,8 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { FilterSidebar } from '@/components/selection/filter-sidebar';
 import { ResultsWorkspace } from '@/components/selection/results-workspace';
+import { STANDARD_QUESTIONS, StandardQuestionTile } from '@/components/selection/standard-question-tile';
+import { StandardQuestionModal } from '@/components/selection/standard-question-modal';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -65,8 +67,13 @@ export function Dashboard() {
   const [qaSessionId, setQaSessionId] = useState<string | null>(null);
   const [qaSelectionId, setQaSelectionId] = useState<string | null>(null);
 
+  const [activeSqId, setActiveSqId] = useState<'1' | '2' | '3' | '4' | null>(null);
+  const [isSqModalOpen, setIsSqModalOpen] = useState(false);
+  const [isProcessingSq, setIsProcessingSq] = useState(false);
+  const [sqError, setSqError] = useState<string | null>(null);
+
   const saveUnavailableReason = useMemo(() => {
-    if (selectedIds.size === 0) return 'Select at least one candidate before saving.';
+    if (selectedIds.size === 0) return 'Select at least one company before saving.';
     if (!userPlan || userPlan === 'anonymous') return 'Sign in to save your selections.';
     if (userPlan && requiresUpgrade(userPlan, 'save')) return 'Please upgrade your plan to save selections.';
     return null;
@@ -74,7 +81,7 @@ export function Dashboard() {
 
   const exportUnavailableReason = useMemo(() => {
     if (results.length === 0) return 'Run a search before exporting.';
-    if (selectedIds.size === 0) return 'Select candidates to include in the Excel export.';
+    if (selectedIds.size === 0) return 'Select companies to include in the Excel export.';
     if (!userPlan || userPlan === 'anonymous') return 'Sign in to export Excel.';
     if (userPlan && requiresUpgrade(userPlan, 'export')) return 'Upgrade your plan to export Excel.';
     return null;
@@ -311,7 +318,7 @@ export function Dashboard() {
           errorMessage = errorData.error || errorData.message || 'Search failed';
 
           if (topK > 3 && userPlan === 'anonymous') {
-            errorMessage = 'You are not allowed to search more than 3 candidates';
+            errorMessage = 'You are not allowed to search more than 3 companies';
           }
         } catch {
           errorMessage = response.statusText || 'Search failed';
@@ -346,7 +353,7 @@ export function Dashboard() {
 
       toast({
         title: 'Search completed',
-        description: `Found ${data.data?.total || 0} candidates`,
+        description: `Found ${data.data?.total || 0} companies`,
         variant: 'success',
       });
     } catch (error) {
@@ -381,8 +388,8 @@ export function Dashboard() {
 
     if (selectedIds.size === 0) {
       toast({
-        title: 'No candidates selected',
-        description: 'Please select at least one candidate to save.',
+        title: 'No companies selected',
+        description: 'Please select at least one company to save.',
         variant: 'destructive',
       });
       return;
@@ -568,8 +575,8 @@ export function Dashboard() {
       toast({
         title: 'Saved',
         description: isUpdate
-          ? `Selection updated with ${selectedItems.length} candidates.`
-          : `Successfully saved ${selectedItems.length} candidates.`,
+          ? `Selection updated with ${selectedItems.length} companies.`
+          : `Successfully saved ${selectedItems.length} companies.`,
         variant: 'success',
       });
 
@@ -624,8 +631,8 @@ export function Dashboard() {
 
       if (selectedItems.length === 0) {
         toast({
-          title: 'No candidates selected',
-          description: 'Please select at least one candidate to export',
+          title: 'No companies selected',
+          description: 'Please select at least one company to export',
           variant: 'destructive',
         });
         setIsExporting(false);
@@ -855,7 +862,7 @@ export function Dashboard() {
       toast({
         title: 'Export Started',
         description:
-          'Your selection has been saved and the export has been started. You will receive an email when your Excel is ready.',
+          'Your Excel file is being prepared. You can download it from the Downloads page when ready. You\u2019ll also receive an email notification.',
       });
 
       // Track selection created event
@@ -896,6 +903,164 @@ export function Dashboard() {
     });
   };
 
+  const ensureSelectionSaved = async (): Promise<string | null> => {
+    const selectedItems = results
+      .filter((r) => selectedIds.has(r.doc_id))
+      .map((item) => ({
+        ...item,
+        similarity: item.similarity ?? 0,
+      }));
+
+    if (selectedItems.length === 0) return null;
+
+    const supabase = createSupabaseBrowserClient();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      throw new Error('Unauthorized. Please sign in.');
+    }
+
+    const sectorsTree = getSectorsTree(locale);
+    const regionsTree = getRegionsTree(locale);
+    const sectorNames = sectors.size > 0 ? getNamesFromIds(sectors, sectorsTree) : [];
+    const regionNames = regions.size > 0 ? getNamesFromIds(regions, regionsTree) : [];
+    const criteria = {
+      names,
+      sectors: sectorNames,
+      regions: regionNames,
+      company_size: companySize,
+      collection,
+    };
+
+    let selectionId: string | null = null;
+    const isUpdate = savedSelectionId !== null;
+
+    if (isUpdate) {
+      const { data: existingSelection, error: checkError } = await supabase
+        .from('selections')
+        .select('id, user_id')
+        .eq('id', savedSelectionId)
+        .eq('user_id', user.id)
+        .single();
+
+      if (checkError || !existingSelection) {
+        setSavedSelectionId(null);
+      } else {
+        const uniqueItems = Array.from(new Map(selectedItems.map((item) => [item.doc_id, item])).values());
+        // @ts-ignore
+        const { error: updateError } = await supabase
+          .from('selections')
+          // @ts-ignore
+          .update({ name: selectionName, criteria_json: criteria, updated_at: new Date().toISOString() })
+          .eq('id', savedSelectionId);
+
+        if (updateError) throw new Error(`Failed to update selection: ${updateError.message}`);
+
+        // @ts-ignore
+        const { error: rpcError } = await supabase.rpc('update_selection_items', {
+          p_selection_id: savedSelectionId,
+          p_items: uniqueItems.map((item) => ({
+            doc_id: item.doc_id, name: item.name || '', domain: item.domain || '',
+            company_size: item.company_size || '', email: item.email || '', phone: item.phone || '',
+            street: item.street || '', city: item.city || '', postal_code: item.postal_code || '',
+            sector_level1: item.sector_level1 || '', sector_level2: item.sector_level2 || '',
+            sector_level3: item.sector_level3 || '', region_level1: item.region_level1 || '',
+            region_level2: item.region_level2 || '', region_level3: item.region_level3 || '',
+            region_level4: item.region_level4 || '', linkedin_company_url: item.linkedin_company_url || '',
+            legal_form: item.legal_form || '', sectors: item.sectors, experience_years: item.experience_years,
+            similarity: item.similarity,
+          })),
+        });
+
+        if (rpcError) throw new Error(`Failed to update selection items: ${rpcError.message}`);
+        selectionId = savedSelectionId;
+      }
+    }
+
+    if (!selectionId) {
+      const uniqueItems = Array.from(new Map(selectedItems.map((item) => [item.doc_id, item])).values());
+      // @ts-ignore
+      const { data: newSelectionId, error: rpcError } = await supabase.rpc('create_selection', {
+        p_name: selectionName, p_criteria_json: criteria,
+        p_items: uniqueItems.map((item) => ({
+          doc_id: item.doc_id, name: item.name || '', domain: item.domain || '',
+          company_size: item.company_size || '', email: item.email || '', phone: item.phone || '',
+          street: item.street || '', city: item.city || '', postal_code: item.postal_code || '',
+          sector_level1: item.sector_level1 || '', sector_level2: item.sector_level2 || '',
+          sector_level3: item.sector_level3 || '', region_level1: item.region_level1 || '',
+          region_level2: item.region_level2 || '', region_level3: item.region_level3 || '',
+          region_level4: item.region_level4 || '', linkedin_company_url: item.linkedin_company_url || '',
+          legal_form: item.legal_form || '', sectors: item.sectors, experience_years: item.experience_years,
+          similarity: item.similarity,
+        })),
+      });
+
+      if (rpcError) throw new Error(`Failed to create selection: ${rpcError.message}`);
+      if (!newSelectionId) throw new Error('Failed to create selection: No ID returned');
+      selectionId = newSelectionId;
+      setSavedSelectionId(selectionId);
+    }
+
+    setSavedSelectionId(selectionId);
+    return selectionId;
+  };
+
+  const handleRunSQ = async (sqId: '1' | '2' | '3' | '4', formInput: Record<string, unknown>) => {
+    if (selectedIds.size === 0) {
+      toast({
+        title: 'No companies selected',
+        description: 'Please select at least one company before running this analysis.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setSqError(null);
+    setIsProcessingSq(true);
+
+    try {
+      const selectionId = await ensureSelectionSaved();
+      if (!selectionId) {
+        setSqError('Failed to save selection');
+        setIsProcessingSq(false);
+        return;
+      }
+
+      const response = await fetch(`/api/selections/${selectionId}/qa`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt: STANDARD_QUESTIONS.find((sq) => sq.id === sqId)?.title ?? `Standard Question ${sqId}`,
+          standard_question_id: sqId,
+          form_input: formInput,
+        }),
+      });
+
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        setSqError(err.error || err.message || 'Failed to start analysis');
+        setIsProcessingSq(false);
+        return;
+      }
+
+      const data = await response.json();
+      if (data.qaSessionId) {
+        setIsSqModalOpen(false);
+        setActiveSqId(null);
+        setIsProcessingSq(false);
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.selections.all });
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.usage.stats });
+        router.push(getLocalePath(locale, `/selections/${selectionId}/qa/${data.qaSessionId}`));
+      }
+    } catch (error: any) {
+      setSqError(error.message || 'Failed to start analysis');
+      setIsProcessingSq(false);
+    }
+  };
+
   const handleGenerateAnswers = async (prompt: string) => {
     if (!prompt.trim()) {
       toast({
@@ -908,8 +1073,8 @@ export function Dashboard() {
 
     if (selectedIds.size === 0) {
       toast({
-        title: 'No candidates selected',
-        description: 'Please select at least one candidate before asking questions.',
+        title: 'No companies selected',
+        description: 'Please select at least one company before asking questions.',
         variant: 'destructive',
       });
       return;
@@ -944,8 +1109,8 @@ export function Dashboard() {
 
       if (selectedItems.length === 0) {
         toast({
-          title: 'No candidates selected',
-          description: 'Please select at least one candidate to ask questions',
+          title: 'No companies selected',
+          description: 'Please select at least one company to ask questions',
           variant: 'destructive',
         });
         setIsProcessingQA(false);
@@ -1308,7 +1473,7 @@ export function Dashboard() {
               onClick={() => handleExportClick(exportUnavailableReason)}
               disabled={isExporting}
             >
-              {isExporting ? 'Exporting...' : 'Export Excel'}
+              {isExporting ? 'Preparing...' : 'Prepare Download'}
             </Button>
             {/* <Button
               variant='outline'
@@ -1352,6 +1517,32 @@ export function Dashboard() {
 
         {/* Right: Workspace */}
         <main className='relative col-span-12 lg:col-span-9'>
+          {/* SQ Tiles */}
+          <div className='mb-4'>
+            <p className='mb-2 text-sm text-gray-600'>Turn your selection into insights and actions</p>
+            <div className='grid grid-cols-2 gap-2 sm:grid-cols-4'>
+              {STANDARD_QUESTIONS.map((sq) => (
+                <StandardQuestionTile
+                  key={sq.id}
+                  config={sq}
+                  onRun={(sqId) => {
+                    if (selectedIds.size === 0) {
+                      toast({
+                        title: 'No companies selected',
+                        description: 'Please select at least one company before running this analysis.',
+                        variant: 'destructive',
+                      });
+                      return;
+                    }
+                    setActiveSqId(sqId);
+                    setIsSqModalOpen(true);
+                  }}
+                  disabled={isProcessingSq}
+                />
+              ))}
+            </div>
+          </div>
+
           <ResultsWorkspace
             results={results}
             isLoading={isLoading}
@@ -1374,7 +1565,7 @@ export function Dashboard() {
 
           <div className='space-y-3 pt-4'>
             <div className='text-sm text-gray-700'>
-              You are about to save <span className='font-semibold text-gray-900'>{selectedIds.size} candidates</span>{' '}
+              You are about to save <span className='font-semibold text-gray-900'>{selectedIds.size} companies</span>{' '}
               to &quot;{selectionName}&quot;.
             </div>
 
@@ -1434,7 +1625,7 @@ export function Dashboard() {
           </DialogHeader>
           <div className='py-4'>
             <p className='text-sm text-gray-600'>
-              You have unsaved changes. If you proceed, all filters, selected candidates, and search results will be
+              You have unsaved changes. If you proceed, all filters, selected companies, and search results will be
               cleared.
             </p>
           </div>
@@ -1448,6 +1639,19 @@ export function Dashboard() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <StandardQuestionModal
+        sqId={activeSqId}
+        open={isSqModalOpen}
+        onClose={() => {
+          setIsSqModalOpen(false);
+          setActiveSqId(null);
+          setSqError(null);
+        }}
+        onSubmit={handleRunSQ}
+        isProcessing={isProcessingSq}
+        error={sqError}
+      />
     </>
   );
 }
