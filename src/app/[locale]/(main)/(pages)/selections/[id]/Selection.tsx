@@ -634,7 +634,8 @@ export function Selection() {
 
       toast({
         title: 'Export Started',
-        description: 'You will receive an email when your export is ready',
+        description:
+          'Your Excel file is being prepared. You can download it from the Downloads page when ready. You\u2019ll also receive an email notification.',
       });
     } catch (error: any) {
       console.error('Export error:', error);
@@ -917,7 +918,7 @@ export function Selection() {
           <DialogHeader>
             <DialogTitle>Ask a custom question</DialogTitle>
             <DialogDescription className='text-gray-700'>
-              Apply your question to all selected companies. Results appear in your table.
+              Apply your question to all companies in this selection. You will be redirected to the results page.
             </DialogDescription>
           </DialogHeader>
 

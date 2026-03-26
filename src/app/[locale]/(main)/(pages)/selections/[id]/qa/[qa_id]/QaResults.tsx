@@ -204,10 +204,8 @@ export function QaResults() {
     } catch { return []; }
   })();
 
-  // SQ2: show only 3 primary columns in table, rest in expand
-  const SQ2_PRIMARY_KEYS = ['Primary Customer Type', 'Geographic Scope', 'Operational Criticality'];
-  const sq2DimKeys = sq2AllDimKeys.filter((k) => SQ2_PRIMARY_KEYS.includes(k));
-  const sq2ExpandKeys = sq2AllDimKeys.filter((k) => !SQ2_PRIMARY_KEYS.includes(k));
+  const sq2DimKeys = sq2AllDimKeys;
+  const sq2ExpandKeys: string[] = [];
 
   const renderExpandPanel = (parsed: Record<string, unknown>, rowSqId: string, colSpan: number, extraKeys: string[] = []) => {
     if (rowSqId === '3') {
@@ -272,7 +270,7 @@ export function QaResults() {
 
   // Column count for colSpan
   const colCount = 1 + (showCity ? 1 : 0) + (hasExpandableRows ? 1 : 0) +
-    (sqId === '1' ? 1 : sqId === '2' ? sq2DimKeys.length : sqId === '3' ? 1 : sqId === '4' ? 1 : 1) + 1;
+    (sqId === '1' ? 2 : sqId === '2' ? sq2DimKeys.length : sqId === '3' ? 1 : sqId === '4' ? 1 : 1) + 1;
 
   return (
     <div className='min-h-screen bg-gray-50 p-6'>
@@ -335,16 +333,17 @@ export function QaResults() {
         )}
 
         {result.answers && Array.isArray(result.answers) && result.answers.length > 0 ? (
-          <div className='overflow-x-auto overflow-hidden rounded-2xl border bg-white'>
+          <div className='overflow-x-scroll rounded-2xl border bg-white'>
             <div className='p-4 text-sm text-gray-600'>
               Showing {result.answers.length} answer{result.answers.length !== 1 ? 's' : ''}
             </div>
-            <Table className='table-fixed'>
+            <Table className={sqId === '2' ? '' : 'table-fixed'}>
               <colgroup>
                 {hasExpandableRows && <col className='w-10' />}
                 <col className={showCity ? 'w-[25%]' : 'w-[30%]'} />
                 {showCity && <col className='w-[15%]' />}
                 {sqId === '1' && <col className='w-20' />}
+                {sqId === '1' && <col />}
                 {sqId === '2' && sq2DimKeys.map((k) => <col key={k} />)}
                 {(sqId === '3' || sqId === '4' || !sqId) && <col />}
                 <col className='w-24' />
@@ -355,6 +354,7 @@ export function QaResults() {
                   <TableHead className='px-4 py-3 font-semibold text-gray-700'>Name</TableHead>
                   {showCity && <TableHead className='px-4 py-3 font-semibold text-gray-700'>City</TableHead>}
                   {sqId === '1' && <TableHead className='w-20 px-4 py-3 font-semibold text-gray-700'>Score</TableHead>}
+                  {sqId === '1' && <TableHead className='px-4 py-3 font-semibold text-gray-700'>Rationale</TableHead>}
                   {sqId === '2' && sq2DimKeys.map((k) => (
                     <TableHead key={k} className='px-4 py-3 font-semibold text-gray-700'>{k}</TableHead>
                   ))}
@@ -408,6 +408,17 @@ export function QaResults() {
                             })() : <span className='text-xs text-red-500'>{answer.error_message || 'failed'}</span>}
                           </TableCell>
                         )}
+                        {sqId === '1' && (
+                          <TableCell className='px-4 py-3 text-sm text-gray-700'>
+                            {isSuccess && parsedAnswer ? (() => {
+                              const raw = String(parsedAnswer['SCORE_TEXT'] ?? '');
+                              const text = raw.replace(/^Score\s*\d+\s*:\s*/i, '').replace(/^(Score\s*)?(NULL|null)\s*:\s*/i, '');
+                              if (!text) return <span className='text-gray-400'>—</span>;
+                              const truncated = text.length > 100 ? text.slice(0, 100) + '…' : text;
+                              return <span className='line-clamp-2'>{truncated}</span>;
+                            })() : null}
+                          </TableCell>
+                        )}
                         {sqId === '2' && sq2DimKeys.map((k) => (
                           <TableCell key={k} className='px-4 py-3 text-sm text-gray-700'>
                             {isSuccess && parsedAnswer
@@ -418,7 +429,12 @@ export function QaResults() {
                         {sqId === '3' && (
                           <TableCell className='px-4 py-3 text-sm text-gray-700'>
                             {isSuccess && parsedAnswer
-                              ? <span className='line-clamp-2'>{String(parsedAnswer['Company Snapshot'] ?? '—')}</span>
+                              ? (
+                                <div>
+                                  <span className='line-clamp-2'>{String(parsedAnswer['Company Snapshot'] ?? '—')}</span>
+                                  <span className='mt-0.5 block text-xs text-blue-500'>View full brief →</span>
+                                </div>
+                              )
                               : <span className='text-xs text-red-500'>{answer.error_message || 'failed'}</span>}
                           </TableCell>
                         )}

@@ -561,16 +561,18 @@ export const processQAJob = inngest.createFunction(
     const downloadUrl = await step.run('generate-excel', async () => {
       console.log('[Inngest processQAJob] Generating Excel...');
 
-      const headers = [
+      const { getExportColumnsForSQ, extractSQValues } = await import('@/libs/export-config');
+      const sqColumns = getExportColumnsForSQ(standardQuestionId || null);
+
+      const baseHeaders = [
         'Name',
-        'City',
-        'Answer',
-        'Status',
+        'Fit Score',
         'Domain',
         'Company Size',
         'Email',
         'Phone',
         'Street',
+        'City',
         'Postal Code',
         'Sector Level 1',
         'Sector Level 2',
@@ -581,31 +583,44 @@ export const processQAJob = inngest.createFunction(
         'Region Level 4',
         'LinkedIn Company URL',
         'Legal Form',
+      ];
+
+      const headers = [
+        ...baseHeaders,
+        ...sqColumns.map((c) => c.header),
+        'Status',
         'Error Message',
       ];
 
-      const rows = results.map((r) => [
-        normalizeValue(r.name),
-        normalizeValue(r.city),
-        normalizeValue(r.answer),
-        normalizeValue(r.status),
-        normalizeValue(r.domain),
-        normalizeValue(r.company_size),
-        normalizeValue(r.email),
-        normalizeValue(r.phone),
-        normalizeValue(r.street),
-        normalizeValue(r.postal_code),
-        normalizeValue(r.sector_level1),
-        normalizeValue(r.sector_level2),
-        normalizeValue(r.sector_level3),
-        normalizeValue(r.region_level1),
-        normalizeValue(r.region_level2),
-        normalizeValue(r.region_level3),
-        normalizeValue(r.region_level4),
-        normalizeValue(r.linkedin_company_url),
-        normalizeValue(r.legal_form),
-        normalizeValue(r.error_message),
-      ]);
+      const rows = results.map((r) => {
+        const sqValues = r.answer && r.status === 'success'
+          ? extractSQValues(standardQuestionId || null, r.answer)
+          : sqColumns.map(() => '');
+
+        return [
+          normalizeValue(r.name),
+          r.similarity != null ? Math.round(r.similarity * 100) + '%' : '',
+          normalizeValue(r.domain),
+          normalizeValue(r.company_size),
+          normalizeValue(r.email),
+          normalizeValue(r.phone),
+          normalizeValue(r.street),
+          normalizeValue(r.city),
+          normalizeValue(r.postal_code),
+          normalizeValue(r.sector_level1),
+          normalizeValue(r.sector_level2),
+          normalizeValue(r.sector_level3),
+          normalizeValue(r.region_level1),
+          normalizeValue(r.region_level2),
+          normalizeValue(r.region_level3),
+          normalizeValue(r.region_level4),
+          normalizeValue(r.linkedin_company_url),
+          normalizeValue(r.legal_form),
+          ...sqValues,
+          normalizeValue(r.status),
+          normalizeValue(r.error_message),
+        ];
+      });
 
       const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
       const wb = XLSX.utils.book_new();
