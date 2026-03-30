@@ -4,6 +4,8 @@
 import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
+import { OnboardingOverlay } from '@/components/onboarding-overlay';
+
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -26,6 +28,7 @@ interface ResultsWorkspaceProps {
   isPreviewMode?: boolean;
   userPlan?: string | null;
   topK?: number;
+  hasFilters?: boolean;
 }
 
 // All 17 required fields + similarity (optional)
@@ -186,6 +189,7 @@ export function ResultsWorkspace({
   isPreviewMode = false,
   userPlan,
   topK = 0,
+  hasFilters = false,
 }: ResultsWorkspaceProps) {
   const userPlanTyped = userPlan as UserPlan;
   const needsUpgradeForQA = userPlanTyped && requiresUpgrade(userPlanTyped, 'qa');
@@ -347,7 +351,27 @@ export function ResultsWorkspace({
         </div>
       </div>
 
+      {/* Empty states — shown INSTEAD of table */}
+
+      {!isLoading && results.length === 0 && activeTab === 'candidates' && (
+        <div className='flex min-h-[350px] items-center justify-center rounded-2xl border bg-white shadow-sm'>
+          {!hasFilters ? (
+            <OnboardingOverlay hasInteracted={false}>
+              <div className='text-center'>
+                <p className='text-xl font-semibold text-gray-700'>Choose a sector or region to see companies</p>
+                <p className='mt-2 text-base text-gray-400'>Start on the left</p>
+              </div>
+            </OnboardingOverlay>
+          ) : (
+            <div className='text-center'>
+              <p className='text-xl font-semibold text-gray-700'>Add another filter or view companies ↓</p>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Table */}
+      {(isLoading || results.length > 0 || activeTab === 'selected') && (
       <div className='min-h-[400px] overflow-hidden rounded-2xl border bg-white shadow-sm'>
         <div className='max-h-[600px] overflow-auto'>
           <Table>
@@ -393,10 +417,10 @@ export function ResultsWorkspace({
                 </TableRow>
               ) : displayedResults.length === 0 ? (
                 <TableRow className='hover:bg-transparent'>
-                  <TableCell colSpan={visibleColumns.length + 1} className='h-24 text-center text-gray-500'>
-                    {activeTab === 'selected'
-                      ? 'No companies selected yet.'
-                      : 'No companies found. Try adjusting your filters or adding names.'}
+                  <TableCell colSpan={visibleColumns.length + 1} className='h-48 text-center'>
+                    <p className='text-gray-500'>
+                      {activeTab === 'selected' ? 'No companies selected yet.' : 'No companies found.'}
+                    </p>
                   </TableCell>
                 </TableRow>
               ) : (
@@ -446,6 +470,7 @@ export function ResultsWorkspace({
           </Table>
         </div>
       </div>
+      )}
 
       {/* Prompt bar */}
       <div className='sticky bottom-2 z-10 mt-4'>

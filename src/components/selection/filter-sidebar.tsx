@@ -1,7 +1,7 @@
 'use client';
 
-import { Info, Plus, X } from 'lucide-react';
-import React, { useState } from 'react';
+import { Plus, X } from 'lucide-react';
+import React, { useRef, useState } from 'react';
 
 import { TreeMultiSelect } from '@/components/selection/tree-multi-select';
 import { Badge } from '@/components/ui/badge';
@@ -50,6 +50,7 @@ export function FilterSidebar({
   const [nameInput, setNameInput] = useState('');
   const [localTopK, setLocalTopK] = useState(topK.toString());
   const [showInfoTip, setShowInfoTip] = useState(false);
+  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Get locale-specific trees
   const sectorsTree = getSectorsTree(locale);
@@ -116,21 +117,42 @@ export function FilterSidebar({
         <h3 className='mb-2 text-sm font-semibold uppercase tracking-wide text-gray-700'>Build your selection</h3>
 
         {/* Names */}
-        <div className='flex items-center gap-1.5'>
-          <label className='text-sm text-gray-600'>Find companies similar</label>
-          <div className='relative'>
+        <div className='mb-1'>
+          <label className='text-sm text-gray-600'>Find similar companies</label>
+          <p className='text-xs text-gray-400'>Based on products, customers, and business model</p>
+          <div
+            className='relative inline-block'
+            onMouseEnter={() => {
+              if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+              hoverTimeoutRef.current = setTimeout(() => setShowInfoTip(true), 150);
+            }}
+            onMouseLeave={() => {
+              if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+              hoverTimeoutRef.current = setTimeout(() => setShowInfoTip(false), 200);
+            }}
+          >
             <button
               type='button'
               onClick={() => setShowInfoTip(!showInfoTip)}
-              className='text-gray-400 hover:text-gray-600 transition-colors'
+              className='mt-0.5 text-xs text-blue-500 hover:text-blue-600'
             >
-              <Info className='h-3.5 w-3.5' />
+              How it works →
             </button>
             {showInfoTip && (
               <>
-                <div className='fixed inset-0 z-40' onClick={() => setShowInfoTip(false)} />
-                <div className='absolute left-6 top-0 z-50 w-56 rounded-lg border bg-white p-3 text-xs text-gray-700 shadow-md'>
-                  Advanced similarity engine — finds companies that match in activity, product, and target customers.
+                <div className='absolute left-0 top-6 z-50 w-[420px] rounded-xl border bg-white p-5 text-sm text-gray-700 shadow-lg'>
+                  <p className='mb-2 font-medium text-gray-900'>We analyze companies across:</p>
+                  <div className='mb-3 space-y-1 text-gray-600'>
+                    <p>– Products and services</p>
+                    <p>– Target customers</p>
+                    <p>– Business model and operations</p>
+                  </div>
+                  <p className='mb-2 text-gray-600'>
+                    Powered by millions of data points, our model identifies companies that truly operate alike — beyond traditional filters like industry or size.
+                  </p>
+                  <p className='text-gray-600'>
+                    Built to deliver higher-quality matches for outreach, segmentation, and targeting.
+                  </p>
                 </div>
               </>
             )}
@@ -173,7 +195,7 @@ export function FilterSidebar({
         </div>
 
         {/* Sector */}
-        <div className='relative mt-4'>
+        <div className='relative mt-4' data-filter='sector'>
           <label className='mb-1 block text-sm text-gray-600'>Sector</label>
           <TreeMultiSelect
             data={sectorsTree}

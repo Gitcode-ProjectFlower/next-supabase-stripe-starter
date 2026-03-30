@@ -1435,62 +1435,6 @@ export function Dashboard() {
 
   return (
     <>
-      {/* Header */}
-      <header className='sticky top-0 z-40 border-b bg-white/90 backdrop-blur'>
-        <div className='mx-auto flex max-w-7xl items-center gap-3 px-4 py-3'>
-          <div className='ml-auto flex items-center gap-2'>
-            <Button
-              variant='outline'
-              className='rounded-lg border bg-white px-3 py-2 text-sm transition-colors hover:bg-gray-100'
-              onClick={handleNewSelectionClick}
-            >
-              New Selection
-            </Button>
-            <div className='h-6 w-px bg-gray-200' />
-            <Input
-              value={selectionName}
-              onChange={(e) => setSelectionName(e.target.value)}
-              placeholder='Selection Name'
-            />
-            <Button
-              onClick={() => handleSaveClick(saveUnavailableReason)}
-              disabled={isSaving}
-              aria-disabled={!!saveUnavailableReason || isSaving}
-              className={cn(
-                'rounded-lg bg-gray-900 px-4 py-2 text-sm text-white transition-colors hover:bg-black',
-                (saveUnavailableReason || isSaving) && 'cursor-not-allowed opacity-60'
-              )}
-            >
-              {isSaving ? 'Saving...' : 'Save'}
-            </Button>
-            <Button
-              variant='outline'
-              className={cn(
-                'rounded-lg border bg-white px-3 py-2 text-sm transition-colors hover:bg-gray-100',
-                (exportUnavailableReason || isExporting) && 'cursor-not-allowed opacity-60'
-              )}
-              aria-disabled={!!exportUnavailableReason || isExporting}
-              onClick={() => handleExportClick(exportUnavailableReason)}
-              disabled={isExporting}
-            >
-              {isExporting ? 'Preparing...' : 'Prepare Download'}
-            </Button>
-            {/* <Button
-              variant='outline'
-              className={cn(
-                'rounded-lg border bg-white px-3 py-2 text-sm transition-colors hover:bg-gray-100',
-                historyUnavailableReason && 'cursor-not-allowed opacity-60'
-              )}
-              aria-disabled={!!historyUnavailableReason}
-              onClick={() => handleHistoryClick(historyUnavailableReason)}
-            >
-              History
-            </Button> */}
-            <div className='h-6 w-px bg-gray-200' />
-            <div className='text-sm text-gray-600'>Profile</div>
-          </div>
-        </div>
-      </header>
 
       {/* Body */}
       <div className='mx-auto grid max-w-7xl grid-cols-12 gap-6 px-4 py-6'>
@@ -1517,6 +1461,46 @@ export function Dashboard() {
 
         {/* Right: Workspace */}
         <main className='relative col-span-12 lg:col-span-9'>
+          {/* Action Bar */}
+          <div className='mb-4 flex items-center gap-2'>
+            <Input
+              value={selectionName}
+              onChange={(e) => setSelectionName(e.target.value)}
+              placeholder='Selection name'
+              className='h-9 max-w-[200px] text-sm'
+            />
+            <Button
+              size='sm'
+              onClick={() => handleSaveClick(saveUnavailableReason)}
+              disabled={isSaving}
+              className={cn(
+                'bg-gray-900 text-white hover:bg-black',
+                (saveUnavailableReason || isSaving) && 'cursor-not-allowed opacity-60'
+              )}
+            >
+              {isSaving ? 'Saving...' : 'Save'}
+            </Button>
+            <Button
+              variant='outline'
+              size='sm'
+              className={cn((exportUnavailableReason || isExporting) && 'cursor-not-allowed opacity-60')}
+              onClick={() => handleExportClick(exportUnavailableReason)}
+              disabled={isExporting}
+            >
+              {isExporting ? 'Preparing...' : 'Prepare Download'}
+            </Button>
+            <div className='ml-auto'>
+              <Button
+                variant='ghost'
+                size='sm'
+                className='text-gray-500 hover:text-gray-700'
+                onClick={handleNewSelectionClick}
+              >
+                New Selection
+              </Button>
+            </div>
+          </div>
+
           {/* SQ Tiles */}
           <div className='mb-4'>
             <p className='mb-2 text-sm text-gray-600'>Turn your selection into insights and actions</p>
@@ -1553,6 +1537,7 @@ export function Dashboard() {
             isPreviewMode={isPreviewMode}
             userPlan={userPlan}
             topK={topK}
+            hasFilters={names.length > 0 || sectors.size > 0 || regions.size > 0 || companySize.length > 0}
           />
         </main>
       </div>

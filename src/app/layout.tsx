@@ -30,6 +30,13 @@ export const metadata: Metadata = {
     template: `%s | ${SEO_PROJECT_NAME}`,
   },
   description: SEO_PROJECT_DESCRIPTION,
+  icons: {
+    icon: [
+      { url: '/favicon.ico', media: '(prefers-color-scheme: light)' },
+      { url: '/favicon_dark.ico', media: '(prefers-color-scheme: dark)' },
+    ],
+    apple: [{ url: '/favicon_180x180.png', sizes: '180x180' }],
+  },
 };
 
 export default function RootLayout({ children }: PropsWithChildren) {

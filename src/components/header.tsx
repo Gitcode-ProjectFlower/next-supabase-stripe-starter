@@ -1,6 +1,7 @@
 'use client';
 
 import { LogOut, Menu, X } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -61,8 +62,8 @@ export function Header() {
         <div className='flex h-16 items-center justify-between'>
           {/* Logo */}
           <div className='flex items-center'>
-            <Link href={getLocalePath('/')} className='text-xl font-bold text-gray-900'>
-              App
+            <Link href={getLocalePath('/')}>
+              <Image src='/insidefirms_logo.png' alt='InsideFirms' width={160} height={40} className='h-10 w-auto' priority />
             </Link>
           </div>
 
