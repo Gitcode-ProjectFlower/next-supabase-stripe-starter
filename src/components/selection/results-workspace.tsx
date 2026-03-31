@@ -29,6 +29,7 @@ interface ResultsWorkspaceProps {
   userPlan?: string | null;
   topK?: number;
   hasFilters?: boolean;
+  onSearch?: () => void;
 }
 
 // All 17 required fields + similarity (optional)
@@ -190,6 +191,7 @@ export function ResultsWorkspace({
   userPlan,
   topK = 0,
   hasFilters = false,
+  onSearch,
 }: ResultsWorkspaceProps) {
   const userPlanTyped = userPlan as UserPlan;
   const needsUpgradeForQA = userPlanTyped && requiresUpgrade(userPlanTyped, 'qa');
@@ -352,6 +354,14 @@ export function ResultsWorkspace({
       </div>
 
       {/* Empty states — shown INSTEAD of table */}
+      {!isLoading && activeTab === 'selected' && selectedIds.size === 0 && (
+        <div className='flex min-h-[350px] items-center justify-center rounded-2xl border bg-white shadow-sm'>
+          <div className='text-center'>
+            <p className='text-xl font-semibold text-gray-700'>No companies selected yet</p>
+            <p className='mt-2 text-base text-gray-400'>Select companies from the Companies tab</p>
+          </div>
+        </div>
+      )}
 
       {!isLoading && results.length === 0 && activeTab === 'candidates' && (
         <div className='flex min-h-[350px] items-center justify-center rounded-2xl border bg-white shadow-sm'>
@@ -364,14 +374,30 @@ export function ResultsWorkspace({
             </OnboardingOverlay>
           ) : (
             <div className='text-center'>
-              <p className='text-xl font-semibold text-gray-700'>Add another filter or view companies ↓</p>
+              <button
+                onClick={onSearch}
+                className='rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-700'
+              >
+                Show companies
+              </button>
+              <p className='mt-3 text-sm text-gray-400'>Or add more filters to narrow your search</p>
             </div>
           )}
         </div>
       )}
 
+      {/* Loading state */}
+      {isLoading && (
+        <div className='flex min-h-[350px] items-center justify-center rounded-2xl border bg-white shadow-sm'>
+          <div className='text-center'>
+            <div className='mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-2 border-gray-200 border-t-blue-600' />
+            <p className='text-base text-gray-500'>Loading companies...</p>
+          </div>
+        </div>
+      )}
+
       {/* Table */}
-      {(isLoading || results.length > 0 || activeTab === 'selected') && (
+      {(!isLoading && ((results.length > 0 && activeTab === 'candidates') || (activeTab === 'selected' && selectedIds.size > 0))) && (
       <div className='min-h-[400px] overflow-hidden rounded-2xl border bg-white shadow-sm'>
         <div className='max-h-[600px] overflow-auto'>
           <Table>
@@ -409,18 +435,15 @@ export function ResultsWorkspace({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {isLoading ? (
-                <TableRow className='hover:bg-transparent'>
-                  <TableCell colSpan={visibleColumns.length + 1} className='h-24 text-center'>
-                    Loading companies...
-                  </TableCell>
-                </TableRow>
-              ) : displayedResults.length === 0 ? (
+              {displayedResults.length === 0 ? (
                 <TableRow className='hover:bg-transparent'>
                   <TableCell colSpan={visibleColumns.length + 1} className='h-48 text-center'>
-                    <p className='text-gray-500'>
-                      {activeTab === 'selected' ? 'No companies selected yet.' : 'No companies found.'}
+                    <p className='text-xl font-semibold text-gray-700'>
+                      {activeTab === 'selected' ? 'No companies selected yet' : 'No companies found'}
                     </p>
+                    {activeTab === 'selected' && (
+                      <p className='mt-2 text-base text-gray-400'>Select companies from the Companies tab</p>
+                    )}
                   </TableCell>
                 </TableRow>
               ) : (

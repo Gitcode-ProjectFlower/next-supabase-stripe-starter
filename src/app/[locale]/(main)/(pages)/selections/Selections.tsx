@@ -100,7 +100,7 @@ export function Selections() {
   if (isLoading) return <FullPageLoader text='Loading selections...' />;
 
   return selections.length === 0 ? (
-    <div className='flex h-full items-center justify-center p-6'>
+    <div className='fixed inset-0 top-16 flex items-center justify-center pb-16'>
       <div className='text-center'>
         <svg className='mx-auto h-24 w-24 text-gray-400' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
           <path

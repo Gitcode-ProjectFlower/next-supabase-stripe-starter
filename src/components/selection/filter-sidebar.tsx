@@ -114,7 +114,7 @@ export function FilterSidebar({
   return (
     <div className='space-y-6'>
       <div className='rounded-2xl border bg-white p-4 shadow-sm'>
-        <h3 className='mb-2 text-sm font-semibold uppercase tracking-wide text-gray-700'>Build your selection</h3>
+        <h3 className='mb-2 text-sm font-semibold uppercase tracking-wide text-gray-700'>Choose your target</h3>
 
         {/* Names */}
         <div className='mb-1'>
@@ -181,6 +181,7 @@ export function FilterSidebar({
             value={nameInput}
             onChange={(e) => setNameInput(e.target.value)}
             onKeyDown={handleKeyDown}
+            onBlur={() => { if (nameInput.trim()) handleAddName(); }}
             disabled={names.length >= 4}
           />
           <Button
@@ -219,17 +220,17 @@ export function FilterSidebar({
         {/* Company Size */}
         <div className='mt-4'>
           <label className='mb-1 block text-sm text-gray-600'>Company Size</label>
-          <div className='flex flex-wrap gap-2'>
+          <div className='flex gap-1.5'>
             {COMPANY_SIZE_OPTIONS.map((size) => (
               <button
                 key={size}
                 onClick={() => toggleCompanySize(size)}
-                className={`rounded-full border px-3 py-1.5 text-sm transition-colors ${companySize.includes(size)
+                className={`whitespace-nowrap rounded-full border px-2.5 py-1 text-xs transition-colors ${companySize.includes(size)
                     ? 'border-gray-900 bg-gray-900 text-white'
                     : 'bg-white text-gray-700 hover:bg-gray-50'
                   }`}
               >
-                {size}
+                {size === '+250' ? '250+' : size}
               </button>
             ))}
           </div>
@@ -237,7 +238,7 @@ export function FilterSidebar({
 
         {/* Top-K */}
         <div className='mt-4'>
-          <label className='mb-1 block text-sm text-gray-600'>Number of results (Top-K)</label>
+          <label className='mb-1 block text-sm text-gray-600'>Number of results</label>
           <Input
             type='number'
             min='1'
@@ -260,16 +261,15 @@ export function FilterSidebar({
                 setLocalTopK(planLimit.toString());
                 setTopK(planLimit);
               } else {
-                // Ensure format matches (e.g. remove leading zeros)
                 setLocalTopK(val.toString());
                 setTopK(val);
               }
             }}
             placeholder={planLimit.toString()}
-            className='w-full'
+            className='w-full [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none'
           />
           <p className='mt-1 text-xs text-gray-500'>
-            Plan cap: <span className='font-semibold'>{planLimit}</span> ({planName} plan)
+            Max {planLimit} results ({planName} plan)
             {userPlan === 'anonymous' || !userPlan ? (
               <span className='ml-1 text-blue-600'>• Sign up to increase limit</span>
             ) : null}
@@ -283,7 +283,7 @@ export function FilterSidebar({
             onClick={onSearch}
             disabled={isLoading}
           >
-            {isLoading ? 'Searching...' : names.length > 0 ? 'Find lookalikes' : 'Search companies'}
+            {isLoading ? 'Searching...' : 'Show companies →'}
           </Button>
           {resultsCount > 0 && (
             <span className='whitespace-nowrap rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700'>

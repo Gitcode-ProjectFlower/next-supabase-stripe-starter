@@ -1503,7 +1503,8 @@ export function Dashboard() {
 
           {/* SQ Tiles */}
           <div className='mb-4'>
-            <p className='mb-2 text-sm text-gray-600'>Turn your selection into insights and actions</p>
+            <p className='text-sm text-gray-600'>Turn your selection into insights and actions</p>
+            <p className='mb-2 text-xs text-gray-400'>Select companies to generate insights, reports, or outreach</p>
             <div className='grid grid-cols-2 gap-2 sm:grid-cols-4'>
               {STANDARD_QUESTIONS.map((sq) => (
                 <StandardQuestionTile
@@ -1538,6 +1539,7 @@ export function Dashboard() {
             userPlan={userPlan}
             topK={topK}
             hasFilters={names.length > 0 || sectors.size > 0 || regions.size > 0 || companySize.length > 0}
+            onSearch={handleSearch}
           />
         </main>
       </div>
