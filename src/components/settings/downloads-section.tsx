@@ -105,12 +105,12 @@ export function DownloadsSection({ initialDownloads = [] }: DownloadsSectionProp
     return (
       <>
         <p className='text-sm text-gray-600'>
-          Your Excel exports will appear here. Exports are available for 7 days after generation.
+          Your Excel exports will appear here. Exports are available for 30 days after generation.
         </p>
         <div className='mt-4 text-sm text-gray-500'>
           <p>• Click &quot;Prepare Download&quot; on any selection to generate a download</p>
           <p>• You&apos;ll receive an email when your export is ready</p>
-          <p>• Downloads expire after 7 days</p>
+          <p>• Downloads expire after 30 days</p>
         </div>
       </>
     );
@@ -184,7 +184,7 @@ export function DownloadsSection({ initialDownloads = [] }: DownloadsSectionProp
           </TableBody>
         </Table>
       </div>
-      <p className='mt-2 text-xs text-gray-600'>Files expire after 7 days.</p>
+      <p className='mt-2 text-xs text-gray-600'>Files expire after 30 days.</p>
     </>
   );
 }

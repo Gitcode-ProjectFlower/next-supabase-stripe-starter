@@ -4,7 +4,21 @@ import { Button } from '@/components/ui/button';
 import { createCheckoutAction } from '@/features/pricing/actions/create-checkout-action';
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
 
-const PLANS = [
+type PlanFeature = { text: string; sub?: string };
+
+const INSIGHTS_FEATURE: PlanFeature = {
+  text: 'Insights on selected companies',
+  sub: 'Includes segmentation, scoring & custom questions',
+};
+
+const PLANS: ReadonlyArray<{
+  name: string;
+  topK: number;
+  price: number;
+  interval: string;
+  popular: boolean;
+  features: ReadonlyArray<PlanFeature>;
+}> = [
   {
     name: 'Small',
     topK: 100,
@@ -12,11 +26,11 @@ const PLANS = [
     interval: 'month',
     popular: false,
     features: [
-      'Up to 100 results per search',
-      'Basic similarity search',
-      'Q&A on selected companies',
-      'Excel export',
-      'Email support',
+      { text: 'Up to 100 results per search' },
+      { text: 'Basic similarity search' },
+      INSIGHTS_FEATURE,
+      { text: 'Excel export' },
+      { text: 'Email support' },
     ],
   },
   {
@@ -26,12 +40,12 @@ const PLANS = [
     interval: 'month',
     popular: true,
     features: [
-      'Up to 500 results per search',
-      'Advanced similarity search',
-      'Q&A on selected companies',
-      'Excel export',
-      'Priority email support',
-      'Advanced filters',
+      { text: 'Up to 500 results per search' },
+      { text: 'Advanced similarity search' },
+      INSIGHTS_FEATURE,
+      { text: 'Excel export' },
+      { text: 'Priority email support' },
+      { text: 'Advanced filters' },
     ],
   },
   {
@@ -41,16 +55,16 @@ const PLANS = [
     interval: 'month',
     popular: false,
     features: [
-      'Up to 5,000 results per search',
-      'Premium similarity search',
-      'Q&A on selected companies',
-      'Excel export',
-      'Priority support',
-      'Advanced filters',
-      'API access',
+      { text: 'Up to 5,000 results per search' },
+      { text: 'Premium similarity search' },
+      INSIGHTS_FEATURE,
+      { text: 'Excel export' },
+      { text: 'Priority support' },
+      { text: 'Advanced filters' },
+      { text: 'API access' },
     ],
   },
-] as const;
+];
 
 export async function Pricing() {
   const supabase = await createSupabaseServerClient();
@@ -159,9 +173,14 @@ export async function Pricing() {
 
               <ul className='mb-6 flex-1 space-y-3'>
                 {plan.features.map((feature) => (
-                  <li key={feature} className='flex items-start gap-2'>
+                  <li key={feature.text} className='flex items-start gap-2'>
                     <Check className='h-5 w-5 shrink-0 text-green-600' />
-                    <span className='text-sm text-gray-700'>{feature}</span>
+                    <div className='flex-1'>
+                      <span className='text-sm text-gray-700'>{feature.text}</span>
+                      {feature.sub && (
+                        <p className='mt-0.5 pl-0 text-xs text-gray-500'>{feature.sub}</p>
+                      )}
+                    </div>
                   </li>
                 ))}
               </ul>

@@ -347,8 +347,8 @@ export function Selection() {
 
       if (remainingCalls < requiredCalls) {
         toast({
-          title: 'AI Limit Reached',
-          description: `You need ${requiredCalls} AI calls but only have ${remainingCalls} remaining. Upgrade your plan to continue.`,
+          title: 'Insight limit reached',
+          description: `You need ${requiredCalls} analyses, but only have ${remainingCalls} remaining. Upgrade your plan to continue.`,
           variant: 'destructive',
         });
         return;
@@ -384,10 +384,10 @@ export function Selection() {
           if (errorData.error === 'CAP_REACHED') {
             const message =
               errorData.type === 'ai_limit'
-                ? `You've reached your AI question limit (${errorData.current}/${errorData.limit}). Upgrade your plan to continue.`
+                ? `You've reached your limit for generating insights. Upgrade your plan to continue.`
                 : errorData.message || 'You have reached your usage limit.';
             toast({
-              title: 'Limit Reached',
+              title: 'Insight limit reached',
               description: message,
               variant: 'destructive',
             });

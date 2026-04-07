@@ -5,8 +5,8 @@ import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
  * TTL Cleanup Job
  *
  * Runs daily at 3:00 AM to clean up expired data:
- * - Selections older than 7 days (expires_at < NOW())
- * - Downloads older than 7 days (expires_at < NOW())
+ * - Selections past their expires_at (default 30 days)
+ * - Downloads past their expires_at (default 30 days)
  * - Associated Excel files from Supabase Storage
  */
 export const cleanupExpiredData = inngest.createFunction(

@@ -388,7 +388,7 @@ export const processQAJob = inngest.createFunction(
             if (responseStatus === 'TIMEOUT' || responseStatus === 'ABORTED') {
               errorMessage = 'Request timed out. Please try again.';
             } else if (responseStatus === 'ERROR' || responseStatus === 'NO_INFO') {
-              errorMessage = 'Failed to generate answer from resume data.';
+              errorMessage = 'Failed to generate insight from company data.';
             } else {
               errorMessage = 'Failed to generate answer';
             }
@@ -643,14 +643,14 @@ export const processQAJob = inngest.createFunction(
 
       const { data: urlData } = await supabaseAdminClient.storage
         .from('exports')
-        .createSignedUrl(filePath, 60 * 60 * 24 * 7);
+        .createSignedUrl(filePath, 60 * 60 * 24 * 30);
 
       if (!urlData) {
         throw new Error('Failed to create signed URL');
       }
 
       const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + 7);
+      expiresAt.setDate(expiresAt.getDate() + 30);
 
       await supabaseAdminClient.from('downloads').insert({
         user_id: userId,

@@ -533,7 +533,7 @@ export function ResultsWorkspace({
                   </TooltipTrigger>
                   {needsUpgradeForQA && (
                     <TooltipContent>
-                      <p>Upgrade your plan to use AI Q&A</p>
+                      <p>Upgrade your plan to generate insights</p>
                     </TooltipContent>
                   )}
                 </Tooltip>

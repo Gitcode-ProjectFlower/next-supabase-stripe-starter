@@ -62,7 +62,7 @@ export function UsageMeter() {
       {/* AI Calls */}
       <div>
         <div className='mb-2 flex justify-between text-sm'>
-          <span className='text-gray-600 dark:text-gray-400'>AI Questions Asked</span>
+          <span className='text-gray-600 dark:text-gray-400'>Insights generated</span>
           <span className='font-medium'>
             {stats.ai_calls.toLocaleString()} / {stats.aiCallsLimit.toLocaleString()}
           </span>

@@ -125,7 +125,7 @@ describe('Integration: Selection Flow', () => {
       expect(data.planCap).toBe(100); // Small plan cap
     });
 
-    it('should set expires_at to 7 days from now', async () => {
+    it('should set expires_at to 30 days from now', async () => {
       mockRpc.mockResolvedValueOnce({
         data: 'test-selection-id',
         error: null,
@@ -150,8 +150,8 @@ describe('Integration: Selection Flow', () => {
       const now = new Date();
       const daysDiff = (expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
 
-      expect(daysDiff).toBeGreaterThan(6.9);
-      expect(daysDiff).toBeLessThan(7.1);
+      expect(daysDiff).toBeGreaterThan(29.9);
+      expect(daysDiff).toBeLessThan(30.1);
     });
   });
 
@@ -163,14 +163,14 @@ describe('Integration: Selection Flow', () => {
           name: 'Selection 1',
           item_count: 5,
           created_at: new Date().toISOString(),
-          expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+          expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
         },
         {
           id: 'sel-2',
           name: 'Selection 2',
           item_count: 10,
           created_at: new Date().toISOString(),
-          expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+          expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
         },
       ];
 
@@ -200,7 +200,7 @@ describe('Integration: Selection Flow', () => {
           name: 'Active Selection',
           item_count: 5,
           created_at: now.toISOString(),
-          expires_at: new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+          expires_at: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString(),
         },
         // Expired selection would be filtered by the RPC function
       ];

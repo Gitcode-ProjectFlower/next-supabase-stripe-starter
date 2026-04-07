@@ -27,7 +27,7 @@ export const WelcomeEmail = ({ userName, userEmail }: WelcomeEmailProps) => {
           <Section style={features}>
             <Text style={feature}>✨ Create and manage selections</Text>
             <Text style={feature}>🔍 Perform advanced searches</Text>
-            <Text style={feature}>💬 Get AI-powered Q&A insights</Text>
+            <Text style={feature}>💬 Get insights from your selected companies</Text>
             <Text style={feature}>📊 Export your data to Excel</Text>
           </Section>
 

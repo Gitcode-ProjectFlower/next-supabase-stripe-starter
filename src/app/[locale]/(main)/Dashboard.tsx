@@ -1088,8 +1088,8 @@ export function Dashboard() {
 
       if (remainingCalls < requiredCalls) {
         toast({
-          title: 'AI Limit Reached',
-          description: `You need ${requiredCalls} AI calls but only have ${remainingCalls} remaining. Upgrade your plan to continue.`,
+          title: 'Insight limit reached',
+          description: `You need ${requiredCalls} analyses, but only have ${remainingCalls} remaining. Upgrade your plan to continue.`,
           variant: 'destructive',
         });
         return;
@@ -1305,10 +1305,10 @@ export function Dashboard() {
           if (errorData.error === 'CAP_REACHED') {
             const message =
               errorData.type === 'ai_limit'
-                ? `You've reached your AI question limit (${errorData.current}/${errorData.limit}). Upgrade your plan to continue.`
+                ? `You've reached your limit for generating insights. Upgrade your plan to continue.`
                 : errorData.message || 'You have reached your usage limit.';
             toast({
-              title: 'Limit Reached',
+              title: 'Insight limit reached',
               description: message,
               variant: 'destructive',
             });
@@ -1461,39 +1461,42 @@ export function Dashboard() {
 
         {/* Right: Workspace */}
         <main className='relative col-span-12 lg:col-span-9'>
-          {/* Action Bar */}
-          <div className='mb-4 flex items-center gap-2'>
-            <Input
-              value={selectionName}
-              onChange={(e) => setSelectionName(e.target.value)}
-              placeholder='Selection name'
-              className='h-9 max-w-[200px] text-sm'
-            />
-            <Button
-              size='sm'
-              onClick={() => handleSaveClick(saveUnavailableReason)}
-              disabled={isSaving}
-              className={cn(
-                'bg-gray-900 text-white hover:bg-black',
-                (saveUnavailableReason || isSaving) && 'cursor-not-allowed opacity-60'
-              )}
-            >
-              {isSaving ? 'Saving...' : 'Save'}
-            </Button>
-            <Button
-              variant='outline'
-              size='sm'
-              className={cn((exportUnavailableReason || isExporting) && 'cursor-not-allowed opacity-60')}
-              onClick={() => handleExportClick(exportUnavailableReason)}
-              disabled={isExporting}
-            >
-              {isExporting ? 'Preparing...' : 'Prepare Download'}
-            </Button>
-            <div className='ml-auto'>
+          {/* Single-line toolbar: title on the left, actions on the right */}
+          <div className='mb-2 flex flex-wrap items-center gap-3'>
+            <h2 className='text-sm font-semibold uppercase tracking-wide text-gray-700'>
+              Turn your selection into insights and actions
+            </h2>
+            <div className='ml-auto flex items-center gap-2'>
+              <Input
+                value={selectionName}
+                onChange={(e) => setSelectionName(e.target.value)}
+                placeholder='Selection name'
+                className='h-9 w-[160px] text-sm'
+              />
               <Button
-                variant='ghost'
                 size='sm'
-                className='text-gray-500 hover:text-gray-700'
+                onClick={() => handleSaveClick(saveUnavailableReason)}
+                disabled={isSaving}
+                className={cn(
+                  'bg-gray-900 text-white hover:bg-black',
+                  (saveUnavailableReason || isSaving) && 'cursor-not-allowed opacity-60'
+                )}
+              >
+                {isSaving ? 'Saving...' : 'Save'}
+              </Button>
+              <Button
+                variant='outline'
+                size='sm'
+                className={cn((exportUnavailableReason || isExporting) && 'cursor-not-allowed opacity-60')}
+                onClick={() => handleExportClick(exportUnavailableReason)}
+                disabled={isExporting}
+              >
+                {isExporting ? 'Preparing...' : 'Prepare Download'}
+              </Button>
+              <Button
+                variant='outline'
+                size='sm'
+                className='text-gray-600 hover:text-gray-800'
                 onClick={handleNewSelectionClick}
               >
                 New Selection
@@ -1503,8 +1506,7 @@ export function Dashboard() {
 
           {/* SQ Tiles */}
           <div className='mb-4'>
-            <p className='text-sm text-gray-600'>Turn your selection into insights and actions</p>
-            <p className='mb-2 text-xs text-gray-400'>Select companies to generate insights, reports, or outreach</p>
+            <p className='mb-3 text-xs text-[#6B7280]'>Select companies to generate insights, reports, or outreach</p>
             <div className='grid grid-cols-2 gap-2 sm:grid-cols-4'>
               {STANDARD_QUESTIONS.map((sq) => (
                 <StandardQuestionTile
@@ -1583,13 +1585,13 @@ export function Dashboard() {
               <span>
                 Expires on:{' '}
                 <span className='font-semibold text-gray-900'>
-                  {new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString('en-GB', {
+                  {new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('en-GB', {
                     day: 'numeric',
                     month: 'short',
                     year: 'numeric',
                   })}
                 </span>{' '}
-                (7 days)
+                (30 days)
               </span>
             </div>
           </div>

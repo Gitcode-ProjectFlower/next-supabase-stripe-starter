@@ -125,14 +125,14 @@ export const exportLookalikesJob = inngest.createFunction(
           throw new Error(`Failed to upload Excel file: ${uploadError.message}`);
         }
 
-        const { data: urlData } = await supabase.storage.from('exports').createSignedUrl(filePath, 60 * 60 * 24 * 7);
+        const { data: urlData } = await supabase.storage.from('exports').createSignedUrl(filePath, 60 * 60 * 24 * 30);
 
         if (!urlData) {
           throw new Error('Failed to create signed URL');
         }
 
         const expiresAt = new Date();
-        expiresAt.setDate(expiresAt.getDate() + 7);
+        expiresAt.setDate(expiresAt.getDate() + 30);
 
         await supabase.from('downloads').insert({
           user_id: userId,
@@ -204,9 +204,9 @@ export const exportLookalikesJob = inngest.createFunction(
           console.log(`Attempting to send email to ${data.user.email}`);
           const { sendExportReadyEmail } = await import('@/libs/resend/email-helpers');
 
-          // Calculate expiration date (7 days from now)
+          // Calculate expiration date (30 days from now)
           const expirationDate = new Date();
-          expirationDate.setDate(expirationDate.getDate() + 7);
+          expirationDate.setDate(expirationDate.getDate() + 30);
 
           const result = await sendExportReadyEmail({
             userEmail: data.user.email,

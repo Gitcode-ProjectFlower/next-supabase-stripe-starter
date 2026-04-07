@@ -1,4 +1,5 @@
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
+import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
 import { PLAN_CONFIGS, UserPlan } from './user-plan';
 
 export type UsageAction = 'record_download' | 'ai_question' | 'selection_created';
@@ -24,7 +25,10 @@ export interface UsageStats {
  * @param count - Number of records/calls/selections
  */
 export async function logUsage(userId: string, action: UsageAction, count: number): Promise<void> {
-  const supabase = await createSupabaseServerClient();
+  // Use admin client to bypass cookie dependency — this function is called from
+  // Inngest background jobs where request cookies are not available, and from API
+  // routes. RLS policy on usage_log requires service role for INSERT.
+  const supabase = supabaseAdminClient;
 
   console.log('[Usage Tracking] Logging usage:', {
     userId,
@@ -34,7 +38,7 @@ export async function logUsage(userId: string, action: UsageAction, count: numbe
 
   const { data: insertData, error } = await supabase
     .from('usage_log')
-    // @ts-ignore - Supabase browser client has TypeScript inference issue with insert queries
+    // @ts-ignore - Supabase admin client type inference issue with insert queries
     .insert({
       user_id: userId,
       action,

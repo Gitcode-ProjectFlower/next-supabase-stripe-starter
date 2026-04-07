@@ -98,7 +98,7 @@ export function OverviewSection({
       <div className='rounded-xl border border-gray-200 p-4'>
         <div className='text-sm text-gray-600'>Downloads ready</div>
         <div className='mt-1 font-semibold text-gray-900'>{downloadsCount}</div>
-        <div className='mt-1 text-xs text-gray-600'>Expire after 7 days</div>
+        <div className='mt-1 text-xs text-gray-600'>Expire after 30 days</div>
       </div>
 
       {/* Status */}

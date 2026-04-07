@@ -1,6 +1,6 @@
 'use client';
 
-import { Plus, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import React, { useRef, useState } from 'react';
 
 import { TreeMultiSelect } from '@/components/selection/tree-multi-select';
@@ -117,29 +117,32 @@ export function FilterSidebar({
         <h3 className='mb-2 text-sm font-semibold uppercase tracking-wide text-gray-700'>Choose your target</h3>
 
         {/* Names */}
-        <div className='mb-1'>
-          <label className='text-sm text-gray-600'>Find similar companies</label>
-          <p className='text-xs text-gray-400'>Based on products, customers, and business model</p>
-          <div
-            className='relative inline-block'
-            onMouseEnter={() => {
-              if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
-              hoverTimeoutRef.current = setTimeout(() => setShowInfoTip(true), 150);
-            }}
-            onMouseLeave={() => {
-              if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
-              hoverTimeoutRef.current = setTimeout(() => setShowInfoTip(false), 200);
-            }}
-          >
-            <button
-              type='button'
-              onClick={() => setShowInfoTip(!showInfoTip)}
-              className='mt-0.5 text-xs text-blue-500 hover:text-blue-600'
+        <div>
+          <div className='flex items-baseline gap-1.5'>
+            <label className='text-sm font-medium text-gray-700'>Find similar companies</label>
+            <span className='text-xs font-normal text-[#71717A]'>(Optional)</span>
+          </div>
+          <p className='mt-0.5 text-xs leading-snug text-[#6B7280]'>
+            Based on products, customers, and business model.{' '}
+            <span
+              className='relative inline-block'
+              onMouseEnter={() => {
+                if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+                hoverTimeoutRef.current = setTimeout(() => setShowInfoTip(true), 150);
+              }}
+              onMouseLeave={() => {
+                if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+                hoverTimeoutRef.current = setTimeout(() => setShowInfoTip(false), 200);
+              }}
             >
-              How it works →
-            </button>
-            {showInfoTip && (
-              <>
+              <button
+                type='button'
+                onClick={() => setShowInfoTip(!showInfoTip)}
+                className='text-xs text-blue-500 underline hover:text-blue-600'
+              >
+                How it works →
+              </button>
+              {showInfoTip && (
                 <div className='absolute left-0 top-6 z-50 w-[420px] rounded-xl border bg-white p-5 text-sm text-gray-700 shadow-lg'>
                   <p className='mb-2 font-medium text-gray-900'>We analyze companies across:</p>
                   <div className='mb-3 space-y-1 text-gray-600'>
@@ -148,52 +151,48 @@ export function FilterSidebar({
                     <p>– Business model and operations</p>
                   </div>
                   <p className='mb-2 text-gray-600'>
-                    Powered by millions of data points, our model identifies companies that truly operate alike — beyond traditional filters like industry or size.
+                    Powered by millions of data points, our model identifies companies that truly operate alike — beyond
+                    traditional filters like industry or size.
                   </p>
                   <p className='text-gray-600'>
                     Built to deliver higher-quality matches for outreach, segmentation, and targeting.
                   </p>
                 </div>
-              </>
-            )}
-          </div>
+              )}
+            </span>
+          </p>
         </div>
-        <div className='mt-2 flex gap-2 overflow-x-auto whitespace-nowrap pb-1'>
-          {names.map((name, idx) => (
-            <Badge
-              key={idx}
-              variant='secondary'
-              className='inline-flex items-center gap-2 border bg-white px-3 py-1 text-sm font-normal shadow-sm'
-            >
-              {name}
-              <button
-                onClick={() => removeName(idx)}
-                className='rounded-full p-0.5 transition-colors hover:bg-gray-100'
-              >
-                <X className='h-3 w-3' />
-              </button>
-            </Badge>
-          ))}
-        </div>
-        <div className='mt-2 flex items-center gap-2'>
+        <div className='mt-2'>
           <Input
-            placeholder={names.length >= 4 ? 'Max 4 names' : 'Enter a company name (e.g. santander.co.uk, tesco.co.uk)'}
+            placeholder={names.length >= 4 ? 'Max 4 names' : 'Enter a company name (e.g. santander.co.uk)'}
             value={nameInput}
             onChange={(e) => setNameInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            onBlur={() => { if (nameInput.trim()) handleAddName(); }}
+            onBlur={() => {
+              if (nameInput.trim()) handleAddName();
+            }}
             disabled={names.length >= 4}
           />
-          <Button
-            variant='outline'
-            size='icon'
-            onClick={handleAddName}
-            disabled={names.length >= 4 || !nameInput.trim()}
-            className='shrink-0 bg-white'
-          >
-            <Plus className='h-4 w-4' />
-          </Button>
         </div>
+        {names.length > 0 && (
+          <div className='mt-2 flex flex-wrap gap-2'>
+            {names.map((name, idx) => (
+              <Badge
+                key={idx}
+                variant='secondary'
+                className='inline-flex items-center gap-2 border border-gray-200 bg-gray-50 px-2.5 py-1 text-sm font-normal text-gray-700 shadow-none'
+              >
+                {name}
+                <button
+                  onClick={() => removeName(idx)}
+                  className='rounded-full p-0.5 text-gray-500 transition-colors hover:bg-gray-200'
+                >
+                  <X className='h-3 w-3' />
+                </button>
+              </Badge>
+            ))}
+          </div>
+        )}
 
         {/* Sector */}
         <div className='relative mt-4' data-filter='sector'>

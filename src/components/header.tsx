@@ -60,8 +60,8 @@ export function Header() {
     <header className='sticky top-0 z-50 border-b border-gray-200 bg-white'>
       <nav className='mx-auto max-w-7xl px-4 sm:px-6 lg:px-8' aria-label='Top'>
         <div className='flex h-16 items-center justify-between'>
-          {/* Logo */}
-          <div className='flex items-center xl:pl-12'>
+          {/* Logo — aligned with sidebar left edge (same container padding) */}
+          <div className='flex items-center'>
             <Link href={getLocalePath('/')}>
               <Image src='/insidefirms_logo.png' alt='InsideFirms' width={160} height={40} className='h-10 w-auto' priority />
             </Link>

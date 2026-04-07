@@ -158,7 +158,7 @@ export async function POST(request: NextRequest) {
     }
 
     const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7);
+    expiresAt.setDate(expiresAt.getDate() + 30);
 
     // @ts-ignore - Supabase RPC type inference issue
     const { data: selectionId, error: rpcError } = await supabase.rpc('create_selection', {

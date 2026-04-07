@@ -78,7 +78,7 @@ export function createMockSelection(overrides = {}) {
     criteria_json: { regions: ['London'], sectors: ['technology'] },
     item_count: 5,
     created_at: new Date().toISOString(),
-    expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+    expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
     ...overrides,
   };
 }

@@ -328,7 +328,7 @@ export function Help() {
               <div>
                 <h3 className='mb-2 font-semibold text-gray-900'>How long are selections available?</h3>
                 <p className='text-gray-600'>
-                  Selections are available for 7 days after creation. After that, they expire and are automatically
+                  Selections are available for 30 days after creation. After that, they expire and are automatically
                   removed.
                 </p>
               </div>
@@ -389,7 +389,7 @@ export function Help() {
               <div>
                 <h3 className='mb-2 font-semibold text-gray-900'>How long are Excel download links valid?</h3>
                 <p className='text-gray-600'>
-                  Excel download links are valid for 7 days after generation. After that, a new export must be generated.
+                  Excel download links are valid for 30 days after generation. After that, a new export must be generated.
                 </p>
               </div>
               <div>
@@ -481,7 +481,7 @@ export function Help() {
               <div>
                 <h3 className='mb-2 font-semibold text-gray-900'>What happens to my data if I cancel?</h3>
                 <p className='text-gray-600'>
-                  Saved selections and exports remain available for 7 days after cancellation and are then automatically
+                  Saved selections and exports remain available for 30 days after cancellation and are then automatically
                   removed.
                 </p>
               </div>
@@ -510,7 +510,7 @@ export function Help() {
                 <ul className='ml-4 list-disc space-y-1 text-gray-600'>
                   <li>All data is stored in secured databases with access control and encryption at rest</li>
                   <li>User authentication is handled securely</li>
-                  <li>Excel exports are stored temporarily (7 days) in secure cloud storage</li>
+                  <li>Excel exports are stored temporarily (30 days) in secure cloud storage</li>
                   <li>Industry-standard security practices are followed</li>
                 </ul>
               </div>
@@ -554,7 +554,7 @@ export function Help() {
               <div>
                 <h3 className='mb-2 font-semibold text-gray-900'>The Excel download link expired. What should I do?</h3>
                 <p className='text-gray-600'>
-                  Generate a new export from the saved selection. Links are valid for 7 days.
+                  Generate a new export from the saved selection. Links are valid for 30 days.
                 </p>
               </div>
             </CollapsibleContent>

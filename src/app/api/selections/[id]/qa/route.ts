@@ -110,7 +110,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         {
           error: 'CAP_REACHED',
           type: 'ai_limit',
-          message: 'You have reached your monthly AI question limit. Upgrade to continue.',
+          message: 'You have reached your monthly insight limit. Upgrade to continue.',
           current: usageCheck.current,
           limit: usageCheck.limit,
           remaining: usageCheck.remaining,
