@@ -250,11 +250,11 @@ export class HaystackClient {
         if (errorText.includes('Vector dimension error')) {
           if (errorText.includes('got 0')) {
             throw new Error(
-              'Unable to process Q&A: The question could not be processed. Please ensure your question contains valid text and try again.'
+              'Unable to generate insights: The question could not be processed. Please ensure your question contains valid text and try again.'
             );
           } else {
             throw new Error(
-              'Unable to process Q&A: Company data not found. Please ensure company names match the database.'
+              'Unable to generate insights: Company data not found. Please ensure company names match the database.'
             );
           }
         }
@@ -281,7 +281,7 @@ export class HaystackClient {
           const batchTimeout = customTimeout || Math.max(120000, Math.min(900000, items.length * 30000));
           errorMessage = `Request timeout after ${Math.round(
             batchTimeout / 1000
-          )}s. The Q&A processing is taking longer than expected. Please try again or reduce the number of companies.`;
+          )}s. Insight generation is taking longer than expected. Please try again or reduce the number of companies.`;
         } else {
           errorMessage = error.message;
         }
@@ -413,7 +413,7 @@ export class HaystackClient {
           const batchTimeout = customTimeout || Math.max(120000, Math.min(900000, items.length * 30000));
           errorMessage = `Request timeout after ${Math.round(
             batchTimeout / 1000
-          )}s. The Q&A processing is taking longer than expected. Please try again.`;
+          )}s. Insight generation is taking longer than expected. Please try again.`;
         } else {
           errorMessage = error.message;
         }

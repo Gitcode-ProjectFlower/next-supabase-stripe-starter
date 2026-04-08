@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 
 interface Download {
   id: string;
-  type: 'Lookalike Excel' | 'Q&A Excel';
+  type: 'Lookalike Excel' | 'Insights Excel';
   selectionId: string;
   selectionName?: string;
   createdAt: string;

@@ -26,7 +26,8 @@
     "test:e2e:headed": "playwright test --headed",
     "format": "prettier . --write",
     "format:check": "prettier . --check",
-    "generate-trees": "tsx scripts/generate-locale-trees.ts"
+    "generate-trees": "tsx scripts/generate-locale-trees.ts",
+    "qdrant:init-indexes": "tsx scripts/qdrant-init-indexes.ts"
   },
   "dependencies": {
     "@radix-ui/react-collapsible": "^1.1.2",

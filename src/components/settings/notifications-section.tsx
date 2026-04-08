@@ -184,15 +184,15 @@ export function NotificationsSection({ initialEmailNotifications }: Notification
     <>
       <SectionTitle>Notifications</SectionTitle>
       <p className='mb-3 text-sm text-gray-600'>
-        Toggle e‑mail notifications for: <span className='italic'>export ready</span> and{' '}
-        <span className='italic'>run ready</span>.
+        Toggle e-mail notifications for: <span className='italic'>export ready</span> and{' '}
+        <span className='italic'>insight run ready</span>.
       </p>
 
       <div className='flex items-center justify-between rounded-xl border border-gray-200 p-4'>
         <div>
           <div className='font-medium text-gray-900'>Email notifications</div>
           <div className='text-sm text-gray-600'>
-            Receive an email when an Excel export is ready or a Q&A run finishes.
+            Receive an email when an Excel export is ready or an insight run finishes.
           </div>
         </div>
 

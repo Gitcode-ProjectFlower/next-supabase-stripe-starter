@@ -176,7 +176,7 @@ export function RecentActivity() {
       <div className='rounded-xl border border-gray-200 p-6'>
         <h3 className='mb-2 text-lg font-semibold text-gray-900'>History</h3>
         <p className='text-sm text-gray-600'>No recent activity to display.</p>
-        <p className='mt-2 text-xs text-gray-500'>Your recent searches, Q&A runs, and exports will appear here.</p>
+        <p className='mt-2 text-xs text-gray-500'>Your recent searches, insights, and exports will appear here.</p>
       </div>
     );
   }

@@ -86,7 +86,7 @@ export function FilterSidebar({
   }, [planLimit]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleAddName = () => {
-    if (nameInput.trim() && names.length < 4) {
+    if (nameInput.trim() && names.length < 1) {
       setNames([...names, nameInput.trim()]);
       setNameInput('');
     }
@@ -164,14 +164,14 @@ export function FilterSidebar({
         </div>
         <div className='mt-2'>
           <Input
-            placeholder={names.length >= 4 ? 'Max 4 names' : 'Enter a company name (e.g. santander.co.uk)'}
+            placeholder={names.length >= 1 ? 'Only one company supported for now' : 'Enter a company name (e.g. santander.co.uk)'}
             value={nameInput}
             onChange={(e) => setNameInput(e.target.value)}
             onKeyDown={handleKeyDown}
             onBlur={() => {
               if (nameInput.trim()) handleAddName();
             }}
-            disabled={names.length >= 4}
+            disabled={names.length >= 1}
           />
         </div>
         {names.length > 0 && (
@@ -276,7 +276,7 @@ export function FilterSidebar({
         </div>
 
         {/* CTA */}
-        <div className='mt-4 flex items-center gap-2'>
+        <div className='mt-4 flex flex-col items-stretch gap-2'>
           <Button
             className='w-full justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700'
             onClick={onSearch}
@@ -285,7 +285,7 @@ export function FilterSidebar({
             {isLoading ? 'Searching...' : 'Show companies →'}
           </Button>
           {resultsCount > 0 && (
-            <span className='whitespace-nowrap rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700'>
+            <span className='self-center whitespace-nowrap rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700'>
               {resultsCount} companies
             </span>
           )}

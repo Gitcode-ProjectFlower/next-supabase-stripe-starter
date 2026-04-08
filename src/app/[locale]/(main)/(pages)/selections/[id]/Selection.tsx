@@ -339,11 +339,10 @@ export function Selection() {
       return;
     }
 
-    // Client-side verification: Check usage limits before making request
+    // Client-side verification: one analysis run = one unit, regardless of selection size.
     if (usageStats) {
-      const itemCount = selection.item_count || selection.items.length || 1;
-      const requiredCalls = itemCount;
       const remainingCalls = usageStats.aiCallsLimit - usageStats.ai_calls;
+      const requiredCalls = 1;
 
       if (remainingCalls < requiredCalls) {
         toast({
@@ -373,7 +372,7 @@ export function Selection() {
         if (response.status === 401) {
           toast({
             title: 'Authentication Required',
-            description: 'Please sign in to use Q&A features',
+            description: 'Please sign in to generate insights',
             variant: 'destructive',
           });
           router.push(getLocalePath(locale, '/login'));
@@ -423,7 +422,7 @@ export function Selection() {
         // Generic error for 500 or other status codes
         toast({
           title: 'Error',
-          description: errorData.error || errorData.message || 'Failed to start Q&A job. Please try again later.',
+          description: errorData.error || errorData.message || 'Failed to start the insight run. Please try again later.',
           variant: 'destructive',
         });
         return;
@@ -434,7 +433,7 @@ export function Selection() {
       if (!data.qaSessionId) {
         toast({
           title: 'Error',
-          description: 'Q&A session was not created. Please try again.',
+          description: 'The insight run was not created. Please try again.',
           variant: 'destructive',
         });
         setIsProcessingQA(false);
@@ -475,7 +474,7 @@ export function Selection() {
                 setQaStatus('failed');
                 toast({
                   title: 'Error',
-                  description: 'Q&A processing completed but no answers were generated. Please try again.',
+                  description: 'Insight generation completed but no answers were generated. Please try again.',
                   variant: 'destructive',
                 });
                 return;
@@ -490,7 +489,7 @@ export function Selection() {
 
               toast({
                 title: 'Success',
-                description: `Q&A completed! Found ${answersCount} answer${answersCount !== 1 ? 's' : ''
+                description: `Insight run completed. Found ${answersCount} answer${answersCount !== 1 ? 's' : ''
                   }. Redirecting...`,
               });
               // Small delay before navigation to show completion
@@ -509,7 +508,7 @@ export function Selection() {
               setIsProcessingQA(false);
               toast({
                 title: 'Error',
-                description: progressData.error_message || 'Q&A processing failed',
+                description: progressData.error_message || 'Insight generation failed',
                 variant: 'destructive',
               });
               setQaStatus('failed');
@@ -522,7 +521,7 @@ export function Selection() {
     } catch (error: any) {
       toast({
         title: 'Error',
-        description: error.message || 'Failed to start Q&A. Please try again.',
+        description: error.message || 'Failed to start the insight run. Please try again.',
         variant: 'destructive',
       });
       setIsProcessingQA(false);
@@ -912,7 +911,7 @@ export function Selection() {
         error={sqError}
       />
 
-      {/* Q&A Modal */}
+      {/* Insights Modal */}
       <Dialog open={isQAModalOpen} onOpenChange={setIsQAModalOpen}>
         <DialogContent className='bg-white sm:max-w-[600px]'>
           <DialogHeader>
@@ -936,10 +935,10 @@ export function Selection() {
                 <div className='flex items-center justify-between text-sm text-gray-600'>
                   <span>
                     {qaStatus === 'completed'
-                      ? 'Q&A Completed!'
+                      ? 'Insight run completed'
                       : qaStatus === 'failed'
-                        ? 'Q&A Failed'
-                        : 'Processing Q&A...'}
+                        ? 'Insight run failed'
+                        : 'Generating insights...'}
                   </span>
                   <span>{qaProgress}%</span>
                 </div>

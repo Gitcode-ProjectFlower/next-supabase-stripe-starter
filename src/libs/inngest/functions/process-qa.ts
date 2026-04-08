@@ -624,7 +624,7 @@ export const processQAJob = inngest.createFunction(
 
       const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
       const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, 'Q&A Results');
+      XLSX.utils.book_append_sheet(wb, ws, 'Insights Results');
       const xlsxArray = XLSX.write(wb, { type: 'array', bookType: 'xlsx' }) as Uint8Array;
       const xlsxBuffer = Buffer.from(xlsxArray);
 
@@ -697,7 +697,7 @@ export const processQAJob = inngest.createFunction(
       if (shouldMarkAsFailed) {
         const errorMessage =
           successCount === 0
-            ? 'All Q&A requests failed. Please check your question and try again.'
+            ? 'All insight requests failed. Please check your question and try again.'
             : `Only ${successCount} out of ${totalCount} answers were generated successfully. The session is marked as failed.`;
 
         console.warn('[Inngest processQAJob] Marking session as failed due to low success rate:', {
@@ -818,13 +818,16 @@ export const processQAJob = inngest.createFunction(
           .eq('id', standardRunId);
       }
 
-      // Log usage only if session was marked as completed (not failed)
+      // Log usage only if session was marked as completed (not failed).
+      // One analysis run = one unit, regardless of how many companies were processed.
+      // This matches the limit check in the API route and lets free-tier users run
+      // an analysis over a large selection without being blocked.
       console.log('[Inngest processQAJob] Logging usage for successful Q&A job...');
       const { logUsage } = await import('@/libs/usage-tracking');
 
       try {
-        await logUsage(userId, 'ai_question', successCount); // Only count successful answers
-        console.log(`[Inngest processQAJob] Usage logged: ${successCount} AI calls (only successful answers)`);
+        await logUsage(userId, 'ai_question', 1);
+        console.log(`[Inngest processQAJob] Usage logged: 1 analysis (successCount=${successCount})`);
       } catch (usageError) {
         console.error('[Inngest processQAJob] Failed to log usage:', usageError);
         // Don't fail the job if usage logging fails - it's not critical

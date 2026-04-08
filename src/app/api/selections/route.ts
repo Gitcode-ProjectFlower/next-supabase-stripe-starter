@@ -12,7 +12,7 @@ import { getUserPlan } from '@/libs/user-plan';
 const createSelectionSchema = z.object({
   name: z.string().min(1, 'Selection name is required').max(100),
   criteria: z.object({
-    names: z.array(z.string()).max(4).optional(),
+    names: z.array(z.string()).max(1).optional(),
     regions: z.array(z.string()).optional(),
     sectors: z.array(z.string()).optional(),
     experience_years: z.array(z.number()).optional(),

@@ -16,6 +16,20 @@ vi.mock('@/libs/supabase/supabase-server-client', () => ({
     from: vi.fn(() => ({
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
+      in: vi.fn().mockReturnThis(),
+      or: vi.fn().mockReturnThis(),
+      order: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockReturnThis(),
+      maybeSingle: vi.fn().mockResolvedValue({
+        data: {
+          prices: {
+            products: {
+              metadata: { plan_name: 'small' },
+            },
+          },
+        },
+        error: null,
+      }),
       single: vi.fn().mockResolvedValue({
         data: {
           prices: {
@@ -32,9 +46,10 @@ vi.mock('@/libs/supabase/supabase-server-client', () => ({
 
 vi.mock('@/libs/ratelimit', () => ({
   checkRateLimit: vi.fn().mockResolvedValue({
-    success: true,
+    allowed: true,
     limit: 30,
     remaining: 29,
+    current: 1,
     reset: new Date(Date.now() + 60000),
   }),
   searchRateLimiter: {},

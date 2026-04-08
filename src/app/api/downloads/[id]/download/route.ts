@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
-import { logUsage } from '@/libs/usage-tracking';
 
 /**
  * POST /api/downloads/[id]/download
- * Logs the download action and returns the download URL
- * This ensures record_download is logged when user actually downloads the file
+ * Returns the download URL for an existing export.
+ *
+ * Usage is intentionally NOT logged here. record_download is logged once
+ * at file-creation time inside the Inngest jobs (export-lookalikes.ts and
+ * process-qa.ts). Logging again on actual download would double-count
+ * (and triple-count on every re-download), which inflates the usage meter.
  */
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -54,28 +57,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ error: 'Download has expired' }, { status: 410 });
     }
 
-    // Log the download usage
-    console.log('[Download API] Logging record_download usage:', {
-      userId: user.id,
-      downloadId,
-      downloadType: download.type,
-      rowCount: download.row_count,
-    });
-
-    try {
-      await logUsage(user.id, 'record_download', download.row_count || 0);
-      console.log('[Download API] record_download usage logged successfully');
-    } catch (usageError) {
-      console.error('[Download API] Failed to log usage (non-critical):', {
-        error: usageError instanceof Error ? usageError.message : String(usageError),
-        userId: user.id,
-        downloadId,
-        rowCount: download.row_count,
-      });
-      // Continue even if logging fails - still allow download
-    }
-
-    // Return the download URL
     return NextResponse.json({
       downloadUrl: download.url,
       type: download.type,

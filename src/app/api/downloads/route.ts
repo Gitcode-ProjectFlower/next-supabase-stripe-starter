@@ -53,7 +53,7 @@ export async function GET() {
 
         return {
           id: download.id,
-          type: download.type === 'lookalike' ? 'Lookalike Excel' : 'Q&A Excel',
+          type: download.type === 'lookalike' ? 'Lookalike Excel' : 'Insights Excel',
           selectionId: download.selection_id,
           selectionName,
           createdAt: download.created_at,

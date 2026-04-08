@@ -2,11 +2,21 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { UserPlan } from '../plan-config';
 import { PLAN_CONFIGS } from '../plan-config';
 import { createSupabaseServerClient } from '../supabase/supabase-server-client';
+import { supabaseAdminClient } from '../supabase/supabase-admin';
 import { checkUsageLimit, getUsageStats, logUsage } from '../usage-tracking';
 
-// Mock Supabase client
+// Mock both clients. logUsage() now uses the admin (service-role) client so it
+// can run from Inngest background jobs where cookies are unavailable. The other
+// helpers (checkUsageLimit / getUsageStats) still use the request-scoped
+// server client.
 vi.mock('../supabase/supabase-server-client', () => ({
   createSupabaseServerClient: vi.fn(),
+}));
+
+vi.mock('../supabase/supabase-admin', () => ({
+  supabaseAdminClient: {
+    from: vi.fn(),
+  },
 }));
 
 // Verify PLAN_CONFIGS is available (it should be since user-plan re-exports it)
@@ -31,15 +41,23 @@ describe('Usage Tracking', () => {
   });
 
   describe('logUsage', () => {
+    const buildInsertChain = (result: { data?: { id: string } | null; error: { message: string } | null }) => {
+      const mockSingle = vi.fn().mockResolvedValue({
+        data: result.data ?? { id: 'log-1' },
+        error: result.error,
+      });
+      const mockSelect = vi.fn().mockReturnValue({ single: mockSingle });
+      const mockInsert = vi.fn().mockReturnValue({ select: mockSelect });
+      vi.mocked(supabaseAdminClient.from).mockReturnValue({ insert: mockInsert } as any);
+      return { mockInsert, mockSelect, mockSingle };
+    };
+
     it('should successfully log usage for record_download action', async () => {
-      const mockInsert = vi.fn().mockResolvedValue({ error: null });
-      mockSupabase.from.mockReturnValue({
-        insert: mockInsert,
-      } as any);
+      const { mockInsert } = buildInsertChain({ error: null });
 
       await expect(logUsage('user-123', 'record_download', 5)).resolves.not.toThrow();
 
-      expect(mockSupabase.from).toHaveBeenCalledWith('usage_log');
+      expect(supabaseAdminClient.from).toHaveBeenCalledWith('usage_log');
       expect(mockInsert).toHaveBeenCalledWith({
         user_id: 'user-123',
         action: 'record_download',
@@ -48,10 +66,7 @@ describe('Usage Tracking', () => {
     });
 
     it('should successfully log usage for ai_question action', async () => {
-      const mockInsert = vi.fn().mockResolvedValue({ error: null });
-      mockSupabase.from.mockReturnValue({
-        insert: mockInsert,
-      } as any);
+      const { mockInsert } = buildInsertChain({ error: null });
 
       await expect(logUsage('user-123', 'ai_question', 1)).resolves.not.toThrow();
 
@@ -63,12 +78,7 @@ describe('Usage Tracking', () => {
     });
 
     it('should throw error when database insert fails', async () => {
-      const mockInsert = vi.fn().mockResolvedValue({
-        error: { message: 'Database error' },
-      });
-      mockSupabase.from.mockReturnValue({
-        insert: mockInsert,
-      } as any);
+      buildInsertChain({ error: { message: 'Database error' } });
 
       await expect(logUsage('user-123', 'record_download', 5)).rejects.toThrow('Failed to log usage');
     });

@@ -96,8 +96,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       }
     }
 
-    // Calculate AI calls: each resume counts as 1 AI call
-    const aiCallCount = resume_ids.length > 0 ? resume_ids.length : selection.item_count || 1;
+    // One analysis run = one unit, regardless of how many companies are in the selection.
+    // Previously we counted each company as a separate AI call which blocked free-tier
+    // users as soon as their selection had more than 5 companies.
+    const aiCallCount = 1;
 
     // Get user plan
     const userPlan = await getUserPlan(user.id);
@@ -249,7 +251,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       const errorMessage =
         inngestError instanceof Error
           ? inngestError.message
-          : 'Failed to queue Q&A job. Please check Inngest configuration.';
+          : 'Failed to queue the insight job. Please check Inngest configuration.';
 
       console.error('[QA API] Failed to send Inngest event:', {
         error: errorMessage,
@@ -272,7 +274,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
       return NextResponse.json(
         {
-          error: 'Failed to queue Q&A job',
+          error: 'Failed to queue the insight job',
           details: process.env.NODE_ENV === 'development' ? errorMessage : undefined,
         },
         { status: 500 }
@@ -280,7 +282,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     }
 
     return NextResponse.json({
-      message: 'Q&A job started',
+      message: 'Insight job started',
       selectionId,
       qaSessionId,
       aiCallsUsed: aiCallCount,
@@ -292,7 +294,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     });
   } catch (error) {
     console.error('Q&A trigger error:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Failed to start Q&A job';
+    const errorMessage = error instanceof Error ? error.message : 'Failed to start the insight job';
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

@@ -5,12 +5,12 @@ import { getCollectionFromLocale, getDefaultLocale, getLocaleFromPath } from '@/
 import { getTopKLimit, validateFilterKeys } from '@/libs/facet-config';
 import { checkRateLimit, searchRateLimiter } from '@/libs/ratelimit';
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
-import { getAnonymousPlan, getUserPlan } from '@/libs/user-plan';
+import { getAnonymousPlan, getUserPlan, maskFields } from '@/libs/user-plan';
 import { normalizeValue } from '@/utils/normalize-value';
 
 const searchSchema = z.object({
-  names: z.array(z.string()).min(0).max(4).optional(),
-  lookalike_names: z.array(z.string()).min(0).max(4).optional(),
+  names: z.array(z.string()).min(0).max(1).optional(),
+  lookalike_names: z.array(z.string()).min(0).max(1).optional(),
   sectors: z.array(z.string()).optional(),
   regions: z.array(z.string()).optional(),
   // Hierarchical sector filters
@@ -311,12 +311,13 @@ export async function POST(request: NextRequest) {
     }));
 
     const limitedResults = isAnonymous ? normalizedResults.slice(0, 3) : normalizedResults;
+    const maskedResults = maskFields(limitedResults, userPlan);
 
     return NextResponse.json({
       success: true,
       data: {
-        preview: limitedResults,
-        total: limitedResults.length,
+        preview: maskedResults,
+        total: maskedResults.length,
         plan: userPlan || 'anonymous',
         limit: planLimit,
         isAnonymous,

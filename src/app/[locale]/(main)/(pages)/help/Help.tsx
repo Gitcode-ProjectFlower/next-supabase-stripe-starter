@@ -142,8 +142,8 @@ export function Help() {
                 <h3 className='mb-2 font-semibold text-gray-900'>What is InsideFirms?</h3>
                 <p className='text-gray-600'>
                   InsideFirms is a platform that helps you find and analyze companies based on your specific criteria.
-                  You can search for companies using lookalike matching, filter by sector and region, and ask questions
-                  to gain insights about selected companies.
+                  You can search for companies using lookalike matching, filter by sector and region, and generate
+                  insights about selected companies.
                 </p>
               </div>
               <div>
@@ -151,22 +151,23 @@ export function Help() {
                 <p className='mb-2 text-gray-600'>The platform offers three main features:</p>
                 <ol className='ml-4 list-decimal space-y-1 text-gray-600'>
                   <li>
-                    <strong>Lookalike Search:</strong> Enter names of companies you like, and we'll find similar
-                    companies based on their profiles.
+                    <strong>Lookalike Search:</strong> Enter a single reference company and we'll find similar
+                    companies based on its profile.
                   </li>
                   <li>
                     <strong>Filter Search:</strong> Search for companies by sector, region, and company size without
-                    needing reference companies.
+                    needing a reference company.
                   </li>
                   <li>
-                    <strong>Q&A:</strong> Ask questions to selected companies and get answers based on their data.
+                    <strong>Insights:</strong> Generate insights for your selected companies — scoring, segmentation,
+                    briefs, and custom questions.
                   </li>
                 </ol>
               </div>
               <div>
                 <h3 className='mb-2 font-semibold text-gray-900'>Do I need to create an account?</h3>
                 <p className='text-gray-600'>
-                  To save selections, export data, and use the Q&A feature, you'll need to create a free account.
+                  To save selections, export data, and generate insights, you'll need to create a free account.
                 </p>
               </div>
             </CollapsibleContent>
@@ -185,8 +186,8 @@ export function Help() {
               <div>
                 <h3 className='mb-2 font-semibold text-gray-900'>What is a lookalike search?</h3>
                 <p className='text-gray-600'>
-                  A lookalike search finds companies similar to the ones you specify. Enter the names of companies
-                  you're interested in, and the platform will find companies with similar characteristics.
+                  A lookalike search finds companies similar to a reference company. Enter a single company name
+                  (for example its domain) and the platform will find companies with similar characteristics.
                 </p>
               </div>
               <div>
@@ -194,14 +195,21 @@ export function Help() {
                 <p className='text-gray-600'>
                   Lookalikes are found using similarity matching. Companies are compared based on their characteristics.
                   Results are sorted by a fit score — the higher the score, the more similar the company is to your
-                  reference companies.
+                  reference company.
                 </p>
               </div>
               <div>
-                <h3 className='mb-2 font-semibold text-gray-900'>Can I search without entering company names?</h3>
+                <h3 className='mb-2 font-semibold text-gray-900'>Can I search without entering a company name?</h3>
                 <p className='text-gray-600'>
-                  Yes. You can skip the lookalike search and go directly to filtering by sector, region, and company
-                  size. Simply leave the company names field empty and use the filter options.
+                  Yes. You can skip the lookalike input and go directly to filtering by sector, region, and company
+                  size. Simply leave the company field empty and use the filter options.
+                </p>
+              </div>
+              <div>
+                <h3 className='mb-2 font-semibold text-gray-900'>Can I enter more than one company?</h3>
+                <p className='text-gray-600'>
+                  For now only a single reference company is supported. Entering multiple names would mix signals in
+                  ways that make the fit score harder to interpret, so the input accepts one company at a time.
                 </p>
               </div>
             </CollapsibleContent>
@@ -226,17 +234,17 @@ export function Help() {
               <div>
                 <h3 className='mb-2 font-semibold text-gray-900'>Can I combine lookalike search with filters?</h3>
                 <p className='text-gray-600'>
-                  Yes. You can enter company names and apply sector and region filters at the same time. The system will
-                  return companies that match both your reference companies and your filter criteria.
+                  Yes. You can enter a reference company and apply sector and region filters at the same time. The
+                  system will return companies that match both your reference company and your filter criteria.
                 </p>
               </div>
             </CollapsibleContent>
           </Collapsible>
 
-          {/* Q&A Feature */}
+          {/* Insights */}
           <Collapsible open={openSections.has('qa')} onOpenChange={() => toggleSection('qa')}>
             <CollapsibleTrigger className='flex w-full items-center justify-between rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-left font-semibold text-gray-900 transition-colors hover:bg-gray-100'>
-              <span>Q&A Feature</span>
+              <span>Insights</span>
               <ChevronDown
                 className={`h-5 w-5 text-gray-500 transition-transform duration-200 ${openSections.has('qa') ? 'rotate-180' : ''
                   }`}
@@ -244,21 +252,21 @@ export function Help() {
             </CollapsibleTrigger>
             <CollapsibleContent className='space-y-4 px-4 pt-4'>
               <div>
-                <h3 className='mb-2 font-semibold text-gray-900'>What is the Q&A feature?</h3>
+                <h3 className='mb-2 font-semibold text-gray-900'>What are insights?</h3>
                 <p className='text-gray-600'>
-                  The Q&A feature allows you to ask questions to selected companies. Each company receives the same
-                  question or set of questions, and answers are generated based on the available company data.
+                  Insights turn a selection of companies into structured output — scoring, segmentation, briefs, or
+                  custom questions. Each company in the selection is analyzed using its available data.
                 </p>
               </div>
               <div>
-                <h3 className='mb-2 font-semibold text-gray-900'>How do I use the Q&A feature?</h3>
+                <h3 className='mb-2 font-semibold text-gray-900'>How do I generate insights?</h3>
                 <ol className='ml-4 list-decimal space-y-1 text-gray-600'>
                   <li>Search for companies using lookalike search or filters</li>
-                  <li>Select the companies you want to ask questions to</li>
-                  <li>Enter your question(s) in the prompt field</li>
+                  <li>Select the companies you want to analyze</li>
+                  <li>Pick an analysis tile or enter a custom question</li>
                   <li>Click "Generate insights"</li>
                   <li>Wait for processing to complete</li>
-                  <li>View the answers in the results table or download them as Excel</li>
+                  <li>View the results in the table or download them as Excel</li>
                 </ol>
               </div>
               <div>
@@ -276,7 +284,7 @@ export function Help() {
                 </p>
               </div>
               <div>
-                <h3 className='mb-2 font-semibold text-gray-900'>How long does it take to generate answers?</h3>
+                <h3 className='mb-2 font-semibold text-gray-900'>How long does it take to generate insights?</h3>
                 <p className='text-gray-600'>
                   Processing time depends on the number of selected companies. Larger selections typically take a few
                   minutes. A progress indicator shows the completion status in real time. You can receive an email
@@ -284,11 +292,11 @@ export function Help() {
                 </p>
               </div>
               <div>
-                <h3 className='mb-2 font-semibold text-gray-900'>Are there limits on Q&A?</h3>
+                <h3 className='mb-2 font-semibold text-gray-900'>Are there limits on insights?</h3>
                 <p className='text-gray-600'>
-                  Yes. Each plan has a monthly limit on calls. Each selected company counts as <strong>one call</strong>
-                  . If your limit is reached, generation is blocked until your rolling 30-day window resets or you
-                  upgrade your plan.
+                  Yes. Each plan has a monthly limit on analyses. One analysis run counts as{' '}
+                  <strong>one unit</strong>, regardless of how many companies are in the selection. If your limit is
+                  reached, generation is blocked until your rolling 30-day window resets or you upgrade your plan.
                 </p>
               </div>
             </CollapsibleContent>
@@ -307,8 +315,8 @@ export function Help() {
               <div>
                 <h3 className='mb-2 font-semibold text-gray-900'>What is a selection?</h3>
                 <p className='text-gray-600'>
-                  A selection is a saved list of companies that you have chosen. Selections can be reused for exports or
-                  Q&A.
+                  A selection is a saved list of companies that you have chosen. Selections can be reused for exports
+                  or for generating insights.
                 </p>
               </div>
               <div>
@@ -335,8 +343,8 @@ export function Help() {
               <div>
                 <h3 className='mb-2 font-semibold text-gray-900'>Can I edit a saved selection?</h3>
                 <p className='text-gray-600'>
-                  Currently, selections cannot be edited. You can view the selection, export it as Excel, ask questions to
-                  the companies in the selection, or create a new selection with different companies.
+                  Currently, selections cannot be edited. You can view the selection, export it as Excel, generate
+                  insights for the companies in the selection, or create a new selection with different companies.
                 </p>
               </div>
               <div>
@@ -376,7 +384,7 @@ export function Help() {
                   <li>Region Level 1, 2, 3, 4</li>
                   <li>LinkedIn Company URL, Legal Form</li>
                   <li>Fit Score (if applicable)</li>
-                  <li>Answer and Status (if Q&A was performed)</li>
+                  <li>Insight fields and Status (if an analysis was run on the selection)</li>
                 </ul>
               </div>
               <div>
@@ -424,7 +432,9 @@ export function Help() {
               </div>
               <div>
                 <h3 className='mb-2 font-semibold text-gray-900'>What are the differences between plans?</h3>
-                <p className='text-gray-600'>Plans differ in Top-K limits, monthly Excel downloads, and monthly calls.</p>
+                <p className='text-gray-600'>
+                  Plans differ in Top-K limits, monthly Excel downloads, and monthly insight analyses.
+                </p>
               </div>
               <div>
                 <h3 className='mb-2 font-semibold text-gray-900'>Can I upgrade or downgrade my plan?</h3>

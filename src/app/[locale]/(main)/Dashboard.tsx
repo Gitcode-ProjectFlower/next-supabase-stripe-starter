@@ -46,7 +46,7 @@ export function Dashboard() {
   const [topK, setTopK] = useState<number>(3);
 
   // State for selection metadata
-  const [selectionName, setSelectionName] = useState('New selection');
+  const [selectionName, setSelectionName] = useState('');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isSaving, setIsSaving] = useState(false);
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
@@ -1080,11 +1080,11 @@ export function Dashboard() {
       return;
     }
 
-    // Check usage limits before starting Q&A
+    // Check usage limits before starting Q&A. One analysis run = one unit,
+    // regardless of how many companies are in the selection.
     if (usageStats) {
-      const itemCount = selectedIds.size;
-      const requiredCalls = itemCount;
       const remainingCalls = usageStats.aiCallsLimit - usageStats.ai_calls;
+      const requiredCalls = 1;
 
       if (remainingCalls < requiredCalls) {
         toast({
@@ -1124,7 +1124,7 @@ export function Dashboard() {
       } = await supabase.auth.getUser();
 
       if (authError || !user) {
-        throw new Error('Unauthorized. Please sign in to use Q&A features.');
+        throw new Error('Unauthorized. Please sign in to generate insights.');
       }
 
       // Get locale-specific trees
@@ -1294,7 +1294,7 @@ export function Dashboard() {
         if (response.status === 401) {
           toast({
             title: 'Authentication Required',
-            description: 'Please sign in to use Q&A features',
+            description: 'Please sign in to generate insights',
             variant: 'destructive',
           });
           router.push(getLocalePath(locale, '/login'));
@@ -1346,7 +1346,7 @@ export function Dashboard() {
         // Generic error for 500 or other status codes
         toast({
           title: 'Error',
-          description: errorData.error || errorData.message || 'Failed to start Q&A job. Please try again later.',
+          description: errorData.error || errorData.message || 'Failed to start the insight run. Please try again later.',
           variant: 'destructive',
         });
         setIsProcessingQA(false);
@@ -1358,7 +1358,7 @@ export function Dashboard() {
       if (!data.qaSessionId) {
         toast({
           title: 'Error',
-          description: 'Q&A session was not created. Please try again.',
+          description: 'The insight run was not created. Please try again.',
           variant: 'destructive',
         });
         setIsProcessingQA(false);
@@ -1374,8 +1374,8 @@ export function Dashboard() {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.usage.stats });
 
       toast({
-        title: 'Q&A Started',
-        description: 'Your question is being processed. Redirecting to results...',
+        title: 'Insight run started',
+        description: 'Your request is being processed. Redirecting to results...',
       });
 
       // Navigate to Q&A page
@@ -1384,7 +1384,7 @@ export function Dashboard() {
       console.error('Q&A error:', error);
       toast({
         title: 'Error',
-        description: error.message || 'Failed to start Q&A. Please try again.',
+        description: error.message || 'Failed to start the insight run. Please try again.',
         variant: 'destructive',
       });
       setIsProcessingQA(false);
@@ -1406,7 +1406,7 @@ export function Dashboard() {
     // Clear results list
     setResults([]);
     // Reset selection name to default
-    setSelectionName('New selection');
+    setSelectionName('');
     // Clear saved selection ID
     setSavedSelectionId(null);
     // Keep country/cluster context unchanged (not implemented yet, so nothing to reset)
@@ -1437,7 +1437,7 @@ export function Dashboard() {
     <>
 
       {/* Body */}
-      <div className='mx-auto grid max-w-7xl grid-cols-12 gap-6 px-4 py-6'>
+      <div className='mx-auto grid max-w-7xl grid-cols-12 gap-6 px-4 py-6 sm:px-6 lg:px-8'>
         {/* Left: Filters */}
         <aside className='col-span-12 lg:col-span-3'>
           <FilterSidebar
@@ -1462,8 +1462,8 @@ export function Dashboard() {
         {/* Right: Workspace */}
         <main className='relative col-span-12 lg:col-span-9'>
           {/* Single-line toolbar: title on the left, actions on the right */}
-          <div className='mb-2 flex flex-wrap items-center gap-3'>
-            <h2 className='text-sm font-semibold uppercase tracking-wide text-gray-700'>
+          <div className='mb-2 flex min-h-[56px] flex-wrap items-center gap-3 py-2'>
+            <h2 className='text-base font-semibold text-gray-900'>
               Turn your selection into insights and actions
             </h2>
             <div className='ml-auto flex items-center gap-2'>

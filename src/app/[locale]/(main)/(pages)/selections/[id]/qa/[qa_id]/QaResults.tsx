@@ -178,7 +178,7 @@ export function QaResults() {
     window.open(result.csv_url, '_blank');
   };
 
-  if (isCheckingAuth || isLoading) return <FullPageLoader text='Loading Q&A results...' />;
+  if (isCheckingAuth || isLoading) return <FullPageLoader text='Loading insights...' />;
 
   const result = qaResult;
   if (!result) return null;
@@ -282,7 +282,7 @@ export function QaResults() {
           </Button>
           <div className='flex items-start justify-between'>
             <div>
-              <h1 className='text-3xl font-bold text-black'>Q&A Results</h1>
+              <h1 className='text-3xl font-bold text-black'>Insights Results</h1>
               <div className='mt-2 flex items-center gap-4 text-sm text-gray-600'>
                 <span>{result.selection_name}</span>
                 <span>•</span>
@@ -321,7 +321,7 @@ export function QaResults() {
               <path fillRule='evenodd' d='M10 18a8 8 0 100-16 8 8 0 000 16zm-.75-9.25a.75.75 0 011.5 0v3a.75.75 0 01-1.5 0v-3zm.75 5.5a.75.75 0 100-1.5.75.75 0 000 1.5z' clipRule='evenodd' />
             </svg>
             <div className='text-sm text-red-800'>
-              {error ? (error.message || 'Failed to load Q&A results') : (result.error_message || 'Processing failed. Please try again.')}
+              {error ? (error.message || 'Failed to load insights') : (result.error_message || 'Processing failed. Please try again.')}
             </div>
           </div>
         )}
@@ -470,7 +470,7 @@ export function QaResults() {
           <div className='rounded-2xl border border-yellow-200 bg-yellow-50 p-6'>
             <h3 className='mb-2 text-lg font-semibold text-yellow-900'>No Answers Available</h3>
             <div className='space-y-2 text-sm text-yellow-800'>
-              <p>The Q&A session completed but no answers were returned.</p>
+              <p>The insight run completed but no answers were returned.</p>
               <details className='mt-4'>
                 <summary className='cursor-pointer font-medium'>Debug Info (Click to expand)</summary>
                 <pre className='mt-2 overflow-auto rounded bg-yellow-100 p-3 text-xs'>

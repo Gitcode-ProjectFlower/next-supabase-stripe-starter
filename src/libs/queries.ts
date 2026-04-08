@@ -60,7 +60,7 @@ type SelectionDetailResponse = {
 
 type DownloadItem = {
   id: string;
-  type: 'Lookalike Excel' | 'Q&A Excel';
+  type: 'Lookalike Excel' | 'Insights Excel';
   selectionId: string;
   selectionName?: string;
   createdAt: string;
@@ -167,7 +167,7 @@ export function useDownloadsQuery(
         const estimatedSizeKB = Math.round((download.row_count * 200) / 1024);
         const size = estimatedSizeKB > 0 ? `${estimatedSizeKB} KB` : '< 1 KB';
 
-        const type: 'Lookalike Excel' | 'Q&A Excel' = download.type === 'lookalike' ? 'Lookalike Excel' : 'Q&A Excel';
+        const type: 'Lookalike Excel' | 'Insights Excel' = download.type === 'lookalike' ? 'Lookalike Excel' : 'Insights Excel';
 
         return {
           id: download.id,
@@ -443,7 +443,7 @@ export function useRecentActivityQuery(
               }
 
               const isExpired = downloads.expires_at ? new Date(downloads.expires_at) < new Date() : false;
-              const typeLabel = downloads.type === 'lookalike' ? 'Lookalike Excel' : 'Q&A Excel';
+              const typeLabel = downloads.type === 'lookalike' ? 'Lookalike Excel' : 'Insights Excel';
 
               return {
                 id: log.id,
@@ -467,7 +467,7 @@ export function useRecentActivityQuery(
 
           if (log.action === 'ai_question') {
             activityType = 'qa';
-            activityLabel = `Q&A run - ${log.count} profiles`;
+            activityLabel = `Insights run (${log.count} ${log.count === 1 ? 'analysis' : 'analyses'})`;
           } else if (log.action === 'selection_created') {
             activityType = 'search';
             activityLabel = `Lookalike search - ${log.count} selection${log.count > 1 ? 's' : ''}`;

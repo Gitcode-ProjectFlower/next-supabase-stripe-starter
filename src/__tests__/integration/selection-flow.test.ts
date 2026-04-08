@@ -16,10 +16,35 @@ vi.mock('@/libs/supabase/supabase-server-client', () => ({
   })),
 }));
 
+vi.mock('@/libs/supabase/supabase-admin', () => ({
+  supabaseAdminClient: {
+    from: vi.fn(() => ({
+      insert: vi.fn(() => ({
+        select: vi.fn(() => ({
+          single: vi.fn().mockResolvedValue({
+            data: { id: 'usage-log-1' },
+            error: null,
+          }),
+        })),
+      })),
+    })),
+  },
+}));
+
 vi.mock('@/libs/ratelimit', () => ({
   searchRateLimiter: {
     limit: vi.fn().mockResolvedValue({ success: true, remaining: 29 }),
   },
+  askRateLimiter: {
+    limit: vi.fn().mockResolvedValue({ success: true, remaining: 4 }),
+  },
+  checkRateLimit: vi.fn().mockResolvedValue({
+    allowed: true,
+    limit: 30,
+    remaining: 29,
+    current: 1,
+    reset: new Date(),
+  }),
 }));
 
 vi.mock('@/libs/idempotency', () => ({
@@ -56,6 +81,20 @@ describe('Integration: Selection Flow', () => {
     mockFrom.mockReturnValue({
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
+      in: vi.fn().mockReturnThis(),
+      or: vi.fn().mockReturnThis(),
+      order: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockReturnThis(),
+      maybeSingle: vi.fn().mockResolvedValue({
+        data: {
+          prices: {
+            products: {
+              metadata: { plan_name: 'small' },
+            },
+          },
+        },
+        error: null,
+      }),
       single: vi.fn().mockResolvedValue({
         data: {
           prices: {
