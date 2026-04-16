@@ -192,7 +192,7 @@ const SQ2_DIMENSIONS = [
   {
     name: 'Target Customer Segment',
     description: 'Indicates the apparent customer size focus of the company.',
-    values: ['Small Businesses', 'Mid-Market', 'Enterprise', 'Mixed', 'Unknown'],
+    values: ['Consumer', 'Small Businesses', 'Mid-Market', 'Enterprise', 'Mixed', 'Unknown'],
   },
   {
     name: 'Geographic Scope',
@@ -200,19 +200,9 @@ const SQ2_DIMENSIONS = [
     values: ['Local', 'National', 'International', 'Global', 'Unknown'],
   },
   {
-    name: 'Organizational Sophistication',
-    description: 'Assesses how structured and operationally advanced the company appears.',
-    values: ['Informal / Founder-Led', 'Structured', 'Process-Driven', 'Enterprise-Governed', 'Unknown'],
-  },
-  {
     name: 'Market Positioning',
     description: 'Indicates how the company positions itself in the market.',
-    values: ['Price-Focused', 'Premium / Quality-Focused', 'Innovation-Driven', 'Reliability-Focused', 'Mixed', 'Unknown'],
-  },
-  {
-    name: 'Operational Criticality',
-    description: 'Assesses how dependent the company appears to be on uptime and mission-critical operations.',
-    values: ['Low', 'Medium', 'High', 'Unknown'],
+    values: ['Cost Efficiency', 'Quality & Expertise', 'Innovation', 'Trust & Reliability', 'Hybrid', 'Unknown'],
   },
 ];
 

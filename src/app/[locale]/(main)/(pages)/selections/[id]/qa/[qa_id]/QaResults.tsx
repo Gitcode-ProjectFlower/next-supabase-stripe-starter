@@ -79,6 +79,18 @@ function SQ3ExpandPanel({ parsed }: { parsed: Record<string, unknown> }) {
   );
 }
 
+function parseCustomAnswer(text: string): { answer: string; evidence: string; insight: string } {
+  const result = { answer: '', evidence: '', insight: '' };
+  const answerMatch = text.match(/\*{0,2}Answer:?\s*\*{0,2}\s*[-–]?\s*([\s\S]*?)(?=\*{0,2}Evidence:?\s*\*{0,2}|$)/i);
+  const evidenceMatch = text.match(/\*{0,2}Evidence:?\s*\*{0,2}\s*[-–]?\s*([\s\S]*?)(?=\*{0,2}Insight(?:\s*\([^)]*\))?\s*:?\s*\*{0,2}|$)/i);
+  const insightMatch = text.match(/\*{0,2}Insight(?:\s*\([^)]*\))?\s*:?\s*\*{0,2}\s*[-–]?\s*([\s\S]*?)$/i);
+  if (answerMatch) result.answer = answerMatch[1].trim();
+  if (evidenceMatch) result.evidence = evidenceMatch[1].trim();
+  if (insightMatch) result.insight = insightMatch[1].trim();
+  if (!result.answer && !result.evidence && !result.insight) result.answer = text;
+  return result;
+}
+
 // Generic expand panel for SQ1/SQ4 — single full-width text block
 function SimpleExpandPanel({ label, content }: { label: string; content: string }) {
   return (
@@ -185,6 +197,7 @@ export function QaResults() {
 
   const sqId = result.standard_question_id ?? null;
   const showCity = result.answers?.some((a) => a.city) ?? false;
+  const isCustomQa = !sqId;
 
   // Per-SQ table structure
   // SQ1: Score column visible, Rationale in expand
@@ -270,7 +283,7 @@ export function QaResults() {
 
   // Column count for colSpan
   const colCount = 1 + (showCity ? 1 : 0) + (hasExpandableRows ? 1 : 0) +
-    (sqId === '1' ? 2 : sqId === '2' ? sq2DimKeys.length : sqId === '3' ? 1 : sqId === '4' ? 1 : 1) + 1;
+    (sqId === '1' ? 2 : sqId === '2' ? sq2DimKeys.length : sqId === '3' ? 1 : sqId === '4' ? 1 : 3) + 1;
 
   return (
     <div className='min-h-screen bg-gray-50 p-6'>
@@ -333,20 +346,23 @@ export function QaResults() {
         )}
 
         {result.answers && Array.isArray(result.answers) && result.answers.length > 0 ? (
-          <div className='overflow-x-scroll rounded-2xl border bg-white'>
+          <div className='overflow-x-auto rounded-2xl border bg-white'>
             <div className='p-4 text-sm text-gray-600'>
               Showing {result.answers.length} answer{result.answers.length !== 1 ? 's' : ''}
             </div>
-            <Table className={sqId === '2' ? '' : 'table-fixed'}>
+            <Table className={isCustomQa ? 'min-w-[1400px] table-fixed' : sqId === '2' ? '' : 'table-fixed'}>
               <colgroup>
                 {hasExpandableRows && <col className='w-10' />}
-                <col className={showCity ? 'w-[25%]' : 'w-[30%]'} />
-                {showCity && <col className='w-[15%]' />}
+                <col className={isCustomQa ? 'w-[12%]' : showCity ? 'w-[25%]' : 'w-[30%]'} />
+                {showCity && <col className={isCustomQa ? 'w-[10%]' : 'w-[15%]'} />}
                 {sqId === '1' && <col className='w-20' />}
                 {sqId === '1' && <col />}
                 {sqId === '2' && sq2DimKeys.map((k) => <col key={k} />)}
-                {(sqId === '3' || sqId === '4' || !sqId) && <col />}
-                <col className='w-24' />
+                {(sqId === '3' || sqId === '4') && <col />}
+                {!sqId && <col className='w-[24%]' />}
+                {!sqId && <col className='w-[24%]' />}
+                {!sqId && <col className='w-[24%]' />}
+                <col className={isCustomQa ? 'w-[6%]' : 'w-24'} />
               </colgroup>
               <TableHeader className='bg-gray-50'>
                 <TableRow className='hover:bg-transparent'>
@@ -361,6 +377,8 @@ export function QaResults() {
                   {sqId === '3' && <TableHead className='px-4 py-3 font-semibold text-gray-700'>Company Snapshot</TableHead>}
                   {sqId === '4' && <TableHead className='px-4 py-3 font-semibold text-gray-700'>Message</TableHead>}
                   {!sqId && <TableHead className='px-4 py-3 font-semibold text-gray-700'>Answer</TableHead>}
+                  {!sqId && <TableHead className='px-4 py-3 font-semibold text-gray-700'>Evidence</TableHead>}
+                  {!sqId && <TableHead className='px-4 py-3 font-semibold text-gray-700'>Insight</TableHead>}
                   <TableHead className='px-4 py-3 font-semibold text-gray-700'>Status</TableHead>
                 </TableRow>
               </TableHeader>
@@ -445,13 +463,24 @@ export function QaResults() {
                               : <span className='text-xs text-red-500'>{answer.error_message || 'failed'}</span>}
                           </TableCell>
                         )}
-                        {!sqId && (
-                          <TableCell className='px-4 py-3 text-sm text-gray-700'>
-                            {isSuccess
-                              ? <div className='max-w-md whitespace-pre-wrap'>{normalizeValue(answer.answer)}</div>
-                              : <span className='text-sm text-red-600'>{answer.error_message || 'Failed to generate answer'}</span>}
-                          </TableCell>
-                        )}
+                        {!sqId && (() => {
+                          const parsed = isSuccess && answer.answer ? parseCustomAnswer(answer.answer) : null;
+                          return (
+                            <>
+                              <TableCell className='px-4 py-3 text-sm text-gray-700'>
+                                {parsed
+                                  ? <div className='max-w-md whitespace-pre-wrap'>{parsed.answer}</div>
+                                  : <span className='text-sm text-red-600'>{answer.error_message || 'Failed to generate answer'}</span>}
+                              </TableCell>
+                              <TableCell className='px-4 py-3 text-sm text-gray-700'>
+                                {parsed ? <div className='max-w-md whitespace-pre-wrap'>{parsed.evidence || '—'}</div> : null}
+                              </TableCell>
+                              <TableCell className='px-4 py-3 text-sm text-gray-700'>
+                                {parsed ? <div className='max-w-md whitespace-pre-wrap'>{parsed.insight || '—'}</div> : null}
+                              </TableCell>
+                            </>
+                          );
+                        })()}
                         <TableCell className='px-4 py-3' onClick={(e) => e.stopPropagation()}>
                           <span className={`rounded-full px-2 py-1 text-xs font-medium ${isSuccess ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                             {answer.status || 'unknown'}

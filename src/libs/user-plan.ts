@@ -1,7 +1,7 @@
 import { stripeAdmin } from '@/libs/stripe/stripe-admin';
 import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
-import { PLAN_CONFIGS, UserPlan } from './plan-config';
+import { PLAN_CONFIGS, UserPlan, getVisibleColumns } from './plan-config';
 
 export { PLAN_CONFIGS };
 export type { UserPlan };
@@ -174,10 +174,7 @@ export function getPlanCap(plan: UserPlan): number {
   return capsByPlan[plan] || capsByPlan.anonymous;
 }
 
-export function getVisibleColumns(plan: UserPlan): string[] {
-  const effectivePlan = plan || 'anonymous';
-  return Array.from(PLAN_CONFIGS[effectivePlan]?.visibleColumns || PLAN_CONFIGS.anonymous.visibleColumns);
-}
+export { getVisibleColumns };
 
 export function getAnonymousPlan(): UserPlan {
   return 'anonymous';

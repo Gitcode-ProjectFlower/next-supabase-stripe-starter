@@ -21,8 +21,9 @@ const SQ1_COLUMNS: ExportColumn[] = [
 
 const SQ2_COLUMNS: ExportColumn[] = [
   { header: 'Primary Customer Type', extract: (p) => toString(p['Primary Customer Type']) },
+  { header: 'Target Customer Segment', extract: (p) => toString(p['Target Customer Segment']) },
   { header: 'Geographic Scope', extract: (p) => toString(p['Geographic Scope']) },
-  { header: 'Operational Criticality', extract: (p) => toString(p['Operational Criticality']) },
+  { header: 'Market Positioning', extract: (p) => toString(p['Market Positioning']) },
   { header: 'Evidence', extract: (p) => toString(p['Evidence']) },
 ];
 
@@ -41,8 +42,22 @@ const SQ4_COLUMNS: ExportColumn[] = [
   { header: 'Message', extract: (p) => toString(p['message']) },
 ];
 
+function parseCustomSections(text: string): { answer: string; evidence: string; insight: string } {
+  const result = { answer: '', evidence: '', insight: '' };
+  const answerMatch = text.match(/\*{0,2}Answer:?\s*\*{0,2}\s*[-–]?\s*([\s\S]*?)(?=\*{0,2}Evidence:?\s*\*{0,2}|$)/i);
+  const evidenceMatch = text.match(/\*{0,2}Evidence:?\s*\*{0,2}\s*[-–]?\s*([\s\S]*?)(?=\*{0,2}Insight(?:\s*\([^)]*\))?\s*:?\s*\*{0,2}|$)/i);
+  const insightMatch = text.match(/\*{0,2}Insight(?:\s*\([^)]*\))?\s*:?\s*\*{0,2}\s*[-–]?\s*([\s\S]*?)$/i);
+  if (answerMatch) result.answer = answerMatch[1].trim();
+  if (evidenceMatch) result.evidence = evidenceMatch[1].trim();
+  if (insightMatch) result.insight = insightMatch[1].trim();
+  if (!result.answer && !result.evidence && !result.insight) result.answer = text;
+  return result;
+}
+
 const CUSTOM_COLUMNS: ExportColumn[] = [
   { header: 'Answer', extract: () => '' },
+  { header: 'Evidence', extract: () => '' },
+  { header: 'Insight', extract: () => '' },
 ];
 
 export function getExportColumnsForSQ(sqId: string | null): ExportColumn[] {
@@ -61,7 +76,10 @@ export function extractSQValues(
 ): string[] {
   const columns = getExportColumnsForSQ(sqId);
 
-  if (!sqId) return [answerText];
+  if (!sqId) {
+    const sections = parseCustomSections(answerText);
+    return [sections.answer, sections.evidence, sections.insight];
+  }
 
   try {
     const parsed = JSON.parse(answerText) as Record<string, unknown>;

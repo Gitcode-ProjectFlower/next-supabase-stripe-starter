@@ -164,7 +164,7 @@ export function FilterSidebar({
         </div>
         <div className='mt-2'>
           <Input
-            placeholder={names.length >= 1 ? 'Only one company supported for now' : 'Enter a company name (e.g. santander.co.uk)'}
+            placeholder={names.length >= 1 ? 'Only one company supported for now' : 'e.g. Tesco or tesco.co.uk'}
             value={nameInput}
             onChange={(e) => setNameInput(e.target.value)}
             onKeyDown={handleKeyDown}

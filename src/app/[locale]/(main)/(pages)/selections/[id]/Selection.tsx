@@ -24,6 +24,7 @@ import {
 } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
+import { ToastAction } from '@/components/ui/toast';
 import { useToast } from '@/components/ui/use-toast';
 import { cn } from '@/utils/cn';
 import { getLocalePath } from '@/utils/get-locale-path';
@@ -381,14 +382,15 @@ export function Selection() {
 
         if (response.status === 403) {
           if (errorData.error === 'CAP_REACHED') {
-            const message =
-              errorData.type === 'ai_limit'
-                ? `You've reached your limit for generating insights. Upgrade your plan to continue.`
-                : errorData.message || 'You have reached your usage limit.';
             toast({
-              title: 'Insight limit reached',
-              description: message,
+              title: 'Usage limit reached',
+              description: 'Upgrade your plan to continue.',
               variant: 'destructive',
+              action: (
+                <ToastAction altText="View pricing" onClick={() => router.push(getLocalePath(locale, '/pricing'))}>
+                  View pricing
+                </ToastAction>
+              ),
             });
           } else {
             toast({
@@ -586,14 +588,15 @@ export function Selection() {
 
         if (response.status === 403) {
           if (errorData.error === 'CAP_REACHED') {
-            const message =
-              errorData.type === 'download_limit'
-                ? `You've reached your download limit (${errorData.current}/${errorData.limit}). Upgrade your plan to continue.`
-                : errorData.message || 'You have reached your usage limit.';
             toast({
-              title: 'Limit Reached',
-              description: message,
+              title: 'Usage limit reached',
+              description: 'Upgrade your plan to continue.',
               variant: 'destructive',
+              action: (
+                <ToastAction altText="View pricing" onClick={() => router.push(getLocalePath(locale, '/pricing'))}>
+                  View pricing
+                </ToastAction>
+              ),
             });
           } else {
             toast({

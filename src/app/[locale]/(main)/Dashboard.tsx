@@ -11,6 +11,7 @@ import { StandardQuestionModal } from '@/components/selection/standard-question-
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { ToastAction } from '@/components/ui/toast';
 import { useToast } from '@/components/ui/use-toast';
 
 import { getRegionsTree, getSectorsTree } from '@/data/tree-loader';
@@ -26,6 +27,8 @@ import type { LookalikeResult } from '@/types/selection';
 import type { TreeNode } from '@/types/tree';
 import { cn } from '@/utils/cn';
 import { getLocalePath } from '@/utils/get-locale-path';
+
+import { ensureSelectionExists } from './dashboard-utils';
 
 export function Dashboard() {
   const { toast } = useToast();
@@ -430,139 +433,24 @@ export function Dashboard() {
         throw new Error('Unauthorized. Please sign in to save selections.');
       }
 
-      let selectionId: string;
-      const isUpdate = savedSelectionId !== null;
+      const { selectionId, isNew } = await ensureSelectionExists(supabase, {
+        savedSelectionId,
+        userId: user.id,
+        selectionName,
+        criteria,
+        items: selectedItems,
+      });
+      setSavedSelectionId(selectionId);
 
-      if (isUpdate) {
-        // UPDATE: Verify ownership and update existing selection
-        const { data: existingSelection, error: checkError } = await supabase
-          .from('selections')
-          .select('id, user_id, expires_at')
-          .eq('id', savedSelectionId)
-          .eq('user_id', user.id)
-          .single();
-
-        if (checkError || !existingSelection) {
-          setSavedSelectionId(null); // Clear invalid ID
-          throw new Error('Selection not found or access denied');
-        }
-
-        // Deduplicate items by doc_id before processing (prevent duplicate keys)
-        const uniqueItems = Array.from(new Map(selectedItems.map((item) => [item.doc_id, item])).values());
-
-        // Update selection metadata (name and criteria only - item_count will be updated by RPC)
-        const { error: updateError } = await supabase
-          .from('selections')
-          // @ts-ignore - Supabase browser client has TypeScript inference issue with update queries
-          .update({
-            name: selectionName,
-            criteria_json: criteria,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', savedSelectionId);
-
-        if (updateError) {
-          throw new Error(`Failed to update selection: ${updateError.message}`);
-        }
-
-        // Use RPC function to atomically replace all items (delete + insert in transaction)
-        // The RPC function will also update item_count to match the actual number of items
-        // @ts-ignore - Supabase RPC type inference issue, p_items accepts Json array
-        const { error: rpcError } = await supabase.rpc('update_selection_items', {
-          p_selection_id: savedSelectionId,
-          p_items: uniqueItems.map((item) => ({
-            doc_id: item.doc_id,
-            name: item.name || '',
-            domain: item.domain || '',
-            company_size: item.company_size || '',
-            email: item.email || '',
-            phone: item.phone || '',
-            street: item.street || '',
-            city: item.city || '',
-            postal_code: item.postal_code || '',
-            sector_level1: item.sector_level1 || '',
-            sector_level2: item.sector_level2 || '',
-            sector_level3: item.sector_level3 || '',
-            region_level1: item.region_level1 || '',
-            region_level2: item.region_level2 || '',
-            region_level3: item.region_level3 || '',
-            region_level4: item.region_level4 || '',
-            linkedin_company_url: item.linkedin_company_url || '',
-            legal_form: item.legal_form || '',
-            sectors: item.sectors,
-            experience_years: item.experience_years,
-            similarity: item.similarity,
-          })),
-        });
-
-        if (rpcError) {
-          throw new Error(`Failed to update selection items: ${rpcError.message}`);
-        }
-
-        selectionId = savedSelectionId;
-      } else {
-        // CREATE: Call create_selection RPC
-        // Ensure all fields are explicitly mapped to guarantee full data is saved
-        const uniqueItems = Array.from(new Map(selectedItems.map((item) => [item.doc_id, item])).values());
-
-        // @ts-ignore - Supabase RPC type inference issue, p_items accepts Json array
-        const { data: newSelectionId, error: rpcError } = await supabase.rpc('create_selection', {
-          p_name: selectionName,
-          p_criteria_json: criteria,
-          p_items: uniqueItems.map((item) => ({
-            doc_id: item.doc_id,
-            name: item.name || '',
-            domain: item.domain || '',
-            company_size: item.company_size || '',
-            email: item.email || '',
-            phone: item.phone || '',
-            street: item.street || '',
-            city: item.city || '',
-            postal_code: item.postal_code || '',
-            sector_level1: item.sector_level1 || '',
-            sector_level2: item.sector_level2 || '',
-            sector_level3: item.sector_level3 || '',
-            region_level1: item.region_level1 || '',
-            region_level2: item.region_level2 || '',
-            region_level3: item.region_level3 || '',
-            region_level4: item.region_level4 || '',
-            linkedin_company_url: item.linkedin_company_url || '',
-            legal_form: item.legal_form || '',
-            sectors: item.sectors,
-            experience_years: item.experience_years,
-            similarity: item.similarity,
-          })),
-        });
-
-        if (rpcError) {
-          throw new Error(`Failed to create selection: ${rpcError.message}`);
-        }
-
-        selectionId = newSelectionId;
-        setSavedSelectionId(selectionId);
-
-        // Log usage (only on create)
-        try {
-          // @ts-ignore - Supabase browser client has TypeScript inference issue with insert queries
-          const { error: logError } = await supabase.from('usage_log').insert({
-            user_id: user.id,
-            action: 'selection_created',
-            count: 1,
-          });
-          if (logError) {
-            console.error('[Save] Failed to log usage:', logError);
-          }
-        } catch (logErr) {
-          console.error('[Save] Failed to log usage:', logErr);
-        }
-
-        // Track analytics (only on create)
+      if (isNew) {
         trackEvent.selectionCreated({
           selectionId,
           itemCount: selectedItems.length,
           hasFilters: sectors.size > 0 || regions.size > 0 || companySize.length > 0,
         });
       }
+
+      const isUpdate = !isNew;
 
       // Invalidate queries to refresh data
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.selections.all });
@@ -662,137 +550,14 @@ export function Dashboard() {
         collection: collection, // Store collection with selection
       };
 
-      let selectionId: string;
-      const isUpdate = savedSelectionId !== null;
-
-      if (isUpdate) {
-        // UPDATE: Verify ownership and update existing selection
-        const { data: existingSelection, error: checkError } = await supabase
-          .from('selections')
-          .select('id, user_id')
-          .eq('id', savedSelectionId)
-          .eq('user_id', user.id)
-          .single();
-
-        if (checkError || !existingSelection) {
-          setSavedSelectionId(null);
-          throw new Error('Selection not found or access denied');
-        }
-
-        // Deduplicate items by doc_id before processing (prevent duplicate keys)
-        const uniqueItems = Array.from(new Map(selectedItems.map((item) => [item.doc_id, item])).values());
-
-        // Update selection metadata (name and criteria only - item_count will be updated by RPC)
-        const { error: updateError } = await supabase
-          .from('selections')
-          // @ts-ignore - Supabase browser client has TypeScript inference issue with update queries
-          .update({
-            name: selectionName,
-            criteria_json: criteria,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', savedSelectionId);
-
-        if (updateError) {
-          throw new Error(`Failed to update selection: ${updateError.message}`);
-        }
-
-        // Use RPC function to atomically replace all items (delete + insert in transaction)
-        // The RPC function will also update item_count to match the actual number of items
-        // @ts-ignore - Supabase RPC type inference issue, p_items accepts Json array
-        const { error: rpcError } = await supabase.rpc('update_selection_items', {
-          p_selection_id: savedSelectionId,
-          p_items: uniqueItems.map((item) => ({
-            doc_id: item.doc_id,
-            name: item.name || '',
-            domain: item.domain || '',
-            company_size: item.company_size || '',
-            email: item.email || '',
-            phone: item.phone || '',
-            street: item.street || '',
-            city: item.city || '',
-            postal_code: item.postal_code || '',
-            sector_level1: item.sector_level1 || '',
-            sector_level2: item.sector_level2 || '',
-            sector_level3: item.sector_level3 || '',
-            region_level1: item.region_level1 || '',
-            region_level2: item.region_level2 || '',
-            region_level3: item.region_level3 || '',
-            region_level4: item.region_level4 || '',
-            linkedin_company_url: item.linkedin_company_url || '',
-            legal_form: item.legal_form || '',
-            sectors: item.sectors,
-            experience_years: item.experience_years,
-            similarity: item.similarity,
-          })),
-        });
-
-        if (rpcError) {
-          throw new Error(`Failed to update selection items: ${rpcError.message}`);
-        }
-
-        selectionId = savedSelectionId;
-      } else {
-        // CREATE: Call create_selection RPC
-        // Ensure all fields are explicitly mapped to guarantee full data is saved
-        const uniqueItems = Array.from(new Map(selectedItems.map((item) => [item.doc_id, item])).values());
-
-        // @ts-ignore - Supabase RPC type inference issue, p_items accepts Json array
-        const { data: newSelectionId, error: rpcError } = await supabase.rpc('create_selection', {
-          p_name: selectionName,
-          p_criteria_json: criteria,
-          p_items: uniqueItems.map((item) => ({
-            doc_id: item.doc_id,
-            name: item.name || '',
-            domain: item.domain || '',
-            company_size: item.company_size || '',
-            email: item.email || '',
-            phone: item.phone || '',
-            street: item.street || '',
-            city: item.city || '',
-            postal_code: item.postal_code || '',
-            sector_level1: item.sector_level1 || '',
-            sector_level2: item.sector_level2 || '',
-            sector_level3: item.sector_level3 || '',
-            region_level1: item.region_level1 || '',
-            region_level2: item.region_level2 || '',
-            region_level3: item.region_level3 || '',
-            region_level4: item.region_level4 || '',
-            linkedin_company_url: item.linkedin_company_url || '',
-            legal_form: item.legal_form || '',
-            sectors: item.sectors,
-            experience_years: item.experience_years,
-            similarity: item.similarity,
-          })),
-        });
-
-        if (rpcError) {
-          throw new Error(`Failed to create selection: ${rpcError.message}`);
-        }
-
-        selectionId = newSelectionId;
-        setSavedSelectionId(selectionId);
-
-        // Log usage (only on create)
-        try {
-          // @ts-ignore - Supabase browser client has TypeScript inference issue with insert queries
-          const { error: logError } = await supabase.from('usage_log').insert({
-            user_id: user.id,
-            action: 'selection_created',
-            count: 1,
-          });
-          if (logError) {
-            console.error('[Export] Failed to log usage:', logError);
-          }
-        } catch (logErr) {
-          console.error('[Export] Failed to log usage:', logErr);
-        }
-      }
-
-      // Store the selection ID for future updates
-      if (selectionId) {
-        setSavedSelectionId(selectionId);
-      }
+      const { selectionId } = await ensureSelectionExists(supabase, {
+        savedSelectionId,
+        userId: user.id,
+        selectionName,
+        criteria,
+        items: selectedItems,
+      });
+      setSavedSelectionId(selectionId);
 
       // Step 2: Immediately trigger export
       const exportResponse = await fetch(`/api/selections/${selectionId}/export`, {
@@ -815,14 +580,15 @@ export function Dashboard() {
 
         if (exportResponse.status === 403) {
           if (errorData.error === 'CAP_REACHED') {
-            const message =
-              errorData.type === 'download_limit'
-                ? `You've reached your download limit (${errorData.current}/${errorData.limit}). Upgrade your plan to continue.`
-                : errorData.message || 'You have reached your usage limit.';
             toast({
-              title: 'Limit Reached',
-              description: message,
+              title: 'Usage limit reached',
+              description: 'Upgrade your plan to continue.',
               variant: 'destructive',
+              action: (
+                <ToastAction altText="View pricing" onClick={() => router.push(getLocalePath(locale, '/pricing'))}>
+                  View pricing
+                </ToastAction>
+              ),
             });
           } else {
             toast({
@@ -906,104 +672,31 @@ export function Dashboard() {
   const ensureSelectionSaved = async (): Promise<string | null> => {
     const selectedItems = results
       .filter((r) => selectedIds.has(r.doc_id))
-      .map((item) => ({
-        ...item,
-        similarity: item.similarity ?? 0,
-      }));
+      .map((item) => ({ ...item, similarity: item.similarity ?? 0 }));
 
     if (selectedItems.length === 0) return null;
 
     const supabase = createSupabaseBrowserClient();
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      throw new Error('Unauthorized. Please sign in.');
-    }
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) throw new Error('Unauthorized. Please sign in.');
 
     const sectorsTree = getSectorsTree(locale);
     const regionsTree = getRegionsTree(locale);
-    const sectorNames = sectors.size > 0 ? getNamesFromIds(sectors, sectorsTree) : [];
-    const regionNames = regions.size > 0 ? getNamesFromIds(regions, regionsTree) : [];
     const criteria = {
       names,
-      sectors: sectorNames,
-      regions: regionNames,
+      sectors: sectors.size > 0 ? getNamesFromIds(sectors, sectorsTree) : [],
+      regions: regions.size > 0 ? getNamesFromIds(regions, regionsTree) : [],
       company_size: companySize,
       collection,
     };
 
-    let selectionId: string | null = null;
-    const isUpdate = savedSelectionId !== null;
-
-    if (isUpdate) {
-      const { data: existingSelection, error: checkError } = await supabase
-        .from('selections')
-        .select('id, user_id')
-        .eq('id', savedSelectionId)
-        .eq('user_id', user.id)
-        .single();
-
-      if (checkError || !existingSelection) {
-        setSavedSelectionId(null);
-      } else {
-        const uniqueItems = Array.from(new Map(selectedItems.map((item) => [item.doc_id, item])).values());
-        // @ts-ignore
-        const { error: updateError } = await supabase
-          .from('selections')
-          // @ts-ignore
-          .update({ name: selectionName, criteria_json: criteria, updated_at: new Date().toISOString() })
-          .eq('id', savedSelectionId);
-
-        if (updateError) throw new Error(`Failed to update selection: ${updateError.message}`);
-
-        // @ts-ignore
-        const { error: rpcError } = await supabase.rpc('update_selection_items', {
-          p_selection_id: savedSelectionId,
-          p_items: uniqueItems.map((item) => ({
-            doc_id: item.doc_id, name: item.name || '', domain: item.domain || '',
-            company_size: item.company_size || '', email: item.email || '', phone: item.phone || '',
-            street: item.street || '', city: item.city || '', postal_code: item.postal_code || '',
-            sector_level1: item.sector_level1 || '', sector_level2: item.sector_level2 || '',
-            sector_level3: item.sector_level3 || '', region_level1: item.region_level1 || '',
-            region_level2: item.region_level2 || '', region_level3: item.region_level3 || '',
-            region_level4: item.region_level4 || '', linkedin_company_url: item.linkedin_company_url || '',
-            legal_form: item.legal_form || '', sectors: item.sectors, experience_years: item.experience_years,
-            similarity: item.similarity,
-          })),
-        });
-
-        if (rpcError) throw new Error(`Failed to update selection items: ${rpcError.message}`);
-        selectionId = savedSelectionId;
-      }
-    }
-
-    if (!selectionId) {
-      const uniqueItems = Array.from(new Map(selectedItems.map((item) => [item.doc_id, item])).values());
-      // @ts-ignore
-      const { data: newSelectionId, error: rpcError } = await supabase.rpc('create_selection', {
-        p_name: selectionName, p_criteria_json: criteria,
-        p_items: uniqueItems.map((item) => ({
-          doc_id: item.doc_id, name: item.name || '', domain: item.domain || '',
-          company_size: item.company_size || '', email: item.email || '', phone: item.phone || '',
-          street: item.street || '', city: item.city || '', postal_code: item.postal_code || '',
-          sector_level1: item.sector_level1 || '', sector_level2: item.sector_level2 || '',
-          sector_level3: item.sector_level3 || '', region_level1: item.region_level1 || '',
-          region_level2: item.region_level2 || '', region_level3: item.region_level3 || '',
-          region_level4: item.region_level4 || '', linkedin_company_url: item.linkedin_company_url || '',
-          legal_form: item.legal_form || '', sectors: item.sectors, experience_years: item.experience_years,
-          similarity: item.similarity,
-        })),
-      });
-
-      if (rpcError) throw new Error(`Failed to create selection: ${rpcError.message}`);
-      if (!newSelectionId) throw new Error('Failed to create selection: No ID returned');
-      selectionId = newSelectionId;
-      setSavedSelectionId(selectionId);
-    }
-
+    const { selectionId } = await ensureSelectionExists(supabase, {
+      savedSelectionId,
+      userId: user.id,
+      selectionName,
+      criteria,
+      items: selectedItems,
+    });
     setSavedSelectionId(selectionId);
     return selectionId;
   };
@@ -1118,165 +811,26 @@ export function Dashboard() {
       }
 
       const supabase = createSupabaseBrowserClient();
-      const {
-        data: { user },
-        error: authError,
-      } = await supabase.auth.getUser();
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError || !user) throw new Error('Unauthorized. Please sign in to generate insights.');
 
-      if (authError || !user) {
-        throw new Error('Unauthorized. Please sign in to generate insights.');
-      }
-
-      // Get locale-specific trees
       const sectorsTree = getSectorsTree(locale);
       const regionsTree = getRegionsTree(locale);
-      const sectorNames = sectors.size > 0 ? getNamesFromIds(sectors, sectorsTree) : [];
-      const regionNames = regions.size > 0 ? getNamesFromIds(regions, regionsTree) : [];
       const criteria = {
         names,
-        sectors: sectorNames,
-        regions: regionNames,
+        sectors: sectors.size > 0 ? getNamesFromIds(sectors, sectorsTree) : [],
+        regions: regions.size > 0 ? getNamesFromIds(regions, regionsTree) : [],
         company_size: companySize,
-        collection: collection, // Store collection with selection
+        collection,
       };
 
-      let selectionId: string | null = null;
-      const isUpdate = savedSelectionId !== null;
-
-      if (isUpdate) {
-        // UPDATE: Verify ownership and update existing selection
-        const { data: existingSelection, error: checkError } = await supabase
-          .from('selections')
-          .select('id, user_id')
-          .eq('id', savedSelectionId)
-          .eq('user_id', user.id)
-          .single();
-
-        if (checkError || !existingSelection) {
-          setSavedSelectionId(null);
-          // Fall through to create new selection
-        } else {
-          // Deduplicate items by doc_id before processing
-          const uniqueItems = Array.from(new Map(selectedItems.map((item) => [item.doc_id, item])).values());
-
-          // Update selection metadata
-          const { error: updateError } = await supabase
-            .from('selections')
-            // @ts-ignore - Supabase browser client has TypeScript inference issue with update queries
-            .update({
-              name: selectionName,
-              criteria_json: criteria,
-              updated_at: new Date().toISOString(),
-            })
-            .eq('id', savedSelectionId);
-
-          if (updateError) {
-            throw new Error(`Failed to update selection: ${updateError.message}`);
-          }
-
-          // Use RPC function to atomically replace all items
-          // @ts-ignore - Supabase RPC type inference issue, p_items accepts Json array
-          const { error: rpcError } = await supabase.rpc('update_selection_items', {
-            p_selection_id: savedSelectionId,
-            p_items: uniqueItems.map((item) => ({
-              doc_id: item.doc_id,
-              name: item.name || '',
-              domain: item.domain || '',
-              company_size: item.company_size || '',
-              email: item.email || '',
-              phone: item.phone || '',
-              street: item.street || '',
-              city: item.city || '',
-              postal_code: item.postal_code || '',
-              sector_level1: item.sector_level1 || '',
-              sector_level2: item.sector_level2 || '',
-              sector_level3: item.sector_level3 || '',
-              region_level1: item.region_level1 || '',
-              region_level2: item.region_level2 || '',
-              region_level3: item.region_level3 || '',
-              region_level4: item.region_level4 || '',
-              linkedin_company_url: item.linkedin_company_url || '',
-              legal_form: item.legal_form || '',
-              sectors: item.sectors,
-              experience_years: item.experience_years,
-              similarity: item.similarity,
-            })),
-          });
-
-          if (rpcError) {
-            throw new Error(`Failed to update selection items: ${rpcError.message}`);
-          }
-
-          selectionId = savedSelectionId;
-        }
-      }
-
-      // CREATE: If not updating or update failed, create new selection
-      if (!selectionId) {
-        const uniqueItems = Array.from(new Map(selectedItems.map((item) => [item.doc_id, item])).values());
-
-        // @ts-ignore - Supabase RPC type inference issue, p_items accepts Json array
-        const { data: newSelectionId, error: rpcError } = await supabase.rpc('create_selection', {
-          p_name: selectionName,
-          p_criteria_json: criteria,
-          p_items: uniqueItems.map((item) => ({
-            doc_id: item.doc_id,
-            name: item.name || '',
-            domain: item.domain || '',
-            company_size: item.company_size || '',
-            email: item.email || '',
-            phone: item.phone || '',
-            street: item.street || '',
-            city: item.city || '',
-            postal_code: item.postal_code || '',
-            sector_level1: item.sector_level1 || '',
-            sector_level2: item.sector_level2 || '',
-            sector_level3: item.sector_level3 || '',
-            region_level1: item.region_level1 || '',
-            region_level2: item.region_level2 || '',
-            region_level3: item.region_level3 || '',
-            region_level4: item.region_level4 || '',
-            linkedin_company_url: item.linkedin_company_url || '',
-            legal_form: item.legal_form || '',
-            sectors: item.sectors,
-            experience_years: item.experience_years,
-            similarity: item.similarity,
-          })),
-        });
-
-        if (rpcError) {
-          throw new Error(`Failed to create selection: ${rpcError.message}`);
-        }
-
-        if (!newSelectionId) {
-          throw new Error('Failed to create selection: No ID returned');
-        }
-
-        selectionId = newSelectionId;
-        setSavedSelectionId(selectionId);
-
-        // Log usage (only on create)
-        try {
-          // @ts-ignore - Supabase browser client has TypeScript inference issue with insert queries
-          const { error: logError } = await supabase.from('usage_log').insert({
-            user_id: user.id,
-            action: 'selection_created',
-            count: 1,
-          });
-          if (logError) {
-            console.error('[QA] Failed to log usage:', logError);
-          }
-        } catch (logErr) {
-          console.error('[QA] Failed to log usage:', logErr);
-        }
-      }
-
-      // Ensure we have a selection ID before proceeding
-      if (!selectionId) {
-        throw new Error('Failed to create or update selection');
-      }
-
-      // Store the selection ID for future updates
+      const { selectionId } = await ensureSelectionExists(supabase, {
+        savedSelectionId,
+        userId: user.id,
+        selectionName,
+        criteria,
+        items: selectedItems,
+      });
       setSavedSelectionId(selectionId);
       setQaSelectionId(selectionId);
 
@@ -1303,14 +857,15 @@ export function Dashboard() {
 
         if (response.status === 403) {
           if (errorData.error === 'CAP_REACHED') {
-            const message =
-              errorData.type === 'ai_limit'
-                ? `You've reached your limit for generating insights. Upgrade your plan to continue.`
-                : errorData.message || 'You have reached your usage limit.';
             toast({
-              title: 'Insight limit reached',
-              description: message,
+              title: 'Usage limit reached',
+              description: 'Upgrade your plan to continue.',
               variant: 'destructive',
+              action: (
+                <ToastAction altText="View pricing" onClick={() => router.push(getLocalePath(locale, '/pricing'))}>
+                  View pricing
+                </ToastAction>
+              ),
             });
           } else {
             toast({
