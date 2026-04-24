@@ -1,19 +1,32 @@
 'use client';
 
 import { ChevronDown, Send } from 'lucide-react';
+import Link from 'next/link';
+import { useParams } from 'next/navigation';
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Field } from '@/components/ui/field';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
 import { createSupabaseBrowserClient } from '@/libs/supabase/supabase-browser-client';
+import { getLocalePath } from '@/utils/get-locale-path';
 
 export function Help() {
+  const params = useParams();
+  const locale = (params?.locale as string) || 'uk';
+  const pricingHref = getLocalePath(locale, '/pricing');
+  const settingsHref = getLocalePath(locale, '/settings');
+  const signupHref = getLocalePath(locale, '/signup');
+  const savedHref = getLocalePath(locale, '/selections');
+  const linkClass = 'text-blue-600 hover:underline';
+  const [email, setEmail] = useState('');
   const [question, setQuestion] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
   const { toast } = useToast();
   const supabase = createSupabaseBrowserClient();
 
@@ -33,10 +46,22 @@ export function Help() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!question.trim()) {
+    const trimmedEmail = email.trim();
+    const trimmedQuestion = question.trim();
+
+    if (!trimmedEmail) {
       toast({
-        title: 'Error',
-        description: 'Please enter your question before sending.',
+        title: 'Email required',
+        description: 'Please enter your email so we can get back to you.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!trimmedQuestion) {
+      toast({
+        title: 'Message required',
+        description: 'Please enter your message before sending.',
         variant: 'destructive',
       });
       return;
@@ -45,7 +70,6 @@ export function Help() {
     setIsSubmitting(true);
 
     try {
-      // Get current user if logged in
       const {
         data: { user },
       } = await supabase.auth.getUser();
@@ -56,9 +80,10 @@ export function Help() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          question: question.trim(),
+          email: trimmedEmail,
+          question: trimmedQuestion,
           userId: user?.id || null,
-          userEmail: user?.email || null,
+          source: 'help_form',
         }),
       });
 
@@ -68,13 +93,9 @@ export function Help() {
         throw new Error(data.error || 'Failed to send message');
       }
 
-      toast({
-        title: 'Message sent',
-        description: 'Your question has been sent successfully. We will get back to you soon!',
-      });
-
-      // Clear the form
+      setIsSubmitted(true);
       setQuestion('');
+      setEmail('');
     } catch (error: any) {
       console.error('Error sending help message:', error);
       toast({
@@ -90,39 +111,70 @@ export function Help() {
   return (
     <div className='mx-auto w-full max-w-3xl space-y-8'>
       <div className='rounded-2xl border border-gray-200 bg-white p-8 shadow-sm'>
-        <h1 className='mb-2 text-3xl font-bold text-gray-900'>Help & Support</h1>
+        <h1 className='mb-2 text-3xl font-bold text-gray-900'>Help & Questions</h1>
         <p className='mb-8 text-gray-600'>
-          Have a question? We're here to help! Send us your question and we'll get back to you as soon as possible.
+          Have a question or need help with your search, insights, or pricing? You don&apos;t need an account — just
+          send us a message and we&apos;ll get back to you shortly.
         </p>
 
-        <form onSubmit={handleSubmit} className='space-y-6'>
-          <Field>
-            <Label htmlFor='question'>Your Question</Label>
-            <Textarea
-              id='question'
-              name='question'
-              value={question}
-              onChange={(e) => setQuestion(e.target.value)}
-              placeholder='Ask your question here...'
-              rows={6}
-              className='w-full resize-none'
-              disabled={isSubmitting}
-            />
-          </Field>
+        {isSubmitted ? (
+          <div className='rounded-lg border border-green-200 bg-green-50 p-6 text-center'>
+            <h2 className='mb-2 text-lg font-semibold text-gray-900'>Thanks!</h2>
+            <p className='text-sm text-gray-700'>
+              We&apos;ve received your message and will get back to you shortly.
+            </p>
+            <Button
+              variant='outline'
+              className='mt-4'
+              onClick={() => setIsSubmitted(false)}
+            >
+              Send another message
+            </Button>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className='space-y-6'>
+            <Field>
+              <Label htmlFor='email'>Your Email</Label>
+              <Input
+                id='email'
+                name='email'
+                type='email'
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder='your@email.com'
+                disabled={isSubmitting}
+              />
+            </Field>
 
-          <Button type='submit' disabled={isSubmitting} className='w-full sm:w-auto'>
-            {isSubmitting ? (
-              <>
-                <span className='mr-2'>Sending...</span>
-              </>
-            ) : (
-              <>
-                <Send className='mr-2 h-4 w-4' />
-                Send Message
-              </>
-            )}
-          </Button>
-        </form>
+            <Field>
+              <Label htmlFor='question'>Your Message</Label>
+              <Textarea
+                id='question'
+                name='question'
+                value={question}
+                onChange={(e) => setQuestion(e.target.value)}
+                placeholder='What would you like help with? (e.g. finding companies, company insights, pricing)'
+                rows={6}
+                className='w-full resize-none'
+                disabled={isSubmitting}
+              />
+            </Field>
+
+            <Button type='submit' disabled={isSubmitting} className='w-full sm:w-auto'>
+              {isSubmitting ? (
+                <>
+                  <span className='mr-2'>Sending...</span>
+                </>
+              ) : (
+                <>
+                  <Send className='mr-2 h-4 w-4' />
+                  Send Message
+                </>
+              )}
+            </Button>
+          </form>
+        )}
       </div>
 
       <div className='rounded-2xl border border-gray-200 bg-white p-8 shadow-sm'>
@@ -167,7 +219,8 @@ export function Help() {
               <div>
                 <h3 className='mb-2 font-semibold text-gray-900'>Do I need to create an account?</h3>
                 <p className='text-gray-600'>
-                  To save selections, export data, and generate insights, you'll need to create a free account.
+                  To save selections, export data, and generate insights, you&apos;ll need to create a{' '}
+                  <Link href={signupHref} className={linkClass}>free account</Link>.
                 </p>
               </div>
             </CollapsibleContent>
@@ -288,7 +341,8 @@ export function Help() {
                 <p className='text-gray-600'>
                   Processing time depends on the number of selected companies. Larger selections typically take a few
                   minutes. A progress indicator shows the completion status in real time. You can receive an email
-                  notification when processing is complete by enabling notifications in Settings.
+                  notification when processing is complete by enabling notifications in{' '}
+                  <Link href={settingsHref} className={linkClass}>Settings</Link>.
                 </p>
               </div>
               <div>
@@ -296,7 +350,8 @@ export function Help() {
                 <p className='text-gray-600'>
                   Yes. Each plan has a monthly limit on analyses. One analysis run counts as{' '}
                   <strong>one unit</strong>, regardless of how many companies are in the selection. If your limit is
-                  reached, generation is blocked until your rolling 30-day window resets or you upgrade your plan.
+                  reached, generation is blocked until your rolling 30-day window resets or you{' '}
+                  <Link href={pricingHref} className={linkClass}>upgrade your plan</Link>.
                 </p>
               </div>
             </CollapsibleContent>
@@ -349,7 +404,10 @@ export function Help() {
               </div>
               <div>
                 <h3 className='mb-2 font-semibold text-gray-900'>Can I delete a selection?</h3>
-                <p className='text-gray-600'>Yes. You can delete selections from your selections list page.</p>
+                <p className='text-gray-600'>
+                  Yes. You can delete selections from your{' '}
+                  <Link href={savedHref} className={linkClass}>Saved selections page</Link>.
+                </p>
               </div>
             </CollapsibleContent>
           </Collapsible>
@@ -428,18 +486,25 @@ export function Help() {
                   <li>Small Plan: For individual users and small teams</li>
                   <li>Medium Plan: For growing businesses</li>
                   <li>Large Plan: For enterprise use</li>
+                  <li>
+                    Pay-as-you-go (beta): No subscription — request access on the{' '}
+                    <Link href={pricingHref} className={linkClass}>Pricing page</Link>
+                  </li>
                 </ul>
               </div>
               <div>
                 <h3 className='mb-2 font-semibold text-gray-900'>What are the differences between plans?</h3>
                 <p className='text-gray-600'>
-                  Plans differ in Top-K limits, monthly Excel downloads, and monthly insight analyses.
+                  Plans differ in Top-K limits, monthly Excel downloads, and monthly insight analyses. See the full
+                  comparison on the <Link href={pricingHref} className={linkClass}>Pricing page</Link>.
                 </p>
               </div>
               <div>
                 <h3 className='mb-2 font-semibold text-gray-900'>Can I upgrade or downgrade my plan?</h3>
                 <p className='text-gray-600'>
-                  Yes. You can change your plan at any time through your account settings. Changes take effect
+                  Yes. You can change your plan at any time on the{' '}
+                  <Link href={pricingHref} className={linkClass}>Pricing page</Link> or through your{' '}
+                  <Link href={settingsHref} className={linkClass}>account settings</Link>. Changes take effect
                   immediately.
                 </p>
               </div>
@@ -447,7 +512,8 @@ export function Help() {
                 <h3 className='mb-2 font-semibold text-gray-900'>What happens if I exceed my plan limits?</h3>
                 <p className='text-gray-600'>
                   You will receive notifications when approaching or reaching your limits. To continue using the
-                  service, you must wait for the rolling 30-day reset or upgrade your plan.
+                  service, you must wait for the rolling 30-day reset or{' '}
+                  <Link href={pricingHref} className={linkClass}>upgrade your plan</Link>.
                 </p>
               </div>
             </CollapsibleContent>
@@ -466,7 +532,8 @@ export function Help() {
               <div>
                 <h3 className='mb-2 font-semibold text-gray-900'>How do I create an account?</h3>
                 <p className='text-gray-600'>
-                  Click "Get started for free" or "Sign up" on the homepage and register with your email address.
+                  Click &quot;Get started for free&quot; or go to the{' '}
+                  <Link href={signupHref} className={linkClass}>Sign up page</Link> and register with your email address.
                 </p>
               </div>
               <div>
@@ -478,8 +545,9 @@ export function Help() {
               <div>
                 <h3 className='mb-2 font-semibold text-gray-900'>How do I manage my subscription?</h3>
                 <p className='text-gray-600'>
-                  Subscriptions can be managed via the "Manage Subscription" button in account settings, using Stripe's
-                  customer portal.
+                  Subscriptions can be managed via the &quot;Manage Subscription&quot; button in your{' '}
+                  <Link href={settingsHref} className={linkClass}>account settings</Link>, using Stripe&apos;s customer
+                  portal.
                 </p>
               </div>
               <div>
@@ -564,7 +632,8 @@ export function Help() {
               <div>
                 <h3 className='mb-2 font-semibold text-gray-900'>The Excel download link expired. What should I do?</h3>
                 <p className='text-gray-600'>
-                  Generate a new export from the saved selection. Links are valid for 30 days.
+                  Generate a new export from your{' '}
+                  <Link href={savedHref} className={linkClass}>saved selection</Link>. Links are valid for 30 days.
                 </p>
               </div>
             </CollapsibleContent>

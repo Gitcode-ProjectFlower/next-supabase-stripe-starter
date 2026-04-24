@@ -1,0 +1,293 @@
+Intro
+This briefing outlines key updates to improve UX, enable email-based form submissions, and add a pay-as-you-go pricing option, while keeping the UI consistent and lightweight.
+
+Contents
+User that is not logged in	1
+Help Page – Form submission	3
+Pricing Page – Pay-as-you-go option	5
+Alerts	8
+Standard question	8
+Custom Question	9
+Questions about credits in Supabase	11
+Brower tab	12
+
+
+
+ 
+User that is not logged in
+ 
+
+
+Two changes for users who are not logged in:
+•	Bottom left: “Sign up to increase limit” → make this a link to https://www.insidefirms.com/uk/signup and 
+Change text from “Sign up to increase limit”
+To:
+Sign up for free to increase your limit
+Underline when mouse over. 
+•	In the center: there is a “Preview mode” message with an “Upgrade Plan” button. This link should directly go to https://www.insidefirms.com/uk/signup instead of the pricing page. (only for users who are not logged in, for the users that have the free plan, the upgrade button should remain linked to the pricing page.)
+
+
+ 
+Help Page – Form submission
+Goal
+Users (including non-logged-in visitors) should be able to send a message via the Help page.
+ 
+Form changes
+Add an email input field above the message box:
+•	Label:
+Your Email 
+•	Placeholder:
+your@email.com 
+ 
+Text changes
+Title:
+Help & Support → Help & Questions
+Description:
+Have a question? We're here to help! Send us your question and we'll get back to you as soon as possible.
+Change to:
+Have a question or need help with your search, insights, or pricing?
+You don’t need an account — just send us a message and we’ll get back to you shortly.
+ 
+Textarea placeholder:
+What would you like help with? (e.g. finding companies, company insights, pricing)
+
+It should look like this
+ 
+ 
+Email delivery (Vercel + Resend)
+Set up form submission to send an email.
+Recipient:
+Hendrikmeijer456@protonmail.com
+ 
+Required setup
+•	Add environment variables (Prod + Preview): 
+o	RESEND_API_KEY 
+o	RESEND_FROM_EMAIL 
+o	HELP_EMAIL = Hendrikmeijer456@protonmail.com 
+•	Configure Resend: 
+o	Verify sender/domain 
+o	Remove sandbox restrictions if needed 
+ 
+Email content
+Each submission should include:
+•	User email (from input field) 
+•	Message text 
+•	Source: 
+o	"help_form" 
+ 
+Expected behavior
+•	Form submit → send email via backend 
+•	User sees confirmation message (UI only) 
+•	No confirmation email sent to user 
+
+
+ 
+Pricing Page – Pay-as-you-go option
+Goal
+Add an alternative option for users who don’t want a subscription.
+
+UI
+Add a 4th pricing card:
+Title:
+Pay-as-you-go (beta)
+Description:
+No subscription required.
+Pay per result or insight.
+Bullets:
+•	Pay per result or insight 
+•	No monthly commitment 
+•	For occasional use 
+CTA button:
+Request access
+
+It should look like:
+ 
+
+Important
+•	No payment flow required 
+•	This is only a request flow (manual follow-up) 
+
+Pay-as-you-go flow
+Step 1
+User clicks Request access
+→ Open modal (use existing design)
+
+Step 2 – Form fields
+•	Email (required) 
+•	Message (optional) 
+
+Step 3 – Submit
+On submit:
+•	Send email (same setup as Help page) 
+Include:
+•	Email 
+•	Message 
+•	Source: 
+o	"pay_as_you_go" 
+
+Step 4 – Confirmation UI
+Show:
+Thanks!
+We received your request and will contact you shortly.
+Button:
+Got it
+
+Remove
+•	Do NOT implement additional steps/screens after confirmation 
+•	No “We’ll be in touch” screen 
+
+Shared logic (Help + Pay-as-you-go)
+•	Use the same email handling (Resend) 
+•	Same recipient email 
+•	No auto-reply emails 
+•	No automation needed 
+
+Definition of done
+•	Help form sends email successfully 
+•	Pay-as-you-go form sends email successfully 
+•	Emails arrive at HELP_EMAIL 
+•	Works in both Preview and Production 
+•	Confirmation UI shown after submit 
+•	No errors / no placeholder alerts 
+
+Deliver back
+Please confirm:
+•	Env vars are set 
+•	Sender email/domain used 
+•	One successful test (log or screenshot) 
+
+ 
+
+Modal UI Guidelines
+•	Use a medium-width modal (~480–560px feel, not full-page) 
+•	Keep same width and layout across all steps (request + confirmation) 
+•	Use comfortable spacing (around 24–32px, no cramped layout) 
+•	Inputs should be full width and aligned 
+•	Primary button should be clearly visible and aligned with inputs 
+•	Confirmation uses same modal, can be slightly more compact 
+•	Match styling with existing UI (pricing cards, form fields) 
+
+🔹 Goal
+👉 Simple, lightweight, consistent with the rest of the app
+👉 No multi-step or heavy feeling
+ 
+Alerts
+The questions/insights and the number of companies are correctly counted in Usage & Limits within the Settings.
+
+Standard question
+When the user exceeds this with a standard query, a message appears: CAP_REACHED.
+
+ 
+
+This should be changed to:
+ 
+
+Subtle “Limit Reached” Alert
+Goal:
+Indicate a usage limit without using error styling, and provide a clear upgrade action.
+
+UI Behavior
+•	Display a subtle alert box at the top of the modal (above the form content) 
+•	This replaces the current red error message (CAP_REACHED) 
+
+Styling
+•	Background: very light neutral or soft warning tint (e.g. light gray or light yellow/orange) 
+•	Border: thin, subtle (no strong red) 
+•	Icon: optional, small info or mild warning icon (not error) 
+•	Text color: standard text color (not red) 
+•	Spacing: same padding as existing alert component 
+
+Content
+Text:
+Limit reached — upgrade to run this analysis
+
+CTA
+•	Place a secondary button on the right side of the alert 
+Button:
+Upgrade
+•	Style: outline or ghost (NOT primary/blue) 
+•	On click: navigate to pricing page 
+
+Layout
+•	Horizontal layout: 
+o	Left: icon + text 
+o	Right: Upgrade button 
+•	Keep height compact (single-line if possible) 
+
+Notes
+•	Do not use: 
+o	red error styling 
+o	“CAP_REACHED” 
+o	multi-line explanations 
+•	This is a blocked state, but should feel like a natural upgrade step, not an error
+
+Custom Question
+Limit Reached UI – Consistency Update
+Goal
+Ensure all “limit reached” states are consistent across the app (modal + toast), both in copy and styling. Also makes it easer to upgrade
+
+Current: 
+ 
+
+Should be like:
+ 
+ 
+Copy (must be identical everywhere)
+Use exactly:
+Limit reached — upgrade to run this analysis
+No variations (e.g. no “Insight limit reached”, no extra explanations).
+
+Styling
+•	Use a subtle alert style (not red/error) 
+o	Light neutral / soft warning background 
+o	Thin, subtle border 
+•	Keep it visually aligned with existing alert components 
+
+Button
+•	Label: Upgrade 
+•	Style: secondary (not primary) 
+o	No blue primary button 
+o	Use neutral/outline style (same as other secondary buttons in the app) 
+•	Must visually match the button used in the modal version 
+
+Layout
+•	Inline alert (top of modal) and toast (bottom-right) should: 
+o	Use the same structure (icon + text + button) 
+o	Have consistent spacing and alignment 
+•	Toast includes a close (X), modal version does not 
+
+Key Principle
+This is not an error state, but a limit/upgrade state
+→ should feel neutral and consistent, not alarming
+
+Summary
+•	Same text everywhere 
+•	Same alert style everywhere 
+•	Same secondary button everywhere 
+•	Match existing design system (no one-off styling)
+
+
+ 
+
+Questions about credits in Supabase
+•	What exactly do “credits” represent in our system? Are they tied to the number of addresses processed, the number of questions asked, or something else? 
+•	I may have misunderstood how this works. I manually updated the credits value to 10 in the database table, but I don’t see any change reflected in the “Usage & Limits” section.
+→ Is there something else that needs to be updated or triggered for this to take effect? Or do the credits change,  but just not in the UI?
+
+
+
+ 
+Brower tab
+
+ 
+
+In the tab of the browers it says App, it should be insidefirms. The favicon, page name and splitter should stay.
+Probably something like this is needed:
+// app/layout.tsx
+export const metadata = {
+title: {
+default: 'insidefirms',
+template: '%s | insidefirms',
+},
+}
+

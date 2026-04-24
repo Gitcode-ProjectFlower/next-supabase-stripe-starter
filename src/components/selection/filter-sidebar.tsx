@@ -1,6 +1,7 @@
 'use client';
 
 import { X } from 'lucide-react';
+import Link from 'next/link';
 import React, { useRef, useState } from 'react';
 
 import { TreeMultiSelect } from '@/components/selection/tree-multi-select';
@@ -9,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { getRegionsTree, getSectorsTree } from '@/data/tree-loader';
 import { getTopKLimit, type UserPlan } from '@/libs/plan-config';
+import { getLocalePath } from '@/utils/get-locale-path';
 
 interface FilterSidebarProps {
   names: string[];
@@ -270,7 +272,12 @@ export function FilterSidebar({
           <p className='mt-1 text-xs text-gray-500'>
             Max {planLimit} results ({planName} plan)
             {userPlan === 'anonymous' || !userPlan ? (
-              <span className='ml-1 text-blue-600'>• Sign up to increase limit</span>
+              <>
+                {' • '}
+                <Link href={getLocalePath(locale, '/signup')} className='text-blue-600 hover:underline'>
+                  Sign up for free to increase your limit
+                </Link>
+              </>
             ) : null}
           </p>
         </div>

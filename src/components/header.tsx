@@ -61,14 +61,14 @@ export function Header() {
       <nav className='mx-auto max-w-7xl px-4 sm:px-6 lg:px-8' aria-label='Top'>
         <div className='flex h-16 items-center justify-between'>
           {/* Logo — aligned with sidebar left edge (same container padding) */}
-          <div className='flex items-center'>
-            <Link href={getLocalePath('/')}>
-              <Image src='/insidefirms_logo.png' alt='InsideFirms' width={160} height={40} className='h-10 w-auto' priority />
+          <div className='flex shrink-0 items-center'>
+            <Link href={getLocalePath('/')} className='shrink-0'>
+              <Image src='/insidefirms_logo.png' alt='InsideFirms' width={160} height={40} className='h-10 w-auto shrink-0' priority />
             </Link>
           </div>
 
           {/* Desktop Navigation */}
-          <div className='hidden md:flex md:items-center md:space-x-6'>
+          <div className='hidden md:flex md:items-center md:space-x-4 lg:space-x-6'>
             {navigation.map((item) => {
               // Hide navigation items that require auth if user is not authenticated
               if (item.requiresAuth && !isAuthenticated) {

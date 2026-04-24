@@ -11,6 +11,7 @@ import { QUERY_KEYS } from '@/libs/query-keys';
 import { createSupabaseBrowserClient } from '@/libs/supabase/supabase-browser-client';
 
 import { FullPageLoader } from '@/components/full-page-loader';
+import { limitReachedToast } from '@/components/limit-reached-alert';
 import { STANDARD_QUESTIONS, StandardQuestionTile } from '@/components/selection/standard-question-tile';
 import { StandardQuestionModal } from '@/components/selection/standard-question-modal';
 import { Button } from '@/components/ui/button';
@@ -24,7 +25,6 @@ import {
 } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
-import { ToastAction } from '@/components/ui/toast';
 import { useToast } from '@/components/ui/use-toast';
 import { cn } from '@/utils/cn';
 import { getLocalePath } from '@/utils/get-locale-path';
@@ -382,16 +382,7 @@ export function Selection() {
 
         if (response.status === 403) {
           if (errorData.error === 'CAP_REACHED') {
-            toast({
-              title: 'Usage limit reached',
-              description: 'Upgrade your plan to continue.',
-              variant: 'destructive',
-              action: (
-                <ToastAction altText="View pricing" onClick={() => router.push(getLocalePath(locale, '/pricing'))}>
-                  View pricing
-                </ToastAction>
-              ),
-            });
+            toast(limitReachedToast(router, locale));
           } else {
             toast({
               title: 'Access Denied',
@@ -588,16 +579,7 @@ export function Selection() {
 
         if (response.status === 403) {
           if (errorData.error === 'CAP_REACHED') {
-            toast({
-              title: 'Usage limit reached',
-              description: 'Upgrade your plan to continue.',
-              variant: 'destructive',
-              action: (
-                <ToastAction altText="View pricing" onClick={() => router.push(getLocalePath(locale, '/pricing'))}>
-                  View pricing
-                </ToastAction>
-              ),
-            });
+            toast(limitReachedToast(router, locale));
           } else {
             toast({
               title: 'Access Denied',

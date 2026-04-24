@@ -1,7 +1,9 @@
 'use client';
 
+import { useParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
+import { LimitReachedAlert } from '@/components/limit-reached-alert';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -660,6 +662,10 @@ export function StandardQuestionModal({
   isProcessing,
   error,
 }: StandardQuestionModalProps) {
+  const params = useParams();
+  const locale = (params?.locale as string) || 'uk';
+  const isLimitReached = error === 'CAP_REACHED';
+
   const getDefaultFormValue = (id: string | null): Record<string, unknown> => {
     if (id === '2') return { dimensions: SQ2_DIMENSIONS.map((d) => d.name) };
     return {};
@@ -710,8 +716,9 @@ export function StandardQuestionModal({
           <DialogDescription className='text-gray-600'>{config?.description}</DialogDescription>
         </DialogHeader>
 
-        {/* §5.5 Inline error — shown above form, replaces toast for 400/500 errors */}
-        {error && (
+        {/* Inline alert — limit state uses neutral Upgrade alert; other errors stay red */}
+        {error && isLimitReached && <LimitReachedAlert locale={locale} />}
+        {error && !isLimitReached && (
           <div className='flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700'>
             <svg className='mt-0.5 h-4 w-4 shrink-0' viewBox='0 0 20 20' fill='currentColor'>
               <path fillRule='evenodd' d='M10 18a8 8 0 100-16 8 8 0 000 16zm-.75-9.25a.75.75 0 011.5 0v3a.75.75 0 01-1.5 0v-3zm.75 5.5a.75.75 0 100-1.5.75.75 0 000 1.5z' clipRule='evenodd' />

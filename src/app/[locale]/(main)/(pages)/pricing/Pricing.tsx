@@ -2,6 +2,7 @@ import { Check } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { createCheckoutAction } from '@/features/pricing/actions/create-checkout-action';
+import { PayAsYouGoCard } from '@/features/pricing/components/pay-as-you-go-card';
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
 
 type PlanFeature = { text: string; sub?: string };
@@ -128,7 +129,7 @@ export async function Pricing() {
   return (
     <>
       {/* Pricing Cards */}
-      <div className='grid grid-cols-1 gap-6 md:grid-cols-3'>
+      <div className='grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4'>
         {PLANS.map((plan, idx) => {
           // Find matching product from database
           const product = typedProducts?.find((p) => p.name === plan.name);
@@ -224,6 +225,8 @@ export async function Pricing() {
             </div>
           );
         })}
+
+        <PayAsYouGoCard />
       </div>
 
       {/* FAQ or Additional Info */}

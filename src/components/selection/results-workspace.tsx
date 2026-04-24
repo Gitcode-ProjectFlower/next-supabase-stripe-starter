@@ -2,6 +2,7 @@
 'use client';
 
 import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react';
+import { useParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 
 import { OnboardingOverlay } from '@/components/onboarding-overlay';
@@ -16,6 +17,7 @@ import { getTopKLimit, getVisibleColumns, type UserPlan } from '@/libs/plan-conf
 import { requiresUpgrade } from '@/libs/soft-gating';
 import { LookalikeResult } from '@/types/selection';
 import { cn } from '@/utils/cn';
+import { getLocalePath } from '@/utils/get-locale-path';
 import { normalizeValue } from '@/utils/normalize-value';
 
 interface ResultsWorkspaceProps {
@@ -193,8 +195,11 @@ export function ResultsWorkspace({
   hasFilters = false,
   onSearch,
 }: ResultsWorkspaceProps) {
+  const params = useParams();
+  const locale = (params?.locale as string) || 'uk';
   const userPlanTyped = userPlan as UserPlan;
   const needsUpgradeForQA = userPlanTyped && requiresUpgrade(userPlanTyped, 'qa');
+  const upgradeUrl = getLocalePath(locale, userPlan === 'anonymous' || !userPlan ? '/signup' : '/pricing');
   const [sortKey, setSortKey] = useState<SortKey>('similarity');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [activeTab, setActiveTab] = useState<'candidates' | 'selected'>('candidates');
@@ -294,7 +299,9 @@ export function ResultsWorkspace({
                   : ' Upgrade your plan to see more results and unlock all features.'}
               </p>
             </div>
-            <UpgradeCTA size='sm' />
+            <UpgradeCTA size='sm' url={upgradeUrl}>
+              {userPlan === 'anonymous' || !userPlan ? 'Sign up' : 'Upgrade Plan'}
+            </UpgradeCTA>
           </div>
         </div>
       )}
