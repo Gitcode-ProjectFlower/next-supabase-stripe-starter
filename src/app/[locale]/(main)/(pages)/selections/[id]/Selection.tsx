@@ -908,7 +908,7 @@ export function Selection() {
 
           <div className='space-y-4 py-4'>
             <Textarea
-              placeholder='e.g. What does this company do? Who are their target customers?'
+              placeholder='e.g. What does this company do? Who is it selling to?'
               value={qaPrompt}
               onChange={(e) => setQaPrompt(e.target.value)}
               className='focus:bo min-h-[120px] border-gray-700 placeholder:text-gray-500'

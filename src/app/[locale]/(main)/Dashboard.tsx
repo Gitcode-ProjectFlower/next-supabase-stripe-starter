@@ -1001,7 +1001,7 @@ export function Dashboard() {
           {/* Single-line toolbar: title on the left, actions on the right */}
           <div className='mb-2 flex min-h-[56px] flex-wrap items-center gap-3 py-2'>
             <h2 className='text-base font-semibold text-gray-900'>
-              Turn your selection into insights and actions
+              Generate insights across your target companies
             </h2>
             <div className='ml-auto flex items-center gap-2'>
               <Input
@@ -1042,8 +1042,8 @@ export function Dashboard() {
           </div>
 
           {/* SQ Tiles */}
-          <div className='mb-4'>
-            <p className='mb-3 text-xs text-[#6B7280]'>Select companies to generate insights, reports, or outreach</p>
+          <div className='mb-12'>
+            <p className='mb-3 text-xs text-[#6B7280]'>Identify priorities, segment markets, and prepare outreach — at scale</p>
             <div className='grid grid-cols-2 gap-2 sm:grid-cols-4'>
               {STANDARD_QUESTIONS.map((sq) => (
                 <StandardQuestionTile

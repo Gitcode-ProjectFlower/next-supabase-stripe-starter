@@ -40,7 +40,7 @@ export const STANDARD_QUESTIONS: StandardQuestionConfig[] = [
   },
   {
     id: '4',
-    title: 'Personalized Outreach Draft Message',
+    title: 'Personalized Outreach Message',
     description: 'Create a personalized first message based on the company\'s priorities.',
     icon: MessageSquare,
     color: 'text-orange-600',

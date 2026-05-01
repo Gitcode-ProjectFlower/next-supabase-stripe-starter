@@ -7,11 +7,13 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
+import { UseCasesDropdown } from '@/components/use-cases-dropdown';
 import { createSupabaseBrowserClient } from '@/libs/supabase/supabase-browser-client';
 import { useLocalePath } from '@/utils/use-locale-path';
 
 const navigation = [
   { name: 'Search', href: '/', requiresAuth: false },
+  // Use cases dropdown is rendered inline (UseCasesDropdown) right after Search.
   { name: 'Saved', href: '/selections', requiresAuth: false },
   { name: 'Downloads', href: '/downloads', requiresAuth: true },
   { name: 'History', href: '/activity', requiresAuth: true },
@@ -76,7 +78,7 @@ export function Header() {
               }
               const itemPath = getLocalePath(item.href);
               const isActive = pathname === itemPath || pathname?.startsWith(itemPath + '/');
-              return (
+              const link = (
                 <Link
                   key={item.name}
                   href={itemPath}
@@ -87,6 +89,15 @@ export function Header() {
                   {item.name}
                 </Link>
               );
+              if (item.name === 'Search') {
+                return (
+                  <div key={item.name} className='flex items-center gap-4 lg:gap-6'>
+                    {link}
+                    <UseCasesDropdown />
+                  </div>
+                );
+              }
+              return link;
             })}
             {isAuthenticated ? (
               <Button variant='ghost' size='sm' onClick={handleLogout} className='text-gray-700 hover:text-gray-900'>
@@ -127,7 +138,7 @@ export function Header() {
               }
               const itemPath = getLocalePath(item.href);
               const isActive = pathname === itemPath || pathname?.startsWith(itemPath + '/');
-              return (
+              const link = (
                 <Link
                   key={item.name}
                   href={itemPath}
@@ -139,6 +150,21 @@ export function Header() {
                   {item.name}
                 </Link>
               );
+              if (item.name === 'Search') {
+                return (
+                  <div key={item.name}>
+                    {link}
+                    <Link
+                      href={getLocalePath('/use-cases')}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className='block rounded-md px-3 py-2 text-base font-medium text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                    >
+                      Use cases
+                    </Link>
+                  </div>
+                );
+              }
+              return link;
             })}
             {isAuthenticated ? (
               <button

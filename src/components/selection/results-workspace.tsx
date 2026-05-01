@@ -308,55 +308,52 @@ export function ResultsWorkspace({
 
       {/* Tabs */}
       <div className='mb-3 flex items-center gap-2'>
-        <Button
-          variant={activeTab === 'candidates' ? 'default' : 'outline'}
-          className={cn(
-            'rounded-xl text-sm',
-            activeTab === 'candidates'
-              ? 'bg-gray-900 text-white hover:bg-black'
-              : 'border-gray-200 bg-white hover:bg-gray-50'
-          )}
-          onClick={() => setActiveTab('candidates')}
-        >
-          Companies
-        </Button>
-        <Button
-          variant={activeTab === 'selected' ? 'default' : 'outline'}
-          className={cn(
-            'rounded-xl text-sm',
-            activeTab === 'selected'
-              ? 'bg-gray-900 text-white hover:bg-black'
-              : 'border-gray-200 bg-white hover:bg-gray-50'
-          )}
-          onClick={() => setActiveTab('selected')}
-        >
-          Selected
-        </Button>
-        <div className='ml-auto flex items-center gap-2'>
-          <Button
-            variant='outline'
-            size='sm'
-            className='bg-white hover:bg-gray-50'
+        <div className='inline-flex items-center rounded-lg border border-[#e2e8f0] bg-[#f1f5f9] p-0.5'>
+          <button
+            type='button'
+            onClick={() => setActiveTab('candidates')}
+            className={cn(
+              'rounded-md px-3 py-1 text-[13px] font-medium transition-colors',
+              activeTab === 'candidates'
+                ? 'bg-white text-gray-900 shadow-sm'
+                : 'text-gray-600 hover:text-gray-900'
+            )}
+          >
+            Companies
+          </button>
+          <button
+            type='button'
+            onClick={() => setActiveTab('selected')}
+            className={cn(
+              'rounded-md px-3 py-1 text-[13px] font-medium transition-colors',
+              activeTab === 'selected'
+                ? 'bg-white text-gray-900 shadow-sm'
+                : 'text-gray-600 hover:text-gray-900'
+            )}
+          >
+            Selected
+          </button>
+        </div>
+        <div className='ml-auto flex items-center gap-3 text-[13px] text-[#64748b]'>
+          <span>{selectedIds.size} selected</span>
+          <span className='text-[#cbd5e1]'>•</span>
+          <button
+            type='button'
             onClick={handleSelectAll}
             disabled={results.length === 0}
+            className='transition-colors hover:text-gray-900 hover:underline disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:no-underline'
           >
             {selectedIds.size > 0 && selectedIds.size === results.length ? 'Deselect all' : 'Select all'}
-          </Button>
-          <Button
-            variant='outline'
-            size='sm'
-            className='bg-white hover:bg-gray-50'
+          </button>
+          <span className='text-[#cbd5e1]'>•</span>
+          <button
+            type='button'
             onClick={() => onSelectionChange(new Set())}
             disabled={selectedIds.size === 0}
+            className='transition-colors hover:text-gray-900 hover:underline disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:no-underline'
           >
             Clear
-          </Button>
-          <Badge
-            variant='secondary'
-            className='border-none bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700 hover:bg-green-100'
-          >
-            {selectedIds.size} selected
-          </Badge>
+          </button>
         </div>
       </div>
 
@@ -371,14 +368,9 @@ export function ResultsWorkspace({
       )}
 
       {!isLoading && results.length === 0 && activeTab === 'candidates' && (
-        <div className='flex min-h-[350px] items-center justify-center rounded-2xl border bg-white shadow-sm'>
+        <div className='flex min-h-[350px] items-center justify-center rounded-2xl border bg-white px-6 py-10 shadow-sm'>
           {!hasFilters ? (
-            <OnboardingOverlay hasInteracted={false}>
-              <div className='text-center'>
-                <p className='text-xl font-semibold text-gray-700'>Choose a sector or region to see companies</p>
-                <p className='mt-2 text-base text-gray-400'>Start on the left</p>
-              </div>
-            </OnboardingOverlay>
+            <OnboardingOverlay hasInteracted={false} />
           ) : (
             <div className='text-center'>
               <button
@@ -511,19 +503,19 @@ export function ResultsWorkspace({
               placeholder={
                 selectedIds.size === 0
                   ? 'Select at least one company to ask a question…'
-                  : 'e.g. What does this company do? Who are their target customers?'
+                  : 'e.g. What does this company do? Who is it selling to?\nOr use one of the analyses above for structured insights'
               }
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               disabled={isProcessingQA || selectedIds.size === 0}
             />
-            <div className='w-56 space-y-2'>
+            <div className='flex shrink-0 flex-col items-stretch gap-2'>
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <div>
                       <Button
-                        className='w-full rounded-lg bg-blue-600 px-3 py-2 text-sm text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50'
+                        className='shrink-0 rounded-lg bg-blue-600 px-5 py-2 text-sm text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50'
                         onClick={() => onGenerateAnswers?.(prompt)}
                         disabled={
                           isProcessingQA ||
