@@ -13,9 +13,9 @@ import { useLocalePath } from '@/utils/use-locale-path';
 
 const navigation = [
   { name: 'Search', href: '/', requiresAuth: false },
-  // Use cases dropdown is rendered inline (UseCasesDropdown) right after Search.
-  { name: 'Product', href: '/product', requiresAuth: false },
+  // Use cases dropdown is rendered inline (UseCasesDropdown) right after Saved.
   { name: 'Saved', href: '/selections', requiresAuth: false },
+  { name: 'Product', href: '/product', requiresAuth: false },
   { name: 'Downloads', href: '/downloads', requiresAuth: true },
   { name: 'History', href: '/activity', requiresAuth: true },
   { name: 'Pricing', href: '/pricing', requiresAuth: false },
@@ -91,7 +91,7 @@ export function Header() {
                   {item.name}
                 </Link>
               );
-              if (item.name === 'Search') {
+              if (item.name === 'Saved') {
                 return (
                   <div key={item.name} className='flex items-center gap-4 lg:gap-6'>
                     {link}
@@ -152,7 +152,7 @@ export function Header() {
                   {item.name}
                 </Link>
               );
-              if (item.name === 'Search') {
+              if (item.name === 'Saved') {
                 return (
                   <div key={item.name}>
                     {link}
