@@ -206,15 +206,26 @@ export function QaResults() {
   // SQ4: truncated message visible, full text in expand
   const hasExpandableRows = sqId === '1' || sqId === '2' || sqId === '3' || sqId === '4';
 
-  // For SQ2: all dimension keys (excluding Evidence)
+  // For SQ2: union of dimension keys (excluding Evidence) across ALL successful rows,
+  // so columns stay stable even when an early row is missing a dimension.
   const sq2AllDimKeys: string[] = (() => {
     if (sqId !== '2' || !result.answers) return [];
-    const first = result.answers.find((a) => a.status === 'success' && a.answer);
-    if (!first?.answer) return [];
-    try {
-      const parsed = JSON.parse(first.answer);
-      return Object.keys(parsed).filter((k) => k !== 'Evidence');
-    } catch { return []; }
+    const seen = new Set<string>();
+    const ordered: string[] = [];
+    for (const a of result.answers) {
+      if (a.status !== 'success' || !a.answer) continue;
+      try {
+        const parsed = JSON.parse(a.answer);
+        for (const k of Object.keys(parsed)) {
+          if (k === 'Evidence' || seen.has(k)) continue;
+          seen.add(k);
+          ordered.push(k);
+        }
+      } catch {
+        // skip unparseable rows
+      }
+    }
+    return ordered;
   })();
 
   const sq2DimKeys = sq2AllDimKeys;

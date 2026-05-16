@@ -1,6 +1,6 @@
 'use client';
 
-import { X } from 'lucide-react';
+import { Database, Download, MessageSquare, Shield, X } from 'lucide-react';
 import Link from 'next/link';
 import React, { useRef, useState } from 'react';
 
@@ -300,15 +300,29 @@ export function FilterSidebar({
       </div>
 
       <div className='rounded-2xl border bg-white p-4 shadow-sm'>
-        <h3 className='mb-2 text-sm font-semibold uppercase tracking-wide text-gray-700'>Info</h3>
-        <ul className='ml-4 list-disc space-y-1 text-sm text-gray-600'>
-          <li>
-            Sector labels are <b>country-specific</b>.
+        <h3 className='mb-3 text-sm font-semibold uppercase tracking-wide text-gray-700'>Platform Information</h3>
+        <ul className='space-y-2.5 text-sm text-gray-600'>
+          <li className='flex items-start gap-2.5'>
+            <Database className='mt-0.5 h-4 w-4 shrink-0 text-gray-500' aria-hidden='true' />
+            <span>Built on company data and public information</span>
           </li>
-          <li>
-            Lookalikes are sorted by <b>fit score</b>.
+          <li className='flex items-start gap-2.5'>
+            <Shield className='mt-0.5 h-4 w-4 shrink-0 text-gray-500' aria-hidden='true' />
+            <span>Your searches and inputs remain private</span>
           </li>
-          <li>All selections can be downloaded as an Excel file.</li>
+          <li className='flex items-start gap-2.5'>
+            <Download className='mt-0.5 h-4 w-4 shrink-0 text-gray-500' aria-hidden='true' />
+            <span>Export results to Excel for outreach or analysis</span>
+          </li>
+          <li className='flex items-start gap-2.5'>
+            <MessageSquare className='mt-0.5 h-4 w-4 shrink-0 text-gray-500' aria-hidden='true' />
+            <Link
+              href={getLocalePath(locale, '/help')}
+              className='text-gray-600 transition-colors hover:text-blue-600'
+            >
+              Need help or want to share feedback? Contact support →
+            </Link>
+          </li>
         </ul>
       </div>
     </div>

@@ -14,10 +14,12 @@ import { useLocalePath } from '@/utils/use-locale-path';
 const navigation = [
   { name: 'Search', href: '/', requiresAuth: false },
   // Use cases dropdown is rendered inline (UseCasesDropdown) right after Search.
+  { name: 'Product', href: '/product', requiresAuth: false },
   { name: 'Saved', href: '/selections', requiresAuth: false },
   { name: 'Downloads', href: '/downloads', requiresAuth: true },
   { name: 'History', href: '/activity', requiresAuth: true },
   { name: 'Pricing', href: '/pricing', requiresAuth: false },
+  { name: 'About', href: '/about', requiresAuth: false },
   { name: 'Help', href: '/help', requiresAuth: false },
   { name: 'Settings', href: '/settings', requiresAuth: true },
 ];
