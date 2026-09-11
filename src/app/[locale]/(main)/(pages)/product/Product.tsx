@@ -127,7 +127,9 @@ const workflowRows: { traditional: string; inside: string; leftIcon: typeof Glob
 function FullBleedSection({ tinted = false, children }: { tinted?: boolean; children: React.ReactNode }) {
   return (
     <section
-      className={`relative left-1/2 right-1/2 -mx-[50vw] w-screen ${tinted ? 'border-y border-slate-200 bg-slate-50' : 'bg-white'}`}
+      className={`relative left-1/2 right-1/2 -mx-[50vw] w-screen ${
+        tinted ? 'border-y border-slate-200 bg-slate-50' : 'bg-white'
+      }`}
     >
       {children}
     </section>
@@ -142,10 +144,12 @@ export function Product() {
   return (
     <main className='w-full text-slate-950'>
       <FullBleedSection>
-        <section className='mx-auto grid max-w-7xl grid-cols-1 gap-12 px-8 py-16 lg:grid-cols-[1.05fr_.95fr] lg:items-center'>
+        <section className='mx-auto grid max-w-7xl grid-cols-1 gap-12 px-4 py-12 sm:px-8 sm:py-16 lg:grid-cols-[1.05fr_.95fr] lg:items-center'>
           <div>
-            <p className='mb-6 text-sm font-semibold uppercase tracking-[0.35em] text-[#6366f1]'>Product</p>
-            <h1 className='max-w-4xl text-4xl font-semibold leading-[1.02] tracking-[-0.055em] lg:text-5xl'>
+            <p className='mb-6 text-xs font-semibold uppercase tracking-[0.2em] text-[#6366f1] sm:text-sm sm:tracking-[0.35em]'>
+              Product
+            </p>
+            <h1 className='max-w-4xl text-[28px] font-semibold leading-[1.02] tracking-[-0.055em] sm:text-4xl lg:text-5xl'>
               Ask one commercial question across hundreds of companies
             </h1>
             <p className='mt-8 max-w-2xl text-lg leading-8 text-slate-600'>
@@ -195,26 +199,24 @@ export function Product() {
                   context.
                 </div>
                 <div className='overflow-x-auto'>
-                  <table className='w-full text-left text-sm'>
+                  <table className='w-full min-w-[480px] text-left text-sm'>
                     <thead className='bg-slate-50 text-xs uppercase tracking-wider text-slate-500'>
                       <tr>
-                        <th className='px-6 py-4'>Company</th>
-                        <th className='px-6 py-4'>Score</th>
-                        <th className='px-6 py-4'>Rationale</th>
+                        <th className='whitespace-nowrap px-4 py-4 sm:px-6'>Company</th>
+                        <th className='whitespace-nowrap px-4 py-4 sm:px-6'>Score</th>
+                        <th className='px-4 py-4 sm:px-6'>Rationale</th>
                       </tr>
                     </thead>
                     <tbody>
                       {salesPriorityExamples.map((row) => (
                         <tr key={row.company} className='border-t border-slate-100'>
-                          <td className='px-6 py-5 font-semibold'>{row.company}</td>
-                          <td className='px-6 py-5'>
-                            <span
-                              className={`rounded-full px-3 py-1 font-semibold ${scoreToneClasses[row.scoreTone]}`}
-                            >
+                          <td className='whitespace-nowrap px-4 py-5 font-semibold sm:px-6'>{row.company}</td>
+                          <td className='px-4 py-5 sm:px-6'>
+                            <span className={`rounded-full px-3 py-1 font-semibold ${scoreToneClasses[row.scoreTone]}`}>
                               {row.score}
                             </span>
                           </td>
-                          <td className='px-6 py-5 text-slate-600'>
+                          <td className='break-words px-4 py-5 text-slate-600 sm:px-6'>
                             {row.fit} — {row.rationale}
                           </td>
                         </tr>
@@ -229,26 +231,40 @@ export function Product() {
       </FullBleedSection>
 
       <FullBleedSection tinted>
-        <section className='mx-auto grid max-w-7xl grid-cols-1 gap-14 px-8 py-16 lg:grid-cols-[.85fr_1.15fr]'>
+        <section className='mx-auto grid max-w-7xl grid-cols-1 gap-14 px-4 py-12 sm:px-8 sm:py-16 lg:grid-cols-[.85fr_1.15fr]'>
           <div>
-            <p className='mb-5 text-sm font-semibold uppercase tracking-[0.35em] text-[#6366f1]'>How it works</p>
-            <h2 className='text-4xl font-semibold leading-tight tracking-[-0.045em]'>
+            <p className='mb-5 text-xs font-semibold uppercase tracking-[0.2em] text-[#6366f1] sm:text-sm sm:tracking-[0.35em]'>
+              How it works
+            </p>
+            <h2 className='text-[28px] font-semibold leading-tight tracking-[-0.045em] sm:text-4xl'>
               A simple workflow from selection to decision
             </h2>
           </div>
           <div className='grid gap-5'>
             {[
-              ['1', 'Select companies', 'Use filters such as sector, region, company size or use the advanced look-alike-model.'],
-              ['2', 'Ask a commercial question', 'Run a predefined analysis or ask a custom question across the selection.'],
-              ['3', 'Receive structured output', 'Get scores, rationale, evidence signals and recommended next steps per company.'],
+              [
+                '1',
+                'Select companies',
+                'Use filters such as sector, region, company size or use the advanced look-alike-model.',
+              ],
+              [
+                '2',
+                'Ask a commercial question',
+                'Run a predefined analysis or ask a custom question across the selection.',
+              ],
+              [
+                '3',
+                'Receive structured output',
+                'Get scores, rationale, evidence signals and recommended next steps per company.',
+              ],
             ].map(([num, title, text]) => (
-              <div key={num} className='flex gap-6 rounded-2xl border border-slate-200 bg-white p-6'>
+              <div key={num} className='flex gap-4 rounded-2xl border border-slate-200 bg-white p-4 sm:gap-6 sm:p-6'>
                 <div className='flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-slate-300 text-lg font-semibold'>
                   {num}
                 </div>
                 <div>
                   <h3 className='text-[1.15rem] font-semibold'>{title}</h3>
-                  <p className='mt-2 text-lg leading-8 text-slate-600'>{text}</p>
+                  <p className='mt-2 text-base leading-7 text-slate-600 sm:text-lg sm:leading-8'>{text}</p>
                 </div>
               </div>
             ))}
@@ -256,12 +272,12 @@ export function Product() {
         </section>
       </FullBleedSection>
 
-      <section className='mx-auto max-w-7xl px-8 py-16'>
+      <section className='mx-auto max-w-7xl px-4 py-12 sm:px-8 sm:py-16'>
         <div className='mb-12 max-w-3xl'>
-          <p className='mb-5 text-sm font-semibold uppercase tracking-[0.35em] text-[#6366f1]'>
+          <p className='mb-5 text-xs font-semibold uppercase tracking-[0.2em] text-[#6366f1] sm:text-sm sm:tracking-[0.35em]'>
             Structured commercial outputs
           </p>
-          <h2 className='text-4xl font-semibold leading-tight tracking-[-0.045em]'>
+          <h2 className='text-[28px] font-semibold leading-tight tracking-[-0.045em] sm:text-4xl'>
             See which companies matter, why they matter, and how to approach them
           </h2>
         </div>
@@ -281,27 +297,27 @@ export function Product() {
             </div>
 
             <div className='overflow-x-auto'>
-              <table className='w-full table-fixed text-left text-sm'>
+              <table className='w-full min-w-[680px] table-fixed text-left text-sm sm:min-w-[720px]'>
                 <thead className='border-b border-slate-100 bg-slate-50 text-[11px] uppercase tracking-wide text-slate-500'>
                   <tr>
-                    <th className='w-[22%] px-3 py-3'>Company</th>
-                    <th className='w-[13%] px-3 py-3'>City</th>
-                    <th className='w-[15%] px-3 py-3'>Customer</th>
-                    <th className='w-[18%] px-3 py-3'>Segment</th>
-                    <th className='w-[12%] px-3 py-3'>Scope</th>
-                    <th className='w-[20%] px-3 py-3'>Positioning</th>
+                    <th className='w-[22%] whitespace-nowrap px-3 py-3'>Company</th>
+                    <th className='w-[13%] whitespace-nowrap px-3 py-3'>City</th>
+                    <th className='w-[15%] whitespace-nowrap px-3 py-3'>Customer</th>
+                    <th className='w-[18%] whitespace-nowrap px-3 py-3'>Segment</th>
+                    <th className='w-[12%] whitespace-nowrap px-3 py-3'>Scope</th>
+                    <th className='w-[20%] whitespace-nowrap px-3 py-3'>Positioning</th>
                   </tr>
                 </thead>
                 <tbody>
                   {segmentationExamples.map((row, index) => (
                     <React.Fragment key={row.company}>
                       <tr className='border-b border-slate-100 align-top'>
-                        <td className='px-3 py-4 font-semibold text-slate-950'>{row.company}</td>
-                        <td className='px-3 py-4 text-slate-600'>{row.city}</td>
-                        <td className='px-3 py-4 text-slate-600'>{row.customerType}</td>
-                        <td className='px-3 py-4 text-slate-600'>{row.segment}</td>
-                        <td className='px-3 py-4 text-slate-600'>{row.scope}</td>
-                        <td className='px-3 py-4 text-slate-600'>{row.positioning}</td>
+                        <td className='break-words px-3 py-4 font-semibold text-slate-950'>{row.company}</td>
+                        <td className='whitespace-nowrap px-3 py-4 text-slate-600'>{row.city}</td>
+                        <td className='whitespace-nowrap px-3 py-4 text-slate-600'>{row.customerType}</td>
+                        <td className='whitespace-nowrap px-3 py-4 text-slate-600'>{row.segment}</td>
+                        <td className='whitespace-nowrap px-3 py-4 text-slate-600'>{row.scope}</td>
+                        <td className='break-words px-3 py-4 text-slate-600'>{row.positioning}</td>
                       </tr>
 
                       {index === 0 && row.evidence && (
@@ -330,10 +346,7 @@ export function Product() {
 
           <div className='grid gap-3'>
             {outputs.map((item) => (
-              <div
-                key={item}
-                className='flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3'
-              >
+              <div key={item} className='flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3'>
                 <CheckCircle2 className='h-4 w-4 shrink-0 text-[#6366f1]' />
                 <span className='text-sm font-semibold leading-5'>{item}</span>
               </div>
@@ -343,10 +356,12 @@ export function Product() {
       </section>
 
       <FullBleedSection tinted>
-        <section className='mx-auto max-w-7xl px-8 py-14'>
+        <section className='mx-auto max-w-7xl px-4 py-10 sm:px-8 sm:py-14'>
           <div className='mb-14 text-center'>
-            <p className='mb-5 text-sm font-semibold uppercase tracking-[0.35em] text-[#6366f1]'>Before vs after</p>
-            <h2 className='mx-auto max-w-5xl text-4xl font-semibold leading-tight tracking-[-0.045em] lg:text-[3.2rem]'>
+            <p className='mb-5 text-xs font-semibold uppercase tracking-[0.2em] text-[#6366f1] sm:text-sm sm:tracking-[0.35em]'>
+              Before vs after
+            </p>
+            <h2 className='mx-auto max-w-5xl text-[28px] font-semibold leading-tight tracking-[-0.045em] sm:text-4xl lg:text-[3.2rem]'>
               Move from manual company research to structured commercial decisions
             </h2>
             <p className='mx-auto mt-6 max-w-3xl text-lg leading-8 text-slate-600'>
@@ -355,20 +370,24 @@ export function Product() {
             </p>
           </div>
           <div className='overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-[0_12px_36px_rgba(15,23,42,0.07)]'>
-            <div className='grid grid-cols-2 border-b border-slate-200 bg-slate-50/70'>
-              <div className='flex items-center gap-4 border-r border-slate-200 px-8 py-5'>
-                <Search className='text-slate-500' size={22} strokeWidth={2} />
-                <p className='text-xs font-bold uppercase tracking-[0.34em] text-slate-500'>Traditional workflow</p>
+            <div className='grid grid-cols-1 divide-y divide-slate-200 border-b border-slate-200 bg-slate-50/70 sm:grid-cols-2 sm:divide-y-0'>
+              <div className='flex items-center gap-4 px-4 py-5 sm:border-r sm:border-slate-200 sm:px-8'>
+                <Search className='shrink-0 text-slate-500' size={22} strokeWidth={2} />
+                <p className='text-xs font-bold uppercase tracking-[0.2em] text-slate-500 sm:tracking-[0.34em]'>
+                  Traditional workflow
+                </p>
               </div>
 
-              <div className='flex items-center gap-4 px-8 py-5'>
-                <Sparkles className='text-[#6366f1]' size={22} strokeWidth={2.2} />
-                <p className='text-xs font-bold uppercase tracking-[0.34em] text-[#6366f1]'>With InsideFirms</p>
+              <div className='flex items-center gap-4 px-4 py-5 sm:px-8'>
+                <Sparkles className='shrink-0 text-[#6366f1]' size={22} strokeWidth={2.2} />
+                <p className='text-xs font-bold uppercase tracking-[0.2em] text-[#6366f1] sm:tracking-[0.34em]'>
+                  With InsideFirms
+                </p>
               </div>
             </div>
 
-            <div className='grid grid-cols-2'>
-              <div className='border-r border-slate-200 px-8 py-8'>
+            <div className='grid grid-cols-1 divide-y divide-slate-200 sm:grid-cols-2 sm:divide-y-0'>
+              <div className='px-4 py-5 sm:border-r sm:border-slate-200 sm:px-8 sm:py-8'>
                 <div className='space-y-7'>
                   {workflowRows.map((row) => {
                     const LeftIcon = row.leftIcon;
@@ -377,7 +396,7 @@ export function Product() {
                         <div className='mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-500'>
                           <LeftIcon size={18} strokeWidth={2} />
                         </div>
-                        <p className='pt-0.5 text-[1.2rem] font-normal leading-snug text-slate-700'>
+                        <p className='pt-0.5 text-[1rem] font-normal leading-snug text-slate-700 sm:text-[1.2rem]'>
                           {row.traditional}
                         </p>
                       </div>
@@ -386,7 +405,7 @@ export function Product() {
                 </div>
               </div>
 
-              <div className='bg-gradient-to-r from-white to-indigo-50/40 px-8 py-8'>
+              <div className='bg-gradient-to-r from-white to-indigo-50/40 px-4 py-5 sm:px-8 sm:py-8'>
                 <div className='space-y-7'>
                   {workflowRows.map((row) => {
                     const RightIcon = row.rightIcon;
@@ -395,7 +414,9 @@ export function Product() {
                         <div className='mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-[#6366f1]'>
                           <RightIcon size={18} strokeWidth={2.2} />
                         </div>
-                        <p className='pt-0.5 text-[1.2rem] font-semibold leading-snug text-slate-950'>{row.inside}</p>
+                        <p className='pt-0.5 text-[1rem] font-semibold leading-snug text-slate-950 sm:text-[1.2rem]'>
+                          {row.inside}
+                        </p>
                       </div>
                     );
                   })}
@@ -406,12 +427,12 @@ export function Product() {
         </section>
       </FullBleedSection>
 
-      <section className='mx-auto max-w-7xl px-8 py-16'>
+      <section className='mx-auto max-w-7xl px-4 py-12 sm:px-8 sm:py-16'>
         <div className='text-center'>
-          <p className='mb-5 text-sm font-semibold uppercase tracking-[0.35em] text-[#6366f1]'>
+          <p className='mb-5 text-xs font-semibold uppercase tracking-[0.2em] text-[#6366f1] sm:text-sm sm:tracking-[0.35em]'>
             Works alongside existing sales tools
           </p>
-          <h2 className='mx-auto max-w-4xl text-4xl font-semibold leading-tight tracking-[-0.045em]'>
+          <h2 className='mx-auto max-w-4xl text-[28px] font-semibold leading-tight tracking-[-0.045em] sm:text-4xl'>
             Use InsideFirms before contact discovery and outreach
           </h2>
           <p className='mx-auto mt-6 max-w-3xl text-lg leading-8 text-slate-600'>

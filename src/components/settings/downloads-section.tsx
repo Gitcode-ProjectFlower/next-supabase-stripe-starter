@@ -47,6 +47,14 @@ export function DownloadsSection({ initialDownloads = [] }: DownloadsSectionProp
     return new Date(dateString).toLocaleString();
   };
 
+  const formatDateShort = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-GB', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    });
+  };
+
   const handleDownload = async (download: Download) => {
     if (!download.downloadUrl) {
       console.error('No download URL available for download:', download.id);
@@ -118,7 +126,7 @@ export function DownloadsSection({ initialDownloads = [] }: DownloadsSectionProp
 
   return (
     <>
-      <div className='mb-4 flex items-center justify-between'>
+      <div className='mb-4 flex flex-wrap items-center justify-between gap-2'>
         <h3 className='text-sm font-medium text-gray-900'>Available Downloads</h3>
         <Button
           variant='outline'
@@ -131,7 +139,33 @@ export function DownloadsSection({ initialDownloads = [] }: DownloadsSectionProp
           {isRefetching ? 'Refreshing...' : 'Refresh'}
         </Button>
       </div>
-      <div className='overflow-auto rounded-xl border border-gray-200'>
+      <div className='space-y-3 md:hidden'>
+        {downloads.map((download) => (
+          <div key={download.id} className='rounded-xl border border-gray-200 bg-white p-4'>
+            <div className='flex items-center justify-between gap-2'>
+              <span className='rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700'>
+                {download.type}
+              </span>
+              <span className='shrink-0 text-xs text-gray-500'>{download.size}</span>
+            </div>
+            <p className='mt-2 break-words text-sm font-medium text-gray-900'>
+              {download.selectionName || download.selectionId}
+            </p>
+            <p className='mt-1 text-xs text-gray-500'>
+              Created {formatDateShort(download.createdAt)} · Expires {formatDateShort(download.expiresAt)}
+            </p>
+            <Button
+              variant='outline'
+              size='sm'
+              onClick={() => handleDownload(download)}
+              className='mt-3 w-full rounded-lg border border-gray-300 px-3 py-1.5 text-sm hover:bg-gray-50'
+            >
+              Download
+            </Button>
+          </div>
+        ))}
+      </div>
+      <div className='hidden overflow-auto rounded-xl border border-gray-200 md:block'>
         <Table className='min-w-full divide-y divide-gray-200'>
           <TableHeader className='bg-gray-50'>
             <TableRow className='hover:bg-transparent'>
@@ -159,7 +193,10 @@ export function DownloadsSection({ initialDownloads = [] }: DownloadsSectionProp
             {downloads.map((download) => (
               <TableRow key={download.id} className='hover:bg-gray-50'>
                 <TableCell className='whitespace-nowrap px-4 py-3 text-sm text-gray-900'>{download.type}</TableCell>
-                <TableCell className='px-4 py-3 text-sm text-gray-900'>
+                <TableCell
+                  className='max-w-[220px] truncate px-4 py-3 text-sm text-gray-900'
+                  title={download.selectionName || download.selectionId}
+                >
                   {download.selectionName || download.selectionId}
                 </TableCell>
                 <TableCell className='whitespace-nowrap px-4 py-3 text-sm text-gray-600'>

@@ -3,6 +3,7 @@ import { Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { createCheckoutAction } from '@/features/pricing/actions/create-checkout-action';
 import { PayAsYouGoCard } from '@/features/pricing/components/pay-as-you-go-card';
+import { PricingCarousel } from '@/features/pricing/components/pricing-carousel';
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
 
 type PlanFeature = { text: string; sub?: string };
@@ -129,7 +130,7 @@ export async function Pricing() {
   return (
     <>
       {/* Pricing Cards */}
-      <div className='grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4'>
+      <PricingCarousel count={PLANS.length + 1}>
         {PLANS.map((plan, idx) => {
           // Find matching product from database
           const product = typedProducts?.find((p) => p.name === plan.name);
@@ -143,8 +144,9 @@ export async function Pricing() {
           return (
             <div
               key={plan.name}
-              className={`relative flex flex-col rounded-2xl border bg-white p-6 shadow-sm ${plan.popular ? 'border-blue-600 ring-2 ring-blue-600' : ''
-                }`}
+              className={`relative flex w-[80%] shrink-0 snap-center flex-col rounded-2xl border bg-white p-6 shadow-sm sm:w-[55%] md:w-auto ${
+                plan.popular ? 'border-blue-600 ring-2 ring-blue-600' : ''
+              }`}
             >
               {plan.popular && (
                 <div className='absolute -top-4 left-1/2 -translate-x-1/2'>
@@ -178,9 +180,7 @@ export async function Pricing() {
                     <Check className='h-5 w-5 shrink-0 text-green-600' />
                     <div className='flex-1'>
                       <span className='text-sm text-gray-700'>{feature.text}</span>
-                      {feature.sub && (
-                        <p className='mt-0.5 pl-0 text-xs text-gray-500'>{feature.sub}</p>
-                      )}
+                      {feature.sub && <p className='mt-0.5 pl-0 text-xs text-gray-500'>{feature.sub}</p>}
                     </div>
                   </li>
                 ))}
@@ -227,7 +227,7 @@ export async function Pricing() {
         })}
 
         <PayAsYouGoCard />
-      </div>
+      </PricingCarousel>
 
       {/* FAQ or Additional Info */}
       <div className='mt-12 rounded-2xl border bg-white p-6 shadow-sm'>
@@ -242,8 +242,8 @@ export async function Pricing() {
           <div>
             <h3 className='font-semibold text-gray-900'>What is Top-K?</h3>
             <p className='mt-1 text-sm text-gray-600'>
-              Top-K is the maximum number of results you can retrieve per search. Higher limits allow you to
-              cast a wider net.
+              Top-K is the maximum number of results you can retrieve per search. Higher limits allow you to cast a
+              wider net.
             </p>
           </div>
           <div>

@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { inngest } from '@/libs/inngest/client';
+import { buildInputSnapshot } from '@/libs/input-snapshot';
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
+import type { Json } from '@/libs/supabase/types';
 import { checkUsageLimit } from '@/libs/usage-tracking';
 import { getUserPlan } from '@/libs/user-plan';
 
@@ -11,7 +13,9 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
     const { id: selectionId } = await params;
     const supabase = await createSupabaseServerClient();
 
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const { data, error } = await supabase
@@ -24,7 +28,27 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-    return NextResponse.json({ sessions: data || [] });
+    const sessions = data || [];
+    let counts: Record<string, number> = {};
+    if (sessions.length > 0) {
+      const { data: countRows } = await supabase
+        .from('qa_answers')
+        .select('session_id')
+        .in(
+          'session_id',
+          sessions.map((s) => (s as { id: string }).id)
+        );
+      for (const row of (countRows as { session_id: string }[]) || []) {
+        counts[row.session_id] = (counts[row.session_id] || 0) + 1;
+      }
+    }
+
+    return NextResponse.json({
+      sessions: sessions.map((s) => ({
+        ...(s as Record<string, unknown>),
+        company_count: counts[(s as { id: string }).id] || 0,
+      })),
+    });
   } catch (error) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
@@ -81,18 +105,36 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ error: 'Prompt cannot be empty or contain only whitespace' }, { status: 400 });
     }
 
+    const inputSnapshot = buildInputSnapshot(
+      standard_question_id ?? null,
+      form_input ?? null,
+      cleanedPrompt
+    ) as unknown as Json;
+
     // §7.1 Required field validation for Standard Questions
+    const asText = (v: unknown): string => (typeof v === 'string' ? v.trim() : '');
     if (standard_question_id === '1') {
-      if (!form_input?.productName?.trim() && !form_input?.productDescription?.trim()) {
-        return NextResponse.json({ error: 'Product/Service name or description is required for Sales Priority Score', type: 'missing_required_input' }, { status: 400 });
-      }
-      if (!form_input?.icpCharacteristics?.trim()) {
-        return NextResponse.json({ error: 'Ideal Customer Profile Characteristics is required for Sales Priority Score', type: 'missing_required_input' }, { status: 400 });
+      const desc = asText(form_input?.productDescription) || asText(form_input?.productName);
+      const icp = asText(form_input?.icp) || asText(form_input?.icpCharacteristics);
+      if (!desc && !icp) {
+        return NextResponse.json(
+          {
+            error: 'Product/Service description or Ideal Customer Profile is required for Sales Priority Score',
+            type: 'missing_required_input',
+          },
+          { status: 400 }
+        );
       }
     }
     if (standard_question_id === '3') {
-      if (!form_input?.productContext?.trim()) {
-        return NextResponse.json({ error: 'Product / Service Context is required for Account Intelligence Brief', type: 'missing_required_input' }, { status: 400 });
+      if (!asText(form_input?.productContext)) {
+        return NextResponse.json(
+          {
+            error: 'Product / Service Context is required for Account Intelligence Brief',
+            type: 'missing_required_input',
+          },
+          { status: 400 }
+        );
       }
     }
 
@@ -166,6 +208,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           error_message: null,
           completed_at: null,
           csv_url: null,
+          input_snapshot: inputSnapshot,
           created_at: new Date().toISOString(), // Update created_at to reflect regeneration
         })
         .eq('id', existingFailedSession.id)
@@ -195,6 +238,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           progress: 0,
           standard_question_id: standard_question_id ?? null,
           form_input: form_input ?? null,
+          input_snapshot: inputSnapshot,
         })
         .select('id')
         .single();

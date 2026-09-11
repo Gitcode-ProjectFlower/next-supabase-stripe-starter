@@ -1,8 +1,9 @@
-import * as XLSX from 'xlsx';
+import * as XLSX from 'xlsx-js-style';
+import { formatResultsWorksheet } from '@/libs/excel-format';
 import { inngest } from '@/libs/inngest/client';
 import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';
 import { normalizeValue } from '@/utils/normalize-value';
-import { parseStandardOutput, type SQId, SCHEMA_VERSION } from '@/libs/qa-output-schemas';
+import { parseStandardOutput, type SQId, PROMPT_VERSION, SCHEMA_VERSION } from '@/libs/qa-output-schemas';
 
 export const processQAJob = inngest.createFunction(
   {
@@ -157,6 +158,7 @@ export const processQAJob = inngest.createFunction(
             status: 'processing',
             total_count: maxProfiles,
             success_count: 0,
+            prompt_version: PROMPT_VERSION,
             schema_version: SCHEMA_VERSION,
             validation_status: 'raw',
           })
@@ -592,12 +594,17 @@ export const processQAJob = inngest.createFunction(
         'Error Message',
       ];
 
+      const isSps = standardQuestionId === '1';
+      const frontHeaders = isSps
+        ? [baseHeaders[0], ...sqColumns.map((c) => c.header), ...baseHeaders.slice(1), 'Status', 'Error Message']
+        : headers;
+
       const rows = results.map((r) => {
         const sqValues = r.answer && r.status === 'success'
           ? extractSQValues(standardQuestionId || null, r.answer)
           : sqColumns.map(() => '');
 
-        return [
+        const base = [
           normalizeValue(r.name),
           r.similarity != null ? Math.round(r.similarity * 100) + '%' : '',
           normalizeValue(r.domain),
@@ -616,13 +623,13 @@ export const processQAJob = inngest.createFunction(
           normalizeValue(r.region_level4),
           normalizeValue(r.linkedin_company_url),
           normalizeValue(r.legal_form),
-          ...sqValues,
-          normalizeValue(r.status),
-          normalizeValue(r.error_message),
         ];
+        const tail = [normalizeValue(r.status), normalizeValue(r.error_message)];
+        return isSps ? [base[0], ...sqValues, ...base.slice(1), ...tail] : [...base, ...sqValues, ...tail];
       });
 
-      const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+      const ws = XLSX.utils.aoa_to_sheet([frontHeaders, ...rows]);
+      formatResultsWorksheet(ws, isSps ? [1] : []);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'Insights Results');
       const xlsxArray = XLSX.write(wb, { type: 'array', bookType: 'xlsx' }) as Uint8Array;

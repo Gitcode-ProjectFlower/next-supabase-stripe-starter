@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import * as XLSX from 'xlsx';
+import * as XLSX from 'xlsx-js-style';
 
 const EXCEL_PATH = path.join(process.cwd(), 'filters_sectors_and_region_UK_and_DE.xlsx');
 

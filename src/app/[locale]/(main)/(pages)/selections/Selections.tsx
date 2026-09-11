@@ -84,6 +84,10 @@ export function Selections() {
     }
   };
 
+  const openSelection = (id: string) => {
+    router.push(getLocalePath(locale, `/selections/${id}`));
+  };
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-GB', {
       day: 'numeric',
@@ -100,7 +104,7 @@ export function Selections() {
   if (isLoading) return <FullPageLoader text='Loading selections...' />;
 
   return selections.length === 0 ? (
-    <div className='fixed inset-0 top-16 flex items-center justify-center pb-16'>
+    <div className='flex items-center justify-center px-4 py-16'>
       <div className='text-center'>
         <svg className='mx-auto h-24 w-24 text-gray-400' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
           <path
@@ -110,7 +114,7 @@ export function Selections() {
             d='M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'
           />
         </svg>
-        <h2 className='mt-4 text-2xl font-bold text-gray-900'>No selections yet</h2>
+        <h2 className='mt-4 text-xl font-bold text-gray-900 sm:text-2xl'>No selections yet</h2>
         <p className='mt-2 text-gray-600'>Create your first selection to save and manage company lists</p>
         <Button
           className='mt-6 rounded-lg bg-blue-600 px-6 py-2 text-white hover:bg-blue-700'
@@ -122,20 +126,63 @@ export function Selections() {
     </div>
   ) : (
     <>
-      <div className='mb-6 flex items-center justify-between'>
-        <div>
-          <h1 className='text-3xl font-bold text-gray-900'>Saved selections</h1>
+      <div className='mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
+        <div className='min-w-0'>
+          <h1 className='text-2xl font-bold text-gray-900 sm:text-3xl'>Saved selections</h1>
           <p className='mt-1 text-gray-600'>View and continue working on your Saved Selections</p>
         </div>
         <Button
-          className='rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700'
+          className='w-full shrink-0 rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 sm:w-auto'
           onClick={() => router.push(getLocalePath(locale, '/'))}
         >
           Create New Selection
         </Button>
       </div>
 
-      <div className='overflow-hidden rounded-2xl border bg-white shadow-sm'>
+      <div className='space-y-3 sm:hidden'>
+        {selections.map((selection) => {
+          const daysLeft = getDaysUntilExpiry(selection.expires_at);
+          const isExpiringSoon = daysLeft <= 2;
+
+          return (
+            <div
+              key={selection.id}
+              onClick={() => openSelection(selection.id)}
+              className='cursor-pointer rounded-2xl border bg-white p-4 shadow-sm active:bg-gray-50'
+            >
+              <div className='flex items-start justify-between gap-3'>
+                <p className='min-w-0 break-words font-medium text-gray-900'>{selection.name}</p>
+                <Button
+                  variant='outline'
+                  size='icon'
+                  className='h-9 w-9 shrink-0 hover:bg-red-50 hover:text-red-600'
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setDeleteId(selection.id);
+                  }}
+                  aria-label='Delete selection'
+                >
+                  <Trash2 className='h-4 w-4' />
+                </Button>
+              </div>
+              <div className='mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500'>
+                <span className='rounded-full bg-blue-100 px-2 py-0.5 font-medium text-blue-700'>
+                  {selection.item_count} companies
+                </span>
+                <span>Created {formatDate(selection.created_at)}</span>
+                <span className={isExpiringSoon ? 'font-semibold text-red-600' : ''}>
+                  Expires {formatDate(selection.expires_at)}
+                </span>
+                {isExpiringSoon && (
+                  <span className='rounded-full bg-red-100 px-2 py-0.5 font-medium text-red-700'>{daysLeft}d left</span>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className='hidden overflow-hidden rounded-2xl border bg-white shadow-sm sm:block'>
         <Table>
           <TableHeader className='bg-gray-50'>
             <TableRow className='hover:bg-transparent'>
@@ -152,7 +199,11 @@ export function Selections() {
               const isExpiringSoon = daysLeft <= 2;
 
               return (
-                <TableRow key={selection.id} className='cursor-pointer hover:bg-gray-50'>
+                <TableRow
+                  key={selection.id}
+                  className='cursor-pointer hover:bg-gray-50'
+                  onClick={() => openSelection(selection.id)}
+                >
                   <TableCell className='px-4 py-3 font-medium'>{selection.name}</TableCell>
                   <TableCell className='px-4 py-3'>
                     <span className='rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-700'>
@@ -179,16 +230,11 @@ export function Selections() {
                       <Button
                         variant='outline'
                         size='sm'
-                        className='hover:bg-gray-100'
-                        onClick={() => router.push(getLocalePath(locale, `/selections/${selection.id}`))}
-                      >
-                        Open
-                      </Button>
-                      <Button
-                        variant='outline'
-                        size='sm'
                         className='hover:bg-red-50 hover:text-red-600'
-                        onClick={() => setDeleteId(selection.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDeleteId(selection.id);
+                        }}
                       >
                         <Trash2 className='h-4 w-4' />
                       </Button>

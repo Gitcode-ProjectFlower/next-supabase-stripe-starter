@@ -196,6 +196,7 @@ type QAResultResponse = {
   selection_name: string;
   prompt: string;
   standard_question_id?: string | null;
+  input_snapshot?: { fields: Array<{ key: string; label: string; type: string; value: unknown; order: number }> } | null;
   total_items?: number;
   status: 'processing' | 'completed' | 'failed';
   progress: number;
@@ -245,6 +246,7 @@ type QASessionListItem = {
   created_at: string;
   completed_at?: string | null;
   error_message?: string | null;
+  company_count?: number;
 };
 
 export function useQASessionListQuery(

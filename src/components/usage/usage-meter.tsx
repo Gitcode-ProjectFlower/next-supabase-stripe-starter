@@ -45,9 +45,9 @@ export function UsageMeter() {
 
       {/* Downloads */}
       <div>
-        <div className='mb-2 flex justify-between text-sm'>
+        <div className='mb-2 flex justify-between gap-3 text-sm'>
           <span className='text-gray-600 dark:text-gray-400'>Records Downloaded</span>
-          <span className='font-medium'>
+          <span className='shrink-0 text-right font-medium tabular-nums'>
             {stats.downloads.toLocaleString()} / {stats.downloadsLimit.toLocaleString()}
           </span>
         </div>
@@ -61,9 +61,9 @@ export function UsageMeter() {
 
       {/* AI Calls */}
       <div>
-        <div className='mb-2 flex justify-between text-sm'>
+        <div className='mb-2 flex justify-between gap-3 text-sm'>
           <span className='text-gray-600 dark:text-gray-400'>Insights generated</span>
-          <span className='font-medium'>
+          <span className='shrink-0 text-right font-medium tabular-nums'>
             {stats.ai_calls.toLocaleString()} / {stats.aiCallsLimit.toLocaleString()}
           </span>
         </div>

@@ -202,6 +202,7 @@ export type Database = {
           error_message: string | null
           form_input: Json | null
           id: string
+          input_snapshot: Json | null
           progress: number | null
           prompt: string
           selection_id: string
@@ -216,6 +217,7 @@ export type Database = {
           error_message?: string | null
           form_input?: Json | null
           id?: string
+          input_snapshot?: Json | null
           progress?: number | null
           prompt: string
           selection_id: string
@@ -230,6 +232,7 @@ export type Database = {
           error_message?: string | null
           form_input?: Json | null
           id?: string
+          input_snapshot?: Json | null
           progress?: number | null
           prompt?: string
           selection_id?: string

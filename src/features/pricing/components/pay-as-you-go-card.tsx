@@ -17,11 +17,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
 
-const BULLETS = [
-  'Pay per result or insight',
-  'No monthly commitment',
-  'For occasional use',
-];
+const BULLETS = ['Pay per result or insight', 'No monthly commitment', 'For occasional use'];
 
 export function PayAsYouGoCard() {
   const [isOpen, setIsOpen] = useState(false);
@@ -69,12 +65,10 @@ export function PayAsYouGoCard() {
 
   return (
     <>
-      <div className='relative flex flex-col rounded-2xl border bg-white p-6 shadow-sm'>
+      <div className='relative flex w-[80%] shrink-0 snap-center flex-col rounded-2xl border bg-white p-6 shadow-sm sm:w-[55%] md:w-auto'>
         <div className='mb-4'>
           <h3 className='text-xl font-bold text-gray-900'>Pay-as-you-go (beta)</h3>
-          <p className='mt-2 text-sm text-gray-600'>
-            No subscription required. Pay per result or insight.
-          </p>
+          <p className='mt-2 text-sm text-gray-600'>No subscription required. Pay per result or insight.</p>
         </div>
 
         <div className='mb-6'>

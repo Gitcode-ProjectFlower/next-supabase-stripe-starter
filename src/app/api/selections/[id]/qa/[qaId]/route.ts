@@ -68,6 +68,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       total_items: (session.selections as any)?.item_count || 0,
       prompt: session.prompt,
       standard_question_id: session.standard_question_id || null,
+      input_snapshot: session.input_snapshot || null,
       status: session.status,
       progress: session.progress || 0,
       created_at: session.created_at,

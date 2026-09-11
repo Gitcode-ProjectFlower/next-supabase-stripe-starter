@@ -67,8 +67,11 @@ export class StandardQuestionRunner {
 
         switch (standardQuestionId) {
             case '1':
-                // §9.5: allowed augment = ICP free text + Commercial Other free text
+                // Exclusions intentionally omitted: negative criteria would pollute vector retrieval.
                 rawTexts = [
+                    formInput.productDescription,
+                    formInput.productName,
+                    formInput.icp,
                     formInput.icpCharacteristics,
                     formInput.icpSignalsOther,
                     formInput.commercialSignalsOther,

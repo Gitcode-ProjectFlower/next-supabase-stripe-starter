@@ -1,8 +1,10 @@
 'use client';
 
-import { ArrowRight, Building2, ClipboardList, FileText, Linkedin, MessageSquare, Search, Sparkles, Target } from 'lucide-react';
+import { ArrowRight, Building2, ClipboardList, FileText, MessageSquare, Search, Sparkles, Target } from 'lucide-react';
 import Image from 'next/image';
 import type { ReactNode } from 'react';
+
+import { SegmentationExampleTable, SpsExampleTable } from '@/components/selection/example-results';
 
 function CaseSectionTitle({ icon, children }: { icon: ReactNode; children: ReactNode }) {
   return (
@@ -27,7 +29,7 @@ function CaseLabel({ children }: { children: ReactNode }) {
 
 function CaseTitle({ children }: { children: ReactNode }) {
   return (
-    <h2 className='mx-auto mb-2 max-w-[760px] text-center text-[28px] font-bold leading-[1.2] text-[#0f172a]'>
+    <h2 className='mx-auto mb-2 max-w-[760px] text-center text-[22px] font-bold leading-[1.2] text-[#0f172a] sm:text-[28px]'>
       {children}
     </h2>
   );
@@ -64,16 +66,8 @@ function FitBadge({ tone, children }: { tone: 'high' | 'medium' | 'low'; childre
     low: 'bg-[#fee2e2] text-[#991b1b]',
   } as const;
   return (
-    <span className={`inline-block rounded-full px-2 py-1 text-[12px] font-medium ${styles[tone]}`}>
+    <span className={`inline-block whitespace-nowrap rounded-full px-2 py-1 text-[12px] font-medium ${styles[tone]}`}>
       {children}
-    </span>
-  );
-}
-
-function ScoreBox({ value }: { value: number }) {
-  return (
-    <span className='inline-flex h-7 w-7 items-center justify-center rounded-md bg-[#e2e8f0] text-[13px] font-semibold text-[#0f172a]'>
-      {value}
     </span>
   );
 }
@@ -86,21 +80,13 @@ function PromptBlock({ children }: { children: ReactNode }) {
   );
 }
 
-function CaseSection({
-  id,
-  tinted = false,
-  children,
-}: {
-  id?: string;
-  tinted?: boolean;
-  children: ReactNode;
-}) {
+function CaseSection({ id, tinted = false, children }: { id?: string; tinted?: boolean; children: ReactNode }) {
   return (
     <section
       id={id}
       className={`relative left-1/2 right-1/2 -mx-[50vw] w-screen scroll-mt-24 ${tinted ? 'bg-[#f8fafc]' : 'bg-white'}`}
     >
-      <div className='mx-auto w-full max-w-[1000px] px-6 py-20'>{children}</div>
+      <div className='mx-auto w-full max-w-[1000px] px-5 py-12 sm:px-6 sm:py-20'>{children}</div>
     </section>
   );
 }
@@ -110,8 +96,8 @@ export function UseCases() {
     <div className='w-full'>
       {/* Hero */}
       <section className='relative left-1/2 right-1/2 -mx-[50vw] w-screen bg-white'>
-        <div className='mx-auto w-full max-w-[1000px] px-6 pb-20 pt-16 text-center'>
-          <h1 className='mx-auto mb-5 max-w-[760px] text-[48px] font-bold leading-[1.1] tracking-tight text-[#0f172a]'>
+        <div className='mx-auto w-full max-w-[1000px] px-5 pb-12 pt-12 text-center sm:px-6 sm:pb-20 sm:pt-16'>
+          <h1 className='mx-auto mb-5 max-w-[760px] text-[32px] font-bold leading-[1.1] tracking-tight text-[#0f172a] sm:text-[40px] lg:text-[48px]'>
             Ask one question across hundreds of companies
           </h1>
           <p className='mx-auto mb-14 max-w-[640px] text-[18px] leading-[1.55] text-[#475569]'>
@@ -125,32 +111,34 @@ export function UseCases() {
           </p>
 
           {/* Visual */}
-          <div className='mx-auto mb-10 flex max-w-[760px] flex-wrap items-stretch justify-center gap-6'>
+          <div className='mx-auto mb-10 flex max-w-[760px] flex-col items-stretch justify-center gap-4 sm:flex-row sm:flex-wrap sm:items-stretch sm:gap-6'>
             <div className='flex flex-1 flex-col items-center gap-3'>
-              <div className='flex h-[120px] w-full items-center justify-center rounded-2xl border border-[#e2e8f0] bg-[#f8fafc] px-8 shadow-sm'>
+              <div className='flex h-[100px] w-full items-center justify-center rounded-2xl border border-[#e2e8f0] bg-[#f8fafc] px-4 shadow-sm sm:h-[120px] sm:px-8'>
                 <Image
                   src='/insidefirms_logo.png'
                   alt='InsideFirms'
                   width={220}
                   height={56}
-                  className='h-12 w-auto'
+                  className='h-8 w-auto max-w-full shrink-0 object-contain sm:h-12'
                   priority
                 />
               </div>
               <span className='text-[14px] font-semibold text-[#0f172a]'>Prioritize accounts</span>
               <span className='text-[12px] text-[#64748b]'>Understand &amp; segment companies</span>
             </div>
-            <div className='flex shrink-0 items-center'>
-              <ArrowRight className='h-7 w-7 text-[#94a3b8]' />
+            <div className='flex h-auto shrink-0 items-center justify-center sm:h-[120px]'>
+              <ArrowRight className='h-7 w-7 rotate-90 text-[#94a3b8] sm:rotate-0' />
             </div>
             <div className='flex flex-1 flex-col items-center gap-3'>
-              <div className='flex h-[120px] w-full items-center justify-center gap-3 rounded-2xl border border-[#e2e8f0] bg-[#f8fafc] px-8 shadow-sm'>
-                <Linkedin className='h-12 w-12 fill-[#0a66c2] text-[#0a66c2]' />
-                <span className='text-left text-[20px] font-semibold leading-tight text-[#0f172a]'>
-                  LinkedIn
-                  <br />
-                  <span className='text-[13px] font-normal text-[#475569]'>Sales Navigator</span>
-                </span>
+              <div className='flex h-auto min-h-[100px] w-full flex-col items-center justify-center gap-2 rounded-2xl border border-[#e2e8f0] bg-[#f8fafc] px-4 py-3 shadow-sm sm:h-[120px] sm:px-8'>
+                <Image
+                  src='/examples/linkedin-logo.webp'
+                  alt='LinkedIn'
+                  width={295}
+                  height={75}
+                  className='h-8 w-auto max-w-full shrink-0 object-contain sm:h-12'
+                />
+                <span className='text-center text-sm font-semibold leading-tight text-[#334155]'>Sales Navigator</span>
               </div>
               <span className='text-[14px] font-semibold text-[#0f172a]'>Find the right people</span>
               <span className='text-[12px] text-[#64748b]'>Reach decision-makers in those accounts</span>
@@ -181,7 +169,7 @@ export function UseCases() {
             <CaseSectionTitle icon={<ClipboardList className='h-[18px] w-[18px]' />}>
               Select &ldquo;Sales Priority Score&rdquo;
             </CaseSectionTitle>
-            <CaseBody>Define what you&apos;re selling and what you&apos;re looking for.</CaseBody>
+            <CaseBody>Define what you&apos;re selling and the prospects you&apos;re looking for.</CaseBody>
           </div>
           <div>
             <CaseSectionTitle icon={<Sparkles className='h-[18px] w-[18px]' />}>Result</CaseSectionTitle>
@@ -190,46 +178,7 @@ export function UseCases() {
         </CaseGrid>
 
         <div className='mt-10'>
-          <ExampleOutputLabel />
-          <ResultTableContainer>
-            <table className='w-full border-collapse text-left'>
-              <thead>
-                <tr className='bg-[#f1f5f9]'>
-                  <th className='px-3 py-2.5 text-[13px] font-medium text-[#64748b]'>Company</th>
-                  <th className='px-3 py-2.5 text-[13px] font-medium text-[#64748b]'>Score</th>
-                  <th className='px-3 py-2.5 text-[13px] font-medium text-[#64748b]'>Summary + evidence</th>
-                </tr>
-              </thead>
-              <tbody className='text-[14px] text-[#0f172a]'>
-                <tr className='border-t border-[#e2e8f0]'>
-                  <td className='px-3 py-3 align-top'>Company A</td>
-                  <td className='px-3 py-3 align-top'>
-                    <ScoreBox value={4} />
-                  </td>
-                  <td className='px-3 py-3 align-top'>
-                    Strong fit — multi-site logistics with efficiency focus.
-                    <ul className='mt-1 list-disc pl-4 text-[13px] text-[#475569]'>
-                      <li>&ldquo;Multiple warehouse locations listed&rdquo;</li>
-                      <li>&ldquo;Focus on route optimization&rdquo;</li>
-                    </ul>
-                  </td>
-                </tr>
-                <tr className='border-t border-[#e2e8f0]'>
-                  <td className='px-3 py-3 align-top'>Company B</td>
-                  <td className='px-3 py-3 align-top'>
-                    <ScoreBox value={2} />
-                  </td>
-                  <td className='px-3 py-3 align-top'>
-                    Low priority — small, local operator.
-                    <ul className='mt-1 list-disc pl-4 text-[13px] text-[#475569]'>
-                      <li>&ldquo;Single location listed&rdquo;</li>
-                      <li>&ldquo;Local delivery focus&rdquo;</li>
-                    </ul>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </ResultTableContainer>
+          <SpsExampleTable />
         </div>
       </CaseSection>
 
@@ -237,7 +186,9 @@ export function UseCases() {
       <CaseSection id='best-fit'>
         <CaseLabel>Use case 2</CaseLabel>
         <CaseTitle>Find your best-fit companies</CaseTitle>
-        <CaseSubline>Example: selling logistics optimization software — the same approach works for any product.</CaseSubline>
+        <CaseSubline>
+          Example: selling logistics optimization software — the same approach works for any product.
+        </CaseSubline>
 
         <CaseGrid>
           <div>
@@ -284,16 +235,14 @@ export function UseCases() {
           </div>
           <div>
             <CaseSectionTitle icon={<Sparkles className='h-[18px] w-[18px]' />}>Result</CaseSectionTitle>
-            <CaseBody>
-              A fit assessment for each company — with a short reasoning for each.
-            </CaseBody>
+            <CaseBody>A fit assessment for each company — with a short reasoning for each.</CaseBody>
           </div>
         </CaseGrid>
 
         <div className='mt-10'>
           <ExampleOutputLabel />
           <ResultTableContainer>
-            <table className='w-full border-collapse text-left'>
+            <table className='w-full min-w-[520px] border-collapse text-left sm:min-w-0'>
               <thead>
                 <tr className='bg-[#f1f5f9]'>
                   <th className='px-3 py-2.5 text-[13px] font-medium text-[#64748b]'>Company</th>
@@ -305,21 +254,27 @@ export function UseCases() {
                   <td className='px-3 py-3 align-top'>Company A</td>
                   <td className='px-3 py-3 align-top'>
                     <FitBadge tone='high'>High fit</FitBadge>{' '}
-                    <span className='ml-2'>— Operates across multiple locations with active delivery operations.</span>
+                    <span className='ml-0 mt-1 block sm:ml-2 sm:mt-0 sm:inline'>
+                      — Operates across multiple locations with active delivery operations.
+                    </span>
                   </td>
                 </tr>
                 <tr className='border-t border-[#e2e8f0]'>
                   <td className='px-3 py-3 align-top'>Company B</td>
                   <td className='px-3 py-3 align-top'>
                     <FitBadge tone='medium'>Medium fit</FitBadge>{' '}
-                    <span className='ml-2'>— Relies on ecommerce fulfilment but shows limited scale.</span>
+                    <span className='ml-0 mt-1 block sm:ml-2 sm:mt-0 sm:inline'>
+                      — Relies on ecommerce fulfilment but shows limited scale.
+                    </span>
                   </td>
                 </tr>
                 <tr className='border-t border-[#e2e8f0]'>
                   <td className='px-3 py-3 align-top'>Company C</td>
                   <td className='px-3 py-3 align-top'>
                     <FitBadge tone='low'>Low fit</FitBadge>{' '}
-                    <span className='ml-2'>— No clear signs of logistics complexity.</span>
+                    <span className='ml-0 mt-1 block sm:ml-2 sm:mt-0 sm:inline'>
+                      — No clear signs of logistics complexity.
+                    </span>
                   </td>
                 </tr>
               </tbody>
@@ -350,50 +305,12 @@ export function UseCases() {
           </div>
           <div>
             <CaseSectionTitle icon={<Sparkles className='h-[18px] w-[18px]' />}>Result</CaseSectionTitle>
-            <CaseBody>
-              A structured view of your market — classifying each company across key dimensions.
-            </CaseBody>
+            <CaseBody>A structured view of your market — classifying each company across key dimensions.</CaseBody>
           </div>
         </CaseGrid>
 
         <div className='mt-10'>
-          <ExampleOutputLabel />
-          <ResultTableContainer>
-            <table className='w-full border-collapse text-left'>
-              <thead>
-                <tr className='bg-[#f1f5f9]'>
-                  <th className='px-3 py-2.5 text-[13px] font-medium text-[#64748b]'>Company</th>
-                  <th className='px-3 py-2.5 text-[13px] font-medium text-[#64748b]'>Customer Type</th>
-                  <th className='px-3 py-2.5 text-[13px] font-medium text-[#64748b]'>Customer Segment</th>
-                  <th className='px-3 py-2.5 text-[13px] font-medium text-[#64748b]'>Geographic Scope</th>
-                  <th className='px-3 py-2.5 text-[13px] font-medium text-[#64748b]'>Market Positioning</th>
-                </tr>
-              </thead>
-              <tbody className='text-[14px] text-[#0f172a]'>
-                <tr className='border-t border-[#e2e8f0]'>
-                  <td className='px-3 py-3'>Company A</td>
-                  <td className='px-3 py-3'>Business</td>
-                  <td className='px-3 py-3'>Enterprise</td>
-                  <td className='px-3 py-3'>International</td>
-                  <td className='px-3 py-3'>Innovation</td>
-                </tr>
-                <tr className='border-t border-[#e2e8f0]'>
-                  <td className='px-3 py-3'>Company B</td>
-                  <td className='px-3 py-3'>Business</td>
-                  <td className='px-3 py-3'>Small Businesses</td>
-                  <td className='px-3 py-3'>National</td>
-                  <td className='px-3 py-3'>Cost Efficiency</td>
-                </tr>
-                <tr className='border-t border-[#e2e8f0]'>
-                  <td className='px-3 py-3'>Company C</td>
-                  <td className='px-3 py-3'>Consumer</td>
-                  <td className='px-3 py-3'>Consumer</td>
-                  <td className='px-3 py-3'>Local</td>
-                  <td className='px-3 py-3'>Trust &amp; Reliability</td>
-                </tr>
-              </tbody>
-            </table>
-          </ResultTableContainer>
+          <SegmentationExampleTable />
         </div>
       </CaseSection>
 
@@ -428,7 +345,7 @@ export function UseCases() {
 
         <div className='mt-10'>
           <ExampleOutputLabel />
-          <div className='space-y-5 rounded-lg border border-[#e2e8f0] bg-[#f8fafc] p-6 text-[14px] leading-[1.6] text-[#475569]'>
+          <div className='space-y-5 break-words rounded-lg border border-[#e2e8f0] bg-[#f8fafc] p-4 text-[14px] leading-[1.6] text-[#475569] sm:p-6'>
             <div>
               <p className='mb-1 font-semibold text-[#0f172a]'>Company Snapshot</p>
               <p>Cloud-based logistics software provider focused on route optimization and operational efficiency.</p>
@@ -536,7 +453,7 @@ export function UseCases() {
         <div className='mt-10'>
           <ExampleOutputLabel />
           <ResultTableContainer>
-            <table className='w-full border-collapse text-left'>
+            <table className='w-full min-w-[520px] border-collapse text-left sm:min-w-0'>
               <thead>
                 <tr className='bg-[#f1f5f9]'>
                   <th className='px-3 py-2.5 text-[13px] font-medium text-[#64748b]'>Company</th>

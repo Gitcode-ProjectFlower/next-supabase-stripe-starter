@@ -172,7 +172,7 @@ export function PlanSelector({ products, currentPriceId }: PlanSelectorProps) {
         })}
       </div>
 
-      <div className='mt-4 flex items-center gap-2'>
+      <div className='mt-4 flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:gap-2'>
         <Button
           onClick={handleSave}
           disabled={!selectedPriceId || isSaving}

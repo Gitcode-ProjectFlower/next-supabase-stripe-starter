@@ -3,13 +3,14 @@ import { NextRequest } from 'next/server';
 
 import { inngest } from '@/libs/inngest/client';
 import { cleanupExpiredData } from '@/libs/inngest/functions/cleanup-expired';
+import { exportCombinedJob } from '@/libs/inngest/functions/export-combined';
 import { exportLookalikesJob } from '@/libs/inngest/functions/export-lookalikes';
 import { processQAJob } from '@/libs/inngest/functions/process-qa';
 
 // Inngest serve configuration
 const inngestHandler = serve({
   client: inngest,
-  functions: [processQAJob, exportLookalikesJob, cleanupExpiredData],
+  functions: [processQAJob, exportLookalikesJob, exportCombinedJob, cleanupExpiredData],
   // Explicitly set signingKey for production
   signingKey: process.env.INNGEST_SIGNING_KEY,
 });

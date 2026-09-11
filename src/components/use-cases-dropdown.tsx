@@ -15,7 +15,8 @@ const ITEMS = [
   { label: 'Find similar companies', anchor: 'similar' },
 ];
 
-const CLOSE_DELAY_MS = 120;
+const CLOSE_DELAY_MS = 250;
+const EXIT_MS = 140;
 
 export function UseCasesDropdown() {
   const getLocalePath = useLocalePath();
@@ -23,24 +24,50 @@ export function UseCasesDropdown() {
   const useCasesPath = getLocalePath('/use-cases');
   const isActive = pathname === useCasesPath || pathname?.startsWith(useCasesPath + '/');
   const [open, setOpen] = useState(false);
+  const [closing, setClosing] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const exitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const cancelClose = () => {
     if (closeTimerRef.current) {
       clearTimeout(closeTimerRef.current);
       closeTimerRef.current = null;
     }
+    if (exitTimerRef.current) {
+      clearTimeout(exitTimerRef.current);
+      exitTimerRef.current = null;
+    }
+    setClosing(false);
+  };
+
+  const startClose = () => {
+    if (!open || closing) return;
+    setClosing(true);
+    exitTimerRef.current = setTimeout(() => {
+      exitTimerRef.current = null;
+      setOpen(false);
+      setClosing(false);
+    }, EXIT_MS);
+  };
+
+  const openMenu = () => {
+    cancelClose();
+    setClosing(false);
+    setOpen(true);
   };
 
   const scheduleClose = () => {
-    cancelClose();
-    closeTimerRef.current = setTimeout(() => setOpen(false), CLOSE_DELAY_MS);
+    if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
+    closeTimerRef.current = setTimeout(startClose, CLOSE_DELAY_MS);
   };
 
   const closeNow = () => {
-    cancelClose();
-    setOpen(false);
+    if (closeTimerRef.current) {
+      clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = null;
+    }
+    startClose();
   };
 
   useEffect(() => {
@@ -52,15 +79,19 @@ export function UseCasesDropdown() {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [open]);
 
-  useEffect(() => () => cancelClose(), []);
+  useEffect(
+    () => () => {
+      cancelClose();
+    },
+    []
+  );
 
   return (
     <div
       ref={containerRef}
-      className='relative'
+      className='relative py-2'
       onMouseEnter={() => {
-        cancelClose();
-        setOpen(true);
+        openMenu();
       }}
       onMouseLeave={scheduleClose}
     >
@@ -68,7 +99,7 @@ export function UseCasesDropdown() {
         href={useCasesPath}
         aria-expanded={open}
         aria-haspopup='menu'
-        className={`inline-flex items-center gap-1 text-sm font-medium transition-colors ${
+        className={`inline-flex shrink-0 items-center gap-1 whitespace-nowrap text-sm font-medium transition-colors ${
           isActive ? 'text-blue-600' : 'text-gray-700 hover:text-gray-900'
         }`}
       >
@@ -79,11 +110,11 @@ export function UseCasesDropdown() {
       {open && (
         <div
           role='menu'
-          className='absolute left-0 top-full z-50 w-[240px] pt-2'
+          className={`absolute left-0 top-full z-50 w-[240px] pt-2${closing ? ' menu-overlay-closing' : ''}`}
           onMouseEnter={cancelClose}
           onMouseLeave={scheduleClose}
         >
-          <div className='rounded-lg border border-[#e2e8f0] bg-white py-1.5 shadow-md'>
+          <div className='menu-overlay rounded-lg border border-[#e2e8f0] bg-white py-1.5 shadow-md'>
             {ITEMS.map((item, idx) => (
               <Link
                 key={item.anchor}
@@ -97,12 +128,12 @@ export function UseCasesDropdown() {
                 {item.label}
               </Link>
             ))}
-            <div className='mt-3 border-t border-[#e2e8f0] pt-1'>
+            <div className='border-t border-[#e2e8f0]'>
               <Link
                 href={useCasesPath}
                 role='menuitem'
                 onClick={closeNow}
-                className='block px-4 py-2 text-[14px] font-medium text-blue-600 transition-colors hover:bg-[#f1f5f9]'
+                className='block px-4 py-2.5 text-[14px] font-medium text-blue-600 transition-colors hover:bg-[#f1f5f9]'
               >
                 View all use cases →
               </Link>

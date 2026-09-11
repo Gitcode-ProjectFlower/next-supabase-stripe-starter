@@ -31,12 +31,12 @@ export function LargeFooter() {
 
   return (
     <footer className='border-t border-slate-200 bg-white/90 backdrop-blur-sm'>
-      <div className='mx-auto max-w-7xl px-6 lg:px-8'>
-        <div className='grid grid-cols-1 gap-y-10 py-12 md:grid-cols-12 md:gap-x-10'>
-          <div className='md:col-span-6 md:pr-8'>
+      <div className='mx-auto max-w-7xl px-4 sm:px-6 lg:px-8'>
+        <div className='grid grid-cols-1 gap-y-8 py-8 md:grid-cols-12 md:gap-x-10 md:gap-y-10 md:py-12'>
+          <div className='hidden md:col-span-6 md:block md:pr-8'>
             <div className='text-xl font-semibold tracking-tight text-slate-950'>InsideFirms</div>
 
-            <h2 className='mt-6 max-w-xl text-2xl font-semibold leading-tight tracking-tight text-slate-950'>
+            <h2 className='mt-4 max-w-xl text-xl font-semibold leading-tight tracking-tight text-slate-950 md:mt-6 md:text-2xl'>
               Ask one commercial question across hundreds of companies.
             </h2>
 
@@ -46,24 +46,26 @@ export function LargeFooter() {
 
             <Link
               href={localize('/')}
-              className='mt-5 inline-flex items-center text-[15px] font-semibold text-[#6366f1] transition hover:translate-x-0.5 hover:text-[#5558e8]'
+              className='-my-2 mt-5 inline-flex items-center py-2 text-[15px] font-semibold text-[#6366f1] transition hover:translate-x-0.5 hover:text-[#5558e8]'
             >
               Start exploring companies →
             </Link>
 
-            <p className='mt-5 text-xs leading-6 text-slate-400'>
+            <p className='mt-5 hidden text-xs leading-6 text-slate-400 sm:block'>
               Evidence-based output · Scalable company analysis · Built for B2B teams
             </p>
           </div>
 
-          <FooterColumn title='Product' links={productLinks} localize={localize} />
-          <FooterColumn title='Company' links={companyLinks} localize={localize} />
-          <FooterColumn title='Legal' links={legalLinks} localize={localize} />
+          <div className='grid grid-cols-2 gap-x-6 gap-y-8 md:contents'>
+            <FooterColumn title='Product' links={productLinks} localize={localize} />
+            <FooterColumn title='Company' links={companyLinks} localize={localize} />
+            <FooterColumn title='Legal' links={legalLinks} localize={localize} />
+          </div>
         </div>
 
-        <div className='flex flex-col gap-5 border-t border-slate-200 py-5 md:flex-row md:items-center md:justify-between'>
+        <div className='flex flex-col gap-2 border-t border-slate-200 py-5 md:flex-row md:items-center md:justify-between md:gap-5'>
           <p className='text-sm text-slate-500'>© {new Date().getFullYear()} InsideFirms. All rights reserved.</p>
-          <p className='text-xs font-medium tracking-wide text-slate-500'>
+          <p className='hidden text-xs font-medium tracking-wide text-slate-500 sm:block'>
             Start with the right accounts before finding the right people.
           </p>
         </div>
@@ -84,7 +86,7 @@ function FooterColumn({
   return (
     <div className='md:col-span-2'>
       <h3 className='text-[11px] font-bold uppercase tracking-[0.28em] text-[#6366f1]/80'>{title}</h3>
-      <ul className='mt-5 space-y-3'>
+      <ul className='mt-4 space-y-2.5 sm:mt-5 sm:space-y-3'>
         {links.map((item) => (
           <li key={item.label}>
             <Link
