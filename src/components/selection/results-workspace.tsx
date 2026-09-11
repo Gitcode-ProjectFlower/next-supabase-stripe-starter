@@ -6,6 +6,7 @@ import { useParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 
 import { OnboardingOverlay } from '@/components/onboarding-overlay';
+import { TopScrollbar, useSyncedTopScrollbar } from '@/components/selection/synced-scroll';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -281,6 +282,7 @@ export function ResultsWorkspace({
   // Users can still see the preview banner which has upgrade CTA
 
   const planLimit = useMemo(() => getTopKLimit(userPlanTyped || 'anonymous'), [userPlanTyped]);
+  const { topRef, mainRef, spacerRef } = useSyncedTopScrollbar([displayedResults.length]);
   const shouldShowPreviewBanner =
     isPreviewMode && topK >= planLimit && userPlan !== 'large' && userPlan !== 'promo_medium';
 
@@ -398,7 +400,8 @@ export function ResultsWorkspace({
       {/* Table */}
       {(!isLoading && ((results.length > 0 && activeTab === 'candidates') || (activeTab === 'selected' && selectedIds.size > 0))) && (
       <div className='min-h-[400px] overflow-hidden rounded-2xl border bg-white shadow-sm'>
-        <div className='max-h-[600px] overflow-auto'>
+        <TopScrollbar topRef={topRef} spacerRef={spacerRef} />
+        <div ref={mainRef} className='max-h-[600px] overflow-auto'>
           <Table>
             <TableHeader className='sticky top-0 z-10 bg-gray-50'>
               <TableRow className='hover:bg-transparent'>

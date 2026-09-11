@@ -1,4 +1,4 @@
-import * as XLSX from 'xlsx';
+import * as XLSX from 'xlsx-js-style';
 
 import { inngest } from '@/libs/inngest/client';
 import { supabaseAdminClient } from '@/libs/supabase/supabase-admin';

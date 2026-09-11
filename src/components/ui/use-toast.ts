@@ -5,12 +5,14 @@ import type { ToastActionElement, ToastProps } from '@/components/ui/toast';
 
 const TOAST_LIMIT = 1;
 const TOAST_REMOVE_DELAY = 1000000;
+const DEFAULT_AUTO_DISMISS_MS = 8000;
 
 type ToasterToast = ToastProps & {
   id: string;
   title?: React.ReactNode;
   description?: React.ReactNode;
   action?: ToastActionElement;
+  autoDismissMs?: number;
 };
 
 const actionTypes = {
@@ -135,7 +137,7 @@ function dispatch(action: Action) {
 
 type Toast = Omit<ToasterToast, 'id'>;
 
-function toast({ ...props }: Toast) {
+function toast({ autoDismissMs, ...props }: Toast) {
   const id = genId();
 
   const update = (props: ToasterToast) =>
@@ -156,6 +158,13 @@ function toast({ ...props }: Toast) {
       },
     },
   });
+
+  // Radix pauses its own countdown on hover/focus, so a toast under the
+  // cursor never closes. This timer fires regardless — toasts always go away.
+  const ms = autoDismissMs ?? DEFAULT_AUTO_DISMISS_MS;
+  if (ms > 0) {
+    setTimeout(() => dismiss(), ms);
+  }
 
   return {
     id: id,

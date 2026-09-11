@@ -188,8 +188,8 @@ export function NotificationsSection({ initialEmailNotifications }: Notification
         <span className='italic'>insight run ready</span>.
       </p>
 
-      <div className='flex items-center justify-between rounded-xl border border-gray-200 p-4'>
-        <div>
+      <div className='flex items-center justify-between gap-4 rounded-xl border border-gray-200 p-4'>
+        <div className='min-w-0 flex-1 pr-2'>
           <div className='font-medium text-gray-900'>Email notifications</div>
           <div className='text-sm text-gray-600'>
             Receive an email when an Excel export is ready or an insight run finishes.
@@ -203,12 +203,14 @@ export function NotificationsSection({ initialEmailNotifications }: Notification
           aria-checked={emailNotifications}
           onClick={handleToggle}
           disabled={isSaving}
-          className={`relative inline-flex h-[25px] w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 ${emailNotifications ? 'bg-blue-600' : 'bg-gray-300'
-            }`}
+          className={`relative inline-flex h-[25px] w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 ${
+            emailNotifications ? 'bg-blue-600' : 'bg-gray-300'
+          }`}
         >
           <span
-            className={`block h-5 w-5 transform rounded-full bg-white transition-transform ${emailNotifications ? 'translate-x-[22px]' : 'translate-x-0.5'
-              }`}
+            className={`block h-5 w-5 transform rounded-full bg-white transition-transform ${
+              emailNotifications ? 'translate-x-[22px]' : 'translate-x-0.5'
+            }`}
           />
         </button>
       </div>

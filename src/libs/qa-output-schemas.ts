@@ -7,12 +7,23 @@ import { z } from 'zod';
 /** Increment when schema shape changes — logged in qa_standard_runs.schema_version */
 export const SCHEMA_VERSION = '1.0.0';
 
+/**
+ * Version of the standard-question prompt templates (VPS owns the templates).
+ * Written to qa_standard_runs.prompt_version on fresh runs; bump manually
+ * whenever a VPS prompt template changes. NULL means unknown (runs created
+ * before versioning).
+ */
+export const PROMPT_VERSION = '1.0.0';
+
 // SQ1: Sales Priority Score
 export const SQ1Schema = z.object({
   SCORE_TEXT: z.string(),
   SCORE_VALUE: z.union([
     z.number().int().min(1).max(5),
-    z.string().regex(/^[1-5]$/).transform(Number),
+    z
+      .string()
+      .regex(/^[1-5]$/)
+      .transform(Number),
     z.literal('NULL').transform(() => null),
     z.null(),
   ]),
@@ -56,13 +67,25 @@ export const SQ_SCHEMAS = {
 
 export type SQId = keyof typeof SQ_SCHEMAS;
 
+export function parseSq1Score(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isInteger(value) && value >= 1 && value <= 5) return value;
+  if (typeof value === 'string' && value.trim() !== '') {
+    const n = Number(value);
+    if (Number.isInteger(n) && n >= 1 && n <= 5) return n;
+  }
+  return null;
+}
+
 /**
  * Attempts to extract and parse the first JSON object from a raw LLM string.
  * Handles trailing text and markdown code fences.
  */
 export function extractJson(raw: string): unknown {
   // Strip markdown code fences
-  let text = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
+  let text = raw
+    .replace(/^```(?:json)?\s*/i, '')
+    .replace(/\s*```$/, '')
+    .trim();
 
   // Find the first { ... } block
   const start = text.indexOf('{');

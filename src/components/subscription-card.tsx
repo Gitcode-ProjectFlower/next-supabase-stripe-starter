@@ -75,10 +75,10 @@ export function SubscriptionCard({ subscription, product, price }: SubscriptionC
           </div>
         </div>
 
-        <div className='p-6'>
-          <div className='flex items-start justify-between'>
-            <div>
-              <div className='flex items-center gap-3'>
+        <div className='p-4 sm:p-6'>
+          <div className='flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between'>
+            <div className='min-w-0'>
+              <div className='flex flex-wrap items-center gap-3'>
                 <h3 className='text-2xl font-bold text-gray-900'>{planName}</h3>
                 <span
                   className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${
@@ -96,19 +96,19 @@ export function SubscriptionCard({ subscription, product, price }: SubscriptionC
             </div>
 
             {subscription ? (
-              <div className='flex flex-col gap-2'>
+              <div className='flex flex-col gap-2 sm:shrink-0'>
                 <Button
                   variant='outline'
                   onClick={handleCancelSubscription}
                   disabled={isCanceling}
-                  className='border-red-600 text-red-600 hover:bg-red-50'
+                  className='w-full whitespace-nowrap border-red-600 text-red-600 hover:bg-red-50 sm:w-auto'
                 >
                   {isCanceling ? 'Canceling...' : 'Cancel Subscription'}
                 </Button>
                 <ManageSubscriptionButton />
               </div>
             ) : (
-              <Button asChild className='bg-blue-600 hover:bg-blue-700'>
+              <Button asChild className='w-full bg-blue-600 hover:bg-blue-700 sm:w-auto'>
                 <Link href='/pricing'>Upgrade Plan</Link>
               </Button>
             )}

@@ -153,8 +153,8 @@ export async function Settings({ searchParams }: SettingsProps) {
           {/* Usage & Limits Tab */}
           <TabsContent value='limits' className='mt-0 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm'>
             <div className='space-y-4'>
-              <h2 className='mb-6 text-lg font-semibold text-gray-900'>Usage & Limits</h2>
-              <p className='mb-6 text-sm text-gray-600'>
+              <h2 className='text-lg font-semibold text-gray-900'>Usage & Limits</h2>
+              <p className='text-sm text-gray-600'>
                 Track your usage for the current 30-day period. Limits reset on a rolling basis.
               </p>
               <UsageMeter />

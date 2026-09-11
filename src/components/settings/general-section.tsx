@@ -29,11 +29,11 @@ export function GeneralSection({
         <div className='space-y-4'>
           <div>
             <label className='text-sm font-medium text-gray-700'>Email</label>
-            <p className='mt-1 text-gray-900'>{userEmail}</p>
+            <p className='mt-1 break-all text-gray-900'>{userEmail}</p>
           </div>
           <div>
             <label className='text-sm font-medium text-gray-700'>User ID</label>
-            <p className='mt-1 font-mono text-sm text-gray-500'>{userId}</p>
+            <p className='mt-1 break-all font-mono text-sm text-gray-500'>{userId}</p>
           </div>
         </div>
       </div>

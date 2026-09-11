@@ -53,7 +53,21 @@ export async function checkRateLimit(identifier: string, limiterOrKey: Ratelimit
     };
   }
 
-  const result = await limiter.limit(identifier);
+  let result;
+  try {
+    result = await limiter.limit(identifier);
+  } catch (error) {
+    // Redis blip (DNS, network, expired instance) must not 500 the product:
+    // fail open like the no-Redis case above, but loudly.
+    console.error('[RateLimit] Redis request failed, allowing request:', error);
+    return {
+      allowed: true,
+      limit: 0,
+      remaining: 0,
+      current: 0,
+      reset: new Date(),
+    };
+  }
 
   return {
     allowed: result.success,

@@ -14,6 +14,7 @@ import { FullPageLoader } from '@/components/full-page-loader';
 import { limitReachedToast } from '@/components/limit-reached-alert';
 import { STANDARD_QUESTIONS, StandardQuestionTile } from '@/components/selection/standard-question-tile';
 import { StandardQuestionModal } from '@/components/selection/standard-question-modal';
+import { TopScrollbar, useSyncedTopScrollbar } from '@/components/selection/synced-scroll';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -301,6 +302,7 @@ export function Selection() {
 
   const selection = selectionData?.selection as SelectionDetail | null;
   const isLoading = isCheckingAuth || isSelectionLoading;
+  const { topRef, mainRef, spacerRef } = useSyncedTopScrollbar([selection?.items?.length ?? 0]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString('en-GB', {
@@ -415,7 +417,8 @@ export function Selection() {
         // Generic error for 500 or other status codes
         toast({
           title: 'Error',
-          description: errorData.error || errorData.message || 'Failed to start the insight run. Please try again later.',
+          description:
+            errorData.error || errorData.message || 'Failed to start the insight run. Please try again later.',
           variant: 'destructive',
         });
         return;
@@ -482,8 +485,9 @@ export function Selection() {
 
               toast({
                 title: 'Success',
-                description: `Insight run completed. Found ${answersCount} answer${answersCount !== 1 ? 's' : ''
-                  }. Redirecting...`,
+                description: `Insight run completed. Found ${answersCount} answer${
+                  answersCount !== 1 ? 's' : ''
+                }. Redirecting...`,
               });
               // Small delay before navigation to show completion
               setTimeout(() => {
@@ -690,32 +694,32 @@ export function Selection() {
           Back to Saved
         </Button>
 
-        <div className='flex items-start justify-between'>
-          <div>
-            <h1 className='text-3xl font-bold text-black'>{selection.name}</h1>
-            <div className='mt-2 flex items-center gap-4 text-sm text-gray-600'>
+        <div className='flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between'>
+          <div className='min-w-0'>
+            <h1 className='break-words text-2xl font-bold text-black sm:text-4xl'>{selection.name}</h1>
+            <div className='mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-600'>
               <span>{selection.item_count} companies</span>
-              <span>•</span>
+              <span className='hidden sm:inline'>•</span>
               <span>Created: {formatDate(selection.created_at)}</span>
-              <span>•</span>
+              <span className='hidden sm:inline'>•</span>
               <span>Expires: {formatDate(selection.expires_at)}</span>
             </div>
           </div>
-          <div className='flex gap-2'>
+          <div className='flex flex-col gap-2 sm:flex-row lg:shrink-0'>
             <Button
               variant='outline'
-              className='rounded-lg px-4 py-2 hover:bg-gray-100'
+              className='w-full rounded-lg px-4 py-2 hover:bg-gray-100 sm:w-auto'
               onClick={() => setIsQAModalOpen(true)}
             >
-              <MessageSquare className='mr-2 h-4 w-4' />
+              <MessageSquare className='mr-2 h-4 w-4 shrink-0' />
               Ask a custom question (advanced)
             </Button>
             <Button
-              className='rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700'
+              className='w-full rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 sm:w-auto'
               onClick={handleExport}
               disabled={isExporting}
             >
-              <Download className='mr-2 h-4 w-4' />
+              <Download className='mr-2 h-4 w-4 shrink-0' />
               {isExporting ? 'Preparing...' : 'Prepare Download'}
             </Button>
           </div>
@@ -806,12 +810,12 @@ export function Selection() {
               return (
                 <div
                   key={session.id}
-                  className='flex items-center justify-between rounded-xl border bg-white px-4 py-3'
+                  className='flex flex-col gap-3 rounded-xl border bg-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between'
                 >
-                  <div className='flex items-center gap-3'>
+                  <div className='flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1.5'>
                     <span
                       className={cn(
-                        'rounded-full px-2 py-0.5 text-xs font-medium',
+                        'shrink-0 rounded-full px-2 py-0.5 text-xs font-medium',
                         session.status === 'completed' && 'bg-green-100 text-green-800',
                         session.status === 'processing' && 'bg-blue-100 text-blue-800',
                         session.status === 'failed' && 'bg-red-100 text-red-800'
@@ -819,14 +823,22 @@ export function Selection() {
                     >
                       {session.status}
                     </span>
-                    <span className='text-sm font-medium text-gray-900'>{label}</span>
-                    <span className='text-xs text-gray-400'>
-                      {new Date(session.created_at).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                    <span className='min-w-0 break-words text-sm font-medium text-gray-900'>{label}</span>
+                    {typeof session.company_count === 'number' && session.company_count > 0 && (
+                      <span className='shrink-0 text-xs text-gray-400'>{session.company_count} companies</span>
+                    )}
+                    <span className='shrink-0 text-xs text-gray-400'>
+                      {new Date(session.created_at).toLocaleString('en-GB', {
+                        day: 'numeric',
+                        month: 'short',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
                     </span>
                   </div>
                   <Button
                     variant='outline'
-                    className='h-8 px-3 text-sm'
+                    className='h-8 w-full px-3 text-sm sm:w-auto sm:shrink-0'
                     onClick={() => router.push(getLocalePath(locale, `/selections/${params.id}/qa/${session.id}`))}
                   >
                     View Results
@@ -840,7 +852,8 @@ export function Selection() {
 
       {/* Candidates Table */}
       <div className='overflow-hidden rounded-2xl border bg-white shadow-sm'>
-        <div className='overflow-auto'>
+        <TopScrollbar topRef={topRef} spacerRef={spacerRef} />
+        <div ref={mainRef} className='overflow-auto'>
           <Table>
             <TableHeader className='bg-gray-50'>
               <TableRow className='hover:bg-transparent'>
@@ -868,8 +881,8 @@ export function Selection() {
                         key === 'email'
                           ? normalizeValue(item.email) || ''
                           : key === 'city' || key === 'street' || key === 'linkedin_company_url'
-                            ? normalizeValue((item as any)[key]) || ''
-                            : undefined
+                          ? normalizeValue((item as any)[key]) || ''
+                          : undefined
                       }
                     >
                       {COLUMN_CONFIG[key].render(item)}
@@ -922,15 +935,16 @@ export function Selection() {
                     {qaStatus === 'completed'
                       ? 'Insight run completed'
                       : qaStatus === 'failed'
-                        ? 'Insight run failed'
-                        : 'Generating insights...'}
+                      ? 'Insight run failed'
+                      : 'Generating insights...'}
                   </span>
                   <span>{qaProgress}%</span>
                 </div>
                 <div className='h-2 w-full overflow-hidden rounded-full bg-gray-200'>
                   <div
-                    className={`h-full transition-all duration-500 ${qaStatus === 'completed' ? 'bg-green-600' : qaStatus === 'failed' ? 'bg-red-600' : 'bg-blue-600'
-                      }`}
+                    className={`h-full transition-all duration-500 ${
+                      qaStatus === 'completed' ? 'bg-green-600' : qaStatus === 'failed' ? 'bg-red-600' : 'bg-blue-600'
+                    }`}
                     style={{ width: `${qaProgress}%` }}
                   />
                 </div>
@@ -938,8 +952,8 @@ export function Selection() {
                   {qaStatus === 'completed'
                     ? 'Redirecting to results page...'
                     : qaStatus === 'failed'
-                      ? 'An error occurred during processing. Please try again.'
-                      : 'This may take a few minutes depending on the number of companies...'}
+                    ? 'An error occurred during processing. Please try again.'
+                    : 'This may take a few minutes depending on the number of companies...'}
                 </p>
                 {qaStatus === 'completed' && qaSessionId && (
                   <Button

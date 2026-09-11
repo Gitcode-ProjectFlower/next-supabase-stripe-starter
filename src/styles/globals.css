@@ -2,6 +2,161 @@
 @tailwind components;
 @tailwind utilities;
 
+.top-scrollbar {
+  height: 10px;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+
+.top-scrollbar::-webkit-scrollbar {
+  height: 8px;
+  -webkit-appearance: none;
+}
+
+.top-scrollbar::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.top-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+@keyframes menu-overlay-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.menu-overlay {
+  animation: menu-overlay-in 160ms ease-out;
+  transform-origin: top center;
+}
+
+@keyframes menu-overlay-out {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+
+.menu-overlay-closing {
+  animation: menu-overlay-out 140ms ease-in;
+  transform-origin: top center;
+}
+
+@keyframes example-preview-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.example-preview {
+  animation: example-preview-in 160ms cubic-bezier(0.23, 1, 0.32, 1);
+  transform-origin: top right;
+}
+
+@keyframes example-preview-out {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+.example-preview-closing {
+  animation: example-preview-out 130ms ease-in;
+  transform-origin: top right;
+}
+
+@keyframes example-fullscreen-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes example-fullscreen-out {
+  from {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.96) translateY(8px);
+  }
+}
+
+.example-fullscreen {
+  animation: example-fullscreen-in 180ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.example-fullscreen-closing {
+  animation: example-fullscreen-out 140ms ease-in;
+}
+
+@keyframes example-backdrop-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes example-backdrop-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+.example-backdrop {
+  animation: example-backdrop-in 180ms ease-out;
+}
+
+.example-backdrop-closing {
+  animation: example-backdrop-out 140ms ease-in;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-collapsible-down,
+  .animate-collapsible-up,
+  .example-preview,
+  .example-preview-closing,
+  .example-fullscreen,
+  .example-fullscreen-closing,
+  .example-backdrop,
+  .example-backdrop-closing,
+  .menu-overlay,
+  .menu-overlay-closing {
+    animation: none;
+  }
+}
+
 @layer base {
   :root {
     --background: 240 6% 10%;

@@ -15,7 +15,9 @@ const principles = [
 function FullBleedSection({ tinted = false, children }: { tinted?: boolean; children: ReactNode }) {
   return (
     <section
-      className={`relative left-1/2 right-1/2 -mx-[50vw] w-screen ${tinted ? 'border-y border-slate-200 bg-slate-50' : 'bg-white'}`}
+      className={`relative left-1/2 right-1/2 -mx-[50vw] w-screen ${
+        tinted ? 'border-y border-slate-200 bg-slate-50' : 'bg-white'
+      }`}
     >
       {children}
     </section>
@@ -26,10 +28,12 @@ function ContentSection({ eyebrow, title, children }: { eyebrow?: string; title:
   return (
     <section>
       {eyebrow ? (
-        <p className='mb-5 text-sm font-semibold uppercase tracking-[0.35em] text-[#6366f1]'>{eyebrow}</p>
+        <p className='mb-5 text-xs font-semibold uppercase tracking-[0.2em] text-[#6366f1] sm:text-sm sm:tracking-[0.35em]'>
+          {eyebrow}
+        </p>
       ) : null}
-      <h2 className='text-4xl font-semibold leading-tight tracking-[-0.045em]'>{title}</h2>
-      <div className='mt-6 space-y-4 text-lg leading-8 text-slate-600'>{children}</div>
+      <h2 className='text-2xl font-semibold leading-tight tracking-[-0.045em] sm:text-4xl'>{title}</h2>
+      <div className='mt-6 space-y-4 text-base leading-7 text-slate-600 sm:text-lg sm:leading-8'>{children}</div>
     </section>
   );
 }
@@ -50,13 +54,15 @@ export function About() {
   return (
     <main className='w-full text-slate-950'>
       <FullBleedSection>
-        <section className='mx-auto max-w-7xl px-8 py-16'>
+        <section className='mx-auto max-w-7xl px-4 py-10 sm:px-8 sm:py-16'>
           <div className='max-w-4xl'>
-            <p className='mb-6 text-sm font-semibold uppercase tracking-[0.35em] text-[#6366f1]'>About InsideFirms</p>
-            <h1 className='text-4xl font-semibold leading-[1.02] tracking-[-0.055em] lg:text-5xl'>
+            <p className='mb-6 text-xs font-semibold uppercase tracking-[0.2em] text-[#6366f1] sm:text-sm sm:tracking-[0.35em]'>
+              About InsideFirms
+            </p>
+            <h1 className='text-3xl font-semibold leading-[1.02] tracking-[-0.055em] sm:text-4xl lg:text-5xl'>
               Why InsideFirms exists
             </h1>
-            <p className='mt-8 max-w-3xl text-2xl font-semibold leading-snug tracking-[-0.035em] text-slate-950 lg:text-3xl'>
+            <p className='mt-8 max-w-3xl text-xl font-semibold leading-snug tracking-[-0.035em] text-slate-950 sm:text-2xl lg:text-3xl'>
               Better account decisions start with clearer commercial interpretation.
             </p>
           </div>
@@ -64,22 +70,24 @@ export function About() {
       </FullBleedSection>
 
       <FullBleedSection tinted>
-        <section className='mx-auto grid max-w-7xl grid-cols-1 gap-12 px-8 py-14 lg:grid-cols-[0.9fr_1.1fr] lg:items-start'>
+        <section className='mx-auto grid max-w-7xl grid-cols-1 gap-8 px-4 py-10 sm:px-8 sm:py-14 lg:grid-cols-[0.9fr_1.1fr] lg:items-start'>
           <div>
-            <p className='mb-5 text-sm font-semibold uppercase tracking-[0.35em] text-[#6366f1]'>The problem</p>
-            <h2 className='text-4xl font-semibold leading-tight tracking-[-0.045em]'>
+            <p className='mb-5 text-xs font-semibold uppercase tracking-[0.2em] text-[#6366f1] sm:text-sm sm:tracking-[0.35em]'>
+              The problem
+            </p>
+            <h2 className='text-2xl font-semibold leading-tight tracking-[-0.045em] sm:text-4xl'>
               Account research is still too manual
             </h2>
           </div>
 
-          <div className='space-y-5 text-lg leading-8 text-slate-600'>
+          <div className='space-y-5 text-base leading-7 text-slate-600 sm:text-lg sm:leading-8'>
             <p>
               Revenue and commercial teams have access to more company data than ever before, but account research
               remains highly manual.
             </p>
             <p>
-              Teams review websites, compare businesses one by one, take notes, and try to determine which companies
-              are actually worth prioritizing before outreach even begins.
+              Teams review websites, compare businesses one by one, take notes, and try to determine which companies are
+              actually worth prioritizing before outreach even begins.
             </p>
             <p>Over time, one pattern became increasingly clear:</p>
 
@@ -100,12 +108,9 @@ export function About() {
         </section>
       </FullBleedSection>
 
-      <section className='mx-auto max-w-7xl px-8 py-14'>
-        <div className='grid grid-cols-1 gap-12 lg:grid-cols-[0.9fr_1.1fr] lg:items-start'>
-          <ContentSection
-            eyebrow='Our approach'
-            title='From fragmented research to structured account evaluation'
-          >
+      <section className='mx-auto max-w-7xl px-4 py-10 sm:px-8 sm:py-14'>
+        <div className='grid grid-cols-1 gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-start'>
+          <ContentSection eyebrow='Our approach' title='From fragmented research to structured account evaluation'>
             <p>
               InsideFirms is designed to help teams move from fragmented company research to structured account
               evaluation.
@@ -129,7 +134,10 @@ export function About() {
               InsideFirms combines structured company data with publicly available business information from multiple
               sources.
             </p>
-            <p>The platform continuously processes and refreshes information to improve analysis quality and coverage over time.</p>
+            <p>
+              The platform continuously processes and refreshes information to improve analysis quality and coverage
+              over time.
+            </p>
             <p>
               Rather than functioning solely as a source of company data, InsideFirms acts as a commercial
               interpretation layer designed to support account qualification and prioritization.
@@ -148,10 +156,12 @@ export function About() {
       </section>
 
       <FullBleedSection tinted>
-        <section className='mx-auto grid max-w-7xl grid-cols-1 gap-12 px-8 py-14 lg:grid-cols-[0.9fr_1.1fr] lg:items-start'>
+        <section className='mx-auto grid max-w-7xl grid-cols-1 gap-8 px-4 py-10 sm:px-8 sm:py-14 lg:grid-cols-[0.9fr_1.1fr] lg:items-start'>
           <div>
-            <p className='mb-5 text-sm font-semibold uppercase tracking-[0.35em] text-[#6366f1]'>Principles</p>
-            <h2 className='text-4xl font-semibold leading-tight tracking-[-0.045em]'>
+            <p className='mb-5 text-xs font-semibold uppercase tracking-[0.2em] text-[#6366f1] sm:text-sm sm:tracking-[0.35em]'>
+              Principles
+            </p>
+            <h2 className='text-2xl font-semibold leading-tight tracking-[-0.045em] sm:text-4xl'>
               The principles behind InsideFirms
             </h2>
           </div>
@@ -160,16 +170,16 @@ export function About() {
             <div className='space-y-7'>
               {principles.map((principle, index) => (
                 <div key={principle} className='flex items-baseline gap-4'>
-                  <span className='min-w-[1.6rem] text-[1.9rem] font-semibold leading-tight tracking-[-0.04em] text-[#6366f1]'>
+                  <span className='min-w-[1.6rem] text-[1.35rem] font-semibold leading-tight tracking-[-0.04em] text-[#6366f1] sm:text-[1.9rem]'>
                     {index + 1}
                   </span>
-                  <p className='max-w-2xl text-[1.9rem] font-semibold leading-tight tracking-[-0.04em] text-slate-950'>
+                  <p className='max-w-2xl text-[1.35rem] font-semibold leading-tight tracking-[-0.04em] text-slate-950 sm:text-[1.9rem]'>
                     {principle}
                   </p>
                 </div>
               ))}
             </div>
-            <p className='mt-10 text-lg leading-8 text-slate-600'>
+            <p className='mt-10 text-base leading-7 text-slate-600 sm:text-lg sm:leading-8'>
               InsideFirms was built on the idea that better account decisions start with clearer commercial
               interpretation.
             </p>
@@ -177,13 +187,15 @@ export function About() {
         </section>
       </FullBleedSection>
 
-      <section className='mx-auto max-w-7xl px-8 py-14'>
+      <section className='mx-auto max-w-7xl px-4 py-10 sm:px-8 sm:py-14'>
         <div className='max-w-3xl'>
-          <p className='mb-5 text-sm font-semibold uppercase tracking-[0.35em] text-[#6366f1]'>Contact</p>
-          <h2 className='text-4xl font-semibold leading-tight tracking-[-0.045em]'>
+          <p className='mb-5 text-xs font-semibold uppercase tracking-[0.2em] text-[#6366f1] sm:text-sm sm:tracking-[0.35em]'>
+            Contact
+          </p>
+          <h2 className='text-2xl font-semibold leading-tight tracking-[-0.045em] sm:text-4xl'>
             Questions about the platform, methodology, or commercial approach?
           </h2>
-          <p className='mt-6 text-lg leading-8 text-slate-600'>
+          <p className='mt-6 text-base leading-7 text-slate-600 sm:text-lg sm:leading-8'>
             Please contact us through the Help page or support channel listed on the platform.
           </p>
           <Link

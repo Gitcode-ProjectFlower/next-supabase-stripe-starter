@@ -668,7 +668,10 @@ export function Dashboard() {
     if (selectedItems.length === 0) return null;
 
     const supabase = createSupabaseBrowserClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
     if (authError || !user) throw new Error('Unauthorized. Please sign in.');
 
     const sectorsTree = getSectorsTree(locale);
@@ -802,7 +805,10 @@ export function Dashboard() {
       }
 
       const supabase = createSupabaseBrowserClient();
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser();
       if (authError || !user) throw new Error('Unauthorized. Please sign in to generate insights.');
 
       const sectorsTree = getSectorsTree(locale);
@@ -883,7 +889,8 @@ export function Dashboard() {
         // Generic error for 500 or other status codes
         toast({
           title: 'Error',
-          description: errorData.error || errorData.message || 'Failed to start the insight run. Please try again later.',
+          description:
+            errorData.error || errorData.message || 'Failed to start the insight run. Please try again later.',
           variant: 'destructive',
         });
         setIsProcessingQA(false);
@@ -972,7 +979,6 @@ export function Dashboard() {
 
   return (
     <>
-
       {/* Body */}
       <div className='mx-auto grid max-w-7xl grid-cols-12 gap-6 px-4 py-6 sm:px-6 lg:px-8'>
         {/* Left: Filters */}
@@ -1000,9 +1006,7 @@ export function Dashboard() {
         <main className='relative col-span-12 lg:col-span-9'>
           {/* Single-line toolbar: title on the left, actions on the right */}
           <div className='mb-2 flex min-h-[56px] flex-wrap items-center gap-3 py-2'>
-            <h2 className='text-base font-semibold text-gray-900'>
-              Generate insights across your target companies
-            </h2>
+            <h2 className='text-base font-semibold text-gray-900'>Generate insights across your target companies</h2>
             <div className='ml-auto flex items-center gap-2'>
               <Input
                 value={selectionName}
@@ -1043,7 +1047,9 @@ export function Dashboard() {
 
           {/* SQ Tiles */}
           <div className='mb-12'>
-            <p className='mb-3 text-xs text-[#6B7280]'>Identify priorities, segment markets, and prepare outreach — at scale</p>
+            <p className='mb-3 text-xs text-[#6B7280]'>
+              Identify priorities, segment markets, and prepare outreach — at scale
+            </p>
             <div className='grid grid-cols-2 gap-2 sm:grid-cols-4'>
               {STANDARD_QUESTIONS.map((sq) => (
                 <StandardQuestionTile
@@ -1091,8 +1097,8 @@ export function Dashboard() {
 
           <div className='space-y-3 pt-4'>
             <div className='text-sm text-gray-700'>
-              You are about to save <span className='font-semibold text-gray-900'>{selectedIds.size} companies</span>{' '}
-              to &quot;{selectionName}&quot;.
+              You are about to save <span className='font-semibold text-gray-900'>{selectedIds.size} companies</span> to
+              &quot;{selectionName}&quot;.
             </div>
 
             {/* Filters Summary */}

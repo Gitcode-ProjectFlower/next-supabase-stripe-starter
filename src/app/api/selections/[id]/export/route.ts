@@ -76,7 +76,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       const nodeEnv = process.env.NODE_ENV;
 
       console.log('[Export API] Sending Inngest event:', {
-        eventName: 'lookalikes/export',
+        eventName: 'selections/export-combined',
         selectionId,
         userId: user.id,
         hasEventKey,
@@ -86,7 +86,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       });
 
       const result = await inngest.send({
-        name: 'lookalikes/export',
+        name: 'selections/export-combined',
         data: {
           selectionId,
           userId: user.id,
