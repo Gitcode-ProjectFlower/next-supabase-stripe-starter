@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
 
 import { parseCustomAnswer } from '@/libs/parse-custom';
+import { resolveQaDownloadUrl } from '@/libs/qa-download';
 import { parseSq1Score } from '@/libs/qa-output-schemas';
 import { useQAResultQuery } from '@/libs/queries';
 import { createSupabaseBrowserClient } from '@/libs/supabase/supabase-browser-client';
@@ -179,8 +180,10 @@ export function QaResults() {
   };
 
   const handleDownloadExcel = async () => {
-    if (!result?.csv_url || result.csv_url === '#') {
-      setDownloadNote('Excel download will be available soon');
+    const directUrl = resolveQaDownloadUrl(result?.csv_url);
+    if (directUrl) {
+      setDownloadNote(null);
+      window.open(directUrl, '_blank');
       return;
     }
     setDownloadNote(null);
@@ -189,18 +192,18 @@ export function QaResults() {
         data: { user },
       } = await supabase.auth.getUser();
       if (!user) {
-        window.open(result.csv_url, '_blank');
+        setDownloadNote('Excel download will be available soon');
         return;
       }
       const { data: downloads, error: downloadError } = await supabase
         .from('downloads')
-        .select('id, row_count')
+        .select('id')
         .eq('user_id', user.id)
         .eq('selection_id', selectionId)
         .eq('type', 'qa')
         .order('created_at', { ascending: false })
         .limit(1)
-        .single<{ id: string; row_count: number }>();
+        .single<{ id: string }>();
       if (!downloadError && downloads?.id) {
         const response = await fetch(`/api/downloads/${downloads.id}/download`, {
           method: 'POST',
@@ -210,8 +213,10 @@ export function QaResults() {
           console.error('[QaResults] Failed to log download:', { status: response.status });
         } else {
           const data = await response.json();
-          window.open(data.downloadUrl || result.csv_url, '_blank');
-          return;
+          if (data.downloadUrl) {
+            window.open(data.downloadUrl, '_blank');
+            return;
+          }
         }
       } else {
         console.warn('[QaResults] Could not find download record:', downloadError);
@@ -219,7 +224,7 @@ export function QaResults() {
     } catch (error) {
       console.error('[QaResults] Error calling download API:', error);
     }
-    window.open(result.csv_url, '_blank');
+    setDownloadNote('Excel download will be available soon');
   };
 
   if (isCheckingAuth || isLoading) return <FullPageLoader text='Loading insights...' />;

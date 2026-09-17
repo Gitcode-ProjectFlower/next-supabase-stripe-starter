@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
+import { buildFollowUpSessionInsert } from '@/libs/follow-up-copy';
 import { getIdempotencyKey, getRequestId, IdempotencyHandler } from '@/libs/idempotency';
 import { getTopKLimit } from '@/libs/plan-config';
 import { parseSq1Score } from '@/libs/qa-output-schemas';
@@ -75,7 +76,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     const { data: sessionData, error: sessionError } = await supabase
       .from('qa_sessions')
-      .select('id, prompt, form_input, input_snapshot, created_at, completed_at, standard_question_id, status')
+      .select('id, prompt, form_input, input_snapshot, created_at, completed_at, csv_url, standard_question_id, status')
       .eq('id', sourceQaSessionId)
       .eq('selection_id', selectionId)
       .eq('user_id', user.id)
@@ -157,18 +158,20 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const { data: newSessionData, error: newSessionError } = await supabase
       .from('qa_sessions')
       // @ts-ignore - Supabase client type inference issue with insert queries
-      .insert({
-        user_id: user.id,
-        selection_id: newSelectionId,
-        prompt: session.prompt,
-        status: 'completed',
-        progress: 100,
-        standard_question_id: '1',
-        form_input: session.form_input,
-        input_snapshot: session.input_snapshot,
-        created_at: session.created_at,
-        completed_at: session.completed_at,
-      })
+      .insert(
+        buildFollowUpSessionInsert(
+          {
+            prompt: session.prompt,
+            form_input: session.form_input,
+            input_snapshot: session.input_snapshot,
+            created_at: session.created_at,
+            completed_at: session.completed_at,
+            csv_url: session.csv_url ?? null,
+          },
+          user.id,
+          newSelectionId
+        )
+      )
       .select('id')
       .single();
 

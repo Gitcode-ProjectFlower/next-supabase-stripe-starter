@@ -108,10 +108,14 @@ export function runTitle(session: { standard_question_id?: string | null; prompt
   return { title: `Custom: ${session.prompt.slice(0, 50)}`, sqId: null };
 }
 
+export function buildRunPrefix(title: string, sqId: string | null, occurrences: number, createdAt: string): string {
+  const label = (sqId && SHORT_RUN_TITLES[sqId]) || title;
+  return occurrences > 1 ? `${label} — ${formatRunDateLong(createdAt)}` : label;
+}
+
 export function buildRunColumns(title: string, sqId: string | null, occurrences: number, createdAt: string): string[] {
   const headers = getExportColumnsForSQ(sqId).map((c) => c.header);
-  const label = (sqId && SHORT_RUN_TITLES[sqId]) || title;
-  const prefix = occurrences > 1 ? `${label} — ${formatRunDateLong(createdAt)}` : label;
+  const prefix = buildRunPrefix(title, sqId, occurrences, createdAt);
   return headers.map((h) => `${prefix} — ${h}`);
 }
 
@@ -129,9 +133,15 @@ export function buildCombinedWorkbook(items: CombinedItem[], runs: CombinedRun[]
   const titleCounts: Record<string, number> = {};
   for (const run of frontRuns) titleCounts[run.title] = (titleCounts[run.title] || 0) + 1;
 
-  const runHeaders = frontRuns.map((run) =>
-    buildRunColumns(run.title, run.sqId, titleCounts[run.title], run.createdAt)
-  );
+  const usedPrefixes = new Map<string, number>();
+  const runHeaders = frontRuns.map((run) => {
+    let prefix = buildRunPrefix(run.title, run.sqId, titleCounts[run.title], run.createdAt);
+    const seen = usedPrefixes.get(prefix) ?? 0;
+    usedPrefixes.set(prefix, seen + 1);
+    if (seen > 0) prefix = `${prefix} (${seen + 1})`;
+    const headers = getExportColumnsForSQ(run.sqId).map((c) => c.header);
+    return headers.map((h) => `${prefix} — ${h}`);
+  });
   const headers = [
     COMBINED_BASE_HEADERS[0],
     ...runHeaders.slice(0, spsRuns.length).flat(),
