@@ -3,7 +3,7 @@ import { Metadata } from 'next';
 import { Product } from './Product';
 
 export const metadata: Metadata = {
-  title: 'Product | InsideFirms',
+  title: 'Product | insidefirms',
   description: 'Ask one commercial question across hundreds of companies — structured answers, scores, and evidence.',
 };
 

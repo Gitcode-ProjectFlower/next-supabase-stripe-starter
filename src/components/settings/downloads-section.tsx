@@ -1,13 +1,14 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
+import type { DownloadTypeLabel } from '@/libs/download-label';
 import { useDownloadsQuery } from '@/libs/queries';
 import { RefreshCw } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 
 interface Download {
   id: string;
-  type: 'Lookalike Excel' | 'Insights Excel';
+  type: DownloadTypeLabel;
   selectionId: string;
   selectionName?: string;
   createdAt: string;

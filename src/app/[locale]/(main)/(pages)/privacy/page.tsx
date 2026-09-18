@@ -3,7 +3,7 @@ import { Metadata } from 'next';
 import { LegalPageLayout, LegalSection, LegalSubheading } from '@/components/legal-page-layout';
 
 export const metadata: Metadata = {
-  title: 'Privacy Policy | InsideFirms',
+  title: 'Privacy Policy | insidefirms',
   description: 'How InsideFirms collects, uses, and protects user information.',
 };
 
@@ -71,7 +71,9 @@ export default function PrivacyPolicyPage() {
           <li>Prevent abuse and unauthorized access</li>
           <li>Communicate product updates and support responses</li>
         </ul>
-        <p>Your searches, selections, and generated outputs are not shared with other users or sold to third parties.</p>
+        <p>
+          Your searches, selections, and generated outputs are not shared with other users or sold to third parties.
+        </p>
       </LegalSection>
 
       <LegalSection heading='Data Privacy'>
@@ -88,9 +90,7 @@ export default function PrivacyPolicyPage() {
           We retain account and platform usage data for as long as necessary to provide the service, comply with legal
           obligations, resolve disputes, and maintain platform security.
         </p>
-        <p>
-          Users may request deletion of their account and associated personal data by contacting support.
-        </p>
+        <p>Users may request deletion of their account and associated personal data by contacting support.</p>
       </LegalSection>
 
       <LegalSection heading='Security'>
@@ -153,12 +153,8 @@ export default function PrivacyPolicyPage() {
       </LegalSection>
 
       <LegalSection heading='Changes to This Policy'>
-        <p>
-          We may update this Privacy Policy from time to time to reflect platform, legal, or operational changes.
-        </p>
-        <p>
-          Updated versions will be published on this page with a revised &ldquo;Last updated&rdquo; date.
-        </p>
+        <p>We may update this Privacy Policy from time to time to reflect platform, legal, or operational changes.</p>
+        <p>Updated versions will be published on this page with a revised &ldquo;Last updated&rdquo; date.</p>
       </LegalSection>
 
       <LegalSection heading='Contact'>

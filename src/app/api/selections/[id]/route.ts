@@ -77,6 +77,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: 'Selection not found' }, { status: 404 });
     }
 
+    if (selection.user_id !== user.id) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     const { data: items, error: itemsError } = await supabase
       .from('selection_items')
       .select('*')

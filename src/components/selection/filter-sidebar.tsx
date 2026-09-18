@@ -64,16 +64,16 @@ export function FilterSidebar({
     userPlan === 'anonymous' || !userPlan
       ? 'Anonymous'
       : userPlan === 'free_tier'
-        ? 'Free'
-        : userPlan === 'small'
-          ? 'Small'
-          : userPlan === 'medium'
-            ? 'Medium'
-            : userPlan === 'large'
-              ? 'Large'
-              : userPlan === 'promo_medium'
-                ? 'Promo Medium'
-                : 'Free';
+      ? 'Free'
+      : userPlan === 'small'
+      ? 'Small'
+      : userPlan === 'medium'
+      ? 'Medium'
+      : userPlan === 'large'
+      ? 'Large'
+      : userPlan === 'promo_medium'
+      ? 'Promo Medium'
+      : 'Free';
 
   React.useEffect(() => {
     setLocalTopK(topK.toString());
@@ -121,7 +121,9 @@ export function FilterSidebar({
         {/* Names */}
         <div>
           <div className='flex items-baseline gap-1.5'>
-            <label className='text-sm font-medium text-gray-700'>Find similar companies</label>
+            <label htmlFor='company-name-input' className='text-sm font-medium text-gray-700'>
+              Find similar companies
+            </label>
             <span className='text-xs font-normal text-[#71717A]'>(Optional)</span>
           </div>
           <p className='mt-0.5 text-xs leading-snug text-[#6B7280]'>
@@ -166,6 +168,7 @@ export function FilterSidebar({
         </div>
         <div className='mt-2'>
           <Input
+            id='company-name-input'
             placeholder={names.length >= 1 ? 'Only one company supported for now' : 'e.g. Tesco or tesco.co.uk'}
             value={nameInput}
             onChange={(e) => setNameInput(e.target.value)}
@@ -186,6 +189,8 @@ export function FilterSidebar({
               >
                 {name}
                 <button
+                  type='button'
+                  aria-label={`Remove ${name}`}
                   onClick={() => removeName(idx)}
                   className='rounded-full p-0.5 text-gray-500 transition-colors hover:bg-gray-200'
                 >
@@ -226,10 +231,11 @@ export function FilterSidebar({
               <button
                 key={size}
                 onClick={() => toggleCompanySize(size)}
-                className={`whitespace-nowrap rounded-full border px-2.5 py-1 text-xs transition-colors ${companySize.includes(size)
+                className={`whitespace-nowrap rounded-full border px-2.5 py-1 text-xs transition-colors ${
+                  companySize.includes(size)
                     ? 'border-gray-900 bg-gray-900 text-white'
                     : 'bg-white text-gray-700 hover:bg-gray-50'
-                  }`}
+                }`}
               >
                 {size === '+250' ? '250+' : size}
               </button>
@@ -316,10 +322,7 @@ export function FilterSidebar({
           </li>
           <li className='flex items-start gap-2.5'>
             <MessageSquare className='mt-0.5 h-4 w-4 shrink-0 text-gray-500' aria-hidden='true' />
-            <Link
-              href={getLocalePath(locale, '/help')}
-              className='text-gray-600 transition-colors hover:text-blue-600'
-            >
+            <Link href={getLocalePath(locale, '/help')} className='text-gray-600 transition-colors hover:text-blue-600'>
               Need help or want to share feedback? Contact support →
             </Link>
           </li>

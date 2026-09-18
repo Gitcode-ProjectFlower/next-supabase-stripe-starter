@@ -20,6 +20,7 @@ import { LookalikeResult } from '@/types/selection';
 import { cn } from '@/utils/cn';
 import { getLocalePath } from '@/utils/get-locale-path';
 import { normalizeValue } from '@/utils/normalize-value';
+import { toSafeExternalUrl } from '@/utils/safe-url';
 
 interface ResultsWorkspaceProps {
   results: LookalikeResult[];
@@ -145,7 +146,7 @@ const COLUMN_CONFIG: Record<
   linkedin_company_url: {
     label: 'LinkedIn URL',
     render: (row) => {
-      const url = normalizeValue(row.linkedin_company_url);
+      const url = toSafeExternalUrl(row.linkedin_company_url);
       return url ? (
         <a href={url} target='_blank' rel='noopener noreferrer' className='text-blue-600 hover:underline'>
           {url}
@@ -316,9 +317,7 @@ export function ResultsWorkspace({
             onClick={() => setActiveTab('candidates')}
             className={cn(
               'rounded-md px-3 py-1 text-[13px] font-medium transition-colors',
-              activeTab === 'candidates'
-                ? 'bg-white text-gray-900 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
+              activeTab === 'candidates' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'
             )}
           >
             Companies
@@ -328,9 +327,7 @@ export function ResultsWorkspace({
             onClick={() => setActiveTab('selected')}
             className={cn(
               'rounded-md px-3 py-1 text-[13px] font-medium transition-colors',
-              activeTab === 'selected'
-                ? 'bg-white text-gray-900 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
+              activeTab === 'selected' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'
             )}
           >
             Selected
@@ -398,110 +395,119 @@ export function ResultsWorkspace({
       )}
 
       {/* Table */}
-      {(!isLoading && ((results.length > 0 && activeTab === 'candidates') || (activeTab === 'selected' && selectedIds.size > 0))) && (
-      <div className='min-h-[400px] overflow-hidden rounded-2xl border bg-white shadow-sm'>
-        <TopScrollbar topRef={topRef} spacerRef={spacerRef} />
-        <div ref={mainRef} className='max-h-[600px] overflow-auto'>
-          <Table>
-            <TableHeader className='sticky top-0 z-10 bg-gray-50'>
-              <TableRow className='hover:bg-transparent'>
-                <TableHead className='w-[40px] px-3 py-2'>
-                  <input
-                    type='checkbox'
-                    className='rounded border-gray-300'
-                    checked={results.length > 0 && selectedIds.size === results.length}
-                    onChange={handleSelectAll}
-                    disabled={results.length === 0}
-                  />
-                </TableHead>
-                {visibleColumns.map((key) => (
-                  <TableHead
-                    key={key}
-                    className='cursor-pointer whitespace-nowrap px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-gray-600 hover:bg-gray-100'
-                    onClick={() => handleSort(key)}
-                  >
-                    <div className='flex items-center gap-1'>
-                      {COLUMN_CONFIG[key].label}
-                      {sortKey === key ? (
-                        sortDirection === 'asc' ? (
-                          <ArrowUp className='h-3 w-3' />
-                        ) : (
-                          <ArrowDown className='h-3 w-3' />
-                        )
-                      ) : (
-                        <ArrowUpDown className='h-3 w-3 opacity-30' />
-                      )}
-                    </div>
-                  </TableHead>
-                ))}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {displayedResults.length === 0 ? (
-                <TableRow className='hover:bg-transparent'>
-                  <TableCell colSpan={visibleColumns.length + 1} className='h-48 text-center'>
-                    <p className='text-xl font-semibold text-gray-700'>
-                      {activeTab === 'selected' ? 'No companies selected yet' : 'No companies found'}
-                    </p>
-                    {activeTab === 'selected' && (
-                      <p className='mt-2 text-base text-gray-400'>Select companies from the Companies tab</p>
-                    )}
-                  </TableCell>
-                </TableRow>
-              ) : (
-                displayedResults.map((r, idx) => {
-                  const isSelected = selectedIds.has(r.doc_id);
-                  return (
-                    <TableRow
-                      key={r.doc_id || idx}
-                      className={cn('cursor-pointer hover:bg-gray-50', isSelected && 'bg-blue-50/50 hover:bg-blue-100')}
-                      onClick={() => handleSelectRow(r.doc_id)}
-                    >
-                      <TableCell className='px-3 py-2'>
-                        <input
-                          type='checkbox'
-                          checked={isSelected}
-                          onChange={() => handleSelectRow(r.doc_id)}
-                          className='rounded border-gray-300'
-                          onClick={(e) => e.stopPropagation()}
-                        />
-                      </TableCell>
-                      {visibleColumns.map((key) => (
-                        <TableCell
-                          key={key}
-                          className={cn(
-                            'px-3 py-2',
-                            key === 'email' || key === 'city' || key === 'street' || key === 'linkedin_company_url'
-                              ? 'max-w-[200px] truncate'
-                              : 'whitespace-nowrap',
-                            key === 'name' && 'font-medium'
-                          )}
-                          title={
-                            key === 'email'
-                              ? r.email
-                              : key === 'city' || key === 'street' || key === 'linkedin_company_url'
-                              ? (r as any)[key] || ''
-                              : undefined
-                          }
+      {!isLoading &&
+        ((results.length > 0 && activeTab === 'candidates') || (activeTab === 'selected' && selectedIds.size > 0)) && (
+          <div className='min-h-[400px] overflow-hidden rounded-2xl border bg-white shadow-sm'>
+            <TopScrollbar topRef={topRef} spacerRef={spacerRef} />
+            <div ref={mainRef} className='max-h-[600px] overflow-auto'>
+              <Table>
+                <TableHeader className='sticky top-0 z-10 bg-gray-50'>
+                  <TableRow className='hover:bg-transparent'>
+                    <TableHead className='w-[40px] px-3 py-2'>
+                      <input
+                        type='checkbox'
+                        className='rounded border-gray-300'
+                        checked={results.length > 0 && selectedIds.size === results.length}
+                        onChange={handleSelectAll}
+                        disabled={results.length === 0}
+                      />
+                    </TableHead>
+                    {visibleColumns.map((key) => (
+                      <TableHead
+                        key={key}
+                        aria-sort={sortKey === key ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
+                        className='whitespace-nowrap px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-gray-600 hover:bg-gray-100'
+                      >
+                        <button
+                          type='button'
+                          onClick={() => handleSort(key)}
+                          className='flex cursor-pointer items-center gap-1'
                         >
-                          {COLUMN_CONFIG[key].render(r)}
-                        </TableCell>
-                      ))}
+                          {COLUMN_CONFIG[key].label}
+                          {sortKey === key ? (
+                            sortDirection === 'asc' ? (
+                              <ArrowUp className='h-3 w-3' />
+                            ) : (
+                              <ArrowDown className='h-3 w-3' />
+                            )
+                          ) : (
+                            <ArrowUpDown className='h-3 w-3 opacity-30' />
+                          )}
+                        </button>
+                      </TableHead>
+                    ))}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {displayedResults.length === 0 ? (
+                    <TableRow className='hover:bg-transparent'>
+                      <TableCell colSpan={visibleColumns.length + 1} className='h-48 text-center'>
+                        <p className='text-xl font-semibold text-gray-700'>
+                          {activeTab === 'selected' ? 'No companies selected yet' : 'No companies found'}
+                        </p>
+                        {activeTab === 'selected' && (
+                          <p className='mt-2 text-base text-gray-400'>Select companies from the Companies tab</p>
+                        )}
+                      </TableCell>
                     </TableRow>
-                  );
-                })
-              )}
-            </TableBody>
-          </Table>
-        </div>
-      </div>
-      )}
+                  ) : (
+                    displayedResults.map((r, idx) => {
+                      const isSelected = selectedIds.has(r.doc_id);
+                      return (
+                        <TableRow
+                          key={r.doc_id || idx}
+                          className={cn(
+                            'cursor-pointer hover:bg-gray-50',
+                            isSelected && 'bg-blue-50/50 hover:bg-blue-100'
+                          )}
+                          onClick={() => handleSelectRow(r.doc_id)}
+                        >
+                          <TableCell className='px-3 py-2'>
+                            <input
+                              type='checkbox'
+                              checked={isSelected}
+                              onChange={() => handleSelectRow(r.doc_id)}
+                              className='rounded border-gray-300'
+                              onClick={(e) => e.stopPropagation()}
+                            />
+                          </TableCell>
+                          {visibleColumns.map((key) => (
+                            <TableCell
+                              key={key}
+                              className={cn(
+                                'px-3 py-2',
+                                key === 'email' || key === 'city' || key === 'street' || key === 'linkedin_company_url'
+                                  ? 'max-w-[200px] truncate'
+                                  : 'whitespace-nowrap',
+                                key === 'name' && 'font-medium'
+                              )}
+                              title={
+                                key === 'email'
+                                  ? r.email
+                                  : key === 'city' || key === 'street' || key === 'linkedin_company_url'
+                                  ? (r as any)[key] || ''
+                                  : undefined
+                              }
+                            >
+                              {COLUMN_CONFIG[key].render(r)}
+                            </TableCell>
+                          ))}
+                        </TableRow>
+                      );
+                    })
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+        )}
 
       {/* Prompt bar */}
       <div className='sticky bottom-2 z-10 mt-4'>
         <div className='rounded-2xl border bg-white p-3 shadow-sm'>
           <div className='flex items-start gap-3'>
             <Textarea
+              aria-label='Custom question for selected companies'
               className='min-h-[48px] flex-1 resize-none rounded-lg border px-3 py-2 text-sm focus-visible:ring-1 focus-visible:ring-gray-900'
               placeholder={
                 selectedIds.size === 0

@@ -3,7 +3,7 @@ import { Metadata } from 'next';
 import { LegalPageLayout, LegalSection } from '@/components/legal-page-layout';
 
 export const metadata: Metadata = {
-  title: 'Terms of Service | InsideFirms',
+  title: 'Terms of Service | insidefirms',
   description: 'The terms governing access to and use of the InsideFirms platform.',
 };
 
@@ -65,8 +65,8 @@ export default function TermsOfServicePage() {
 
       <LegalSection heading='Platform Outputs'>
         <p>
-          InsideFirms generates analyses, classifications, summaries, and related commercial insights based on
-          available data sources and automated processing.
+          InsideFirms generates analyses, classifications, summaries, and related commercial insights based on available
+          data sources and automated processing.
         </p>
         <p>
           While we aim to provide useful and reliable outputs, InsideFirms does not guarantee the completeness,
@@ -125,16 +125,14 @@ export default function TermsOfServicePage() {
 
       <LegalSection heading='Governing Law'>
         <p>
-          These Terms shall be governed by and interpreted in accordance with the laws applicable in the jurisdiction
-          in which InsideFirms operates, without regard to conflict of law principles.
+          These Terms shall be governed by and interpreted in accordance with the laws applicable in the jurisdiction in
+          which InsideFirms operates, without regard to conflict of law principles.
         </p>
       </LegalSection>
 
       <LegalSection heading='Changes to These Terms'>
         <p>We may update these Terms from time to time.</p>
-        <p>
-          Updated versions will be published on this page with a revised &ldquo;Last updated&rdquo; date.
-        </p>
+        <p>Updated versions will be published on this page with a revised &ldquo;Last updated&rdquo; date.</p>
         <p>Continued use of the platform after updates constitutes acceptance of the revised Terms.</p>
       </LegalSection>
 

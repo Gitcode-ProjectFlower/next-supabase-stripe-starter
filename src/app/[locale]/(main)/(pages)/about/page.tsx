@@ -3,7 +3,7 @@ import { Metadata } from 'next';
 import { About } from './About';
 
 export const metadata: Metadata = {
-  title: 'About | InsideFirms',
+  title: 'About | insidefirms',
   description: 'Why InsideFirms exists — better account decisions start with clearer commercial interpretation.',
 };
 

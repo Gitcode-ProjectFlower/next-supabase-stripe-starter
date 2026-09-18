@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { checkRateLimit, getClientIp } from '@/libs/ratelimit';
 import { FROM_EMAIL, resendClient } from '@/libs/resend/resend-client';
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
 
@@ -20,6 +21,11 @@ function escapeHtml(text: string) {
 
 export async function POST(request: NextRequest) {
   try {
+    const contactLimit = await checkRateLimit(`contact:${getClientIp(request)}`, 'contact');
+    if (!contactLimit.allowed) {
+      return NextResponse.json({ error: 'Too many messages. Please try again later.' }, { status: 429 });
+    }
+
     const body = await request.json();
     const email: string = body.email?.trim() ?? '';
     const question: string = body.question?.trim() ?? '';

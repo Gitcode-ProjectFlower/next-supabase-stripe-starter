@@ -129,6 +129,7 @@ export async function Pricing() {
 
   return (
     <>
+      <h1 className='sr-only'>Pricing</h1>
       {/* Pricing Cards */}
       <PricingCarousel count={PLANS.length + 1}>
         {PLANS.map((plan, idx) => {

@@ -1003,7 +1003,7 @@ export function Dashboard() {
         </aside>
 
         {/* Right: Workspace */}
-        <main className='relative col-span-12 lg:col-span-9'>
+        <div className='relative col-span-12 lg:col-span-9'>
           {/* Single-line toolbar: title on the left, actions on the right */}
           <div className='mb-2 flex min-h-[56px] flex-wrap items-center gap-3 py-2'>
             <h2 className='text-base font-semibold text-gray-900'>Generate insights across your target companies</h2>
@@ -1012,6 +1012,7 @@ export function Dashboard() {
                 value={selectionName}
                 onChange={(e) => setSelectionName(e.target.value)}
                 placeholder='Selection name'
+                aria-label='Selection name'
                 className='h-9 w-[160px] text-sm'
               />
               <Button
@@ -1031,6 +1032,7 @@ export function Dashboard() {
                 className={cn((exportUnavailableReason || isExporting) && 'cursor-not-allowed opacity-60')}
                 onClick={() => handleExportClick(exportUnavailableReason)}
                 disabled={isExporting}
+                title='Download one Excel workbook with all analyses of this selection'
               >
                 {isExporting ? 'Preparing...' : 'Prepare Download'}
               </Button>
@@ -1086,7 +1088,7 @@ export function Dashboard() {
             hasFilters={names.length > 0 || sectors.size > 0 || regions.size > 0 || companySize.length > 0}
             onSearch={handleSearch}
           />
-        </main>
+        </div>
       </div>
 
       <Dialog open={isSaveModalOpen} onOpenChange={setIsSaveModalOpen}>

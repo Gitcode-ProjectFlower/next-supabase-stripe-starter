@@ -13,6 +13,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'priceId is required' }, { status: 400 });
     }
 
+    if (typeof priceId !== 'string' || !priceId.startsWith('price_')) {
+      return NextResponse.json({ error: 'Invalid priceId' }, { status: 400 });
+    }
+
     const supabase = await createSupabaseServerClient();
 
     const {
@@ -22,6 +26,17 @@ export async function POST(request: NextRequest) {
 
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { data: knownPrice } = await supabase
+      .from('prices')
+      .select('id')
+      .eq('id', priceId)
+      .eq('active', true)
+      .maybeSingle();
+
+    if (!knownPrice) {
+      return NextResponse.json({ error: 'Unknown or inactive price' }, { status: 400 });
     }
 
     if (!user.email) {

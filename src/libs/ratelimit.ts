@@ -11,33 +11,67 @@ if (!hasRedis) {
 
 const redis = hasRedis
   ? new Redis({
-    url: process.env.UPSTASH_REDIS_REST_URL!,
-    token: process.env.UPSTASH_REDIS_REST_TOKEN!,
-  })
+      url: process.env.UPSTASH_REDIS_REST_URL!,
+      token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+    })
   : null;
 
 export const searchRateLimiter = redis
   ? new Ratelimit({
-    redis,
-    limiter: Ratelimit.slidingWindow(30, '1 m'),
-    analytics: true,
-    prefix: 'ratelimit:search',
-  })
+      redis,
+      limiter: Ratelimit.slidingWindow(30, '1 m'),
+      analytics: true,
+      prefix: 'ratelimit:search',
+    })
   : null;
 
 export const askRateLimiter = redis
   ? new Ratelimit({
-    redis,
-    limiter: Ratelimit.slidingWindow(5, '1 m'),
-    analytics: true,
-    prefix: 'ratelimit:ask',
-  })
+      redis,
+      limiter: Ratelimit.slidingWindow(5, '1 m'),
+      analytics: true,
+      prefix: 'ratelimit:ask',
+    })
   : null;
 
-export async function checkRateLimit(identifier: string, limiterOrKey: Ratelimit | 'search' | 'ask') {
+export const authRateLimiter = redis
+  ? new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(10, '1 m'),
+      analytics: true,
+      prefix: 'ratelimit:auth',
+    })
+  : null;
+
+export const contactRateLimiter = redis
+  ? new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(5, '1 m'),
+      analytics: true,
+      prefix: 'ratelimit:contact',
+    })
+  : null;
+
+export function getClientIp(request: Request): string {
+  const forwarded = request.headers.get('x-forwarded-for');
+  if (forwarded) return forwarded.split(',')[0].trim();
+  return request.headers.get('x-real-ip')?.trim() || 'unknown';
+}
+
+export async function checkRateLimit(
+  identifier: string,
+  limiterOrKey: Ratelimit | 'search' | 'ask' | 'auth' | 'contact'
+) {
   let limiter: Ratelimit | null = null;
   if (typeof limiterOrKey === 'string') {
-    limiter = limiterOrKey === 'search' ? searchRateLimiter : askRateLimiter;
+    limiter =
+      limiterOrKey === 'search'
+        ? searchRateLimiter
+        : limiterOrKey === 'ask'
+        ? askRateLimiter
+        : limiterOrKey === 'auth'
+        ? authRateLimiter
+        : contactRateLimiter;
   } else {
     limiter = limiterOrKey;
   }

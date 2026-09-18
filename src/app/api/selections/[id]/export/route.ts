@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { inngest } from '@/libs/inngest/client';
+import { checkRateLimit } from '@/libs/ratelimit';
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
 import { checkUsageLimit } from '@/libs/usage-tracking';
 import { getUserPlan } from '@/libs/user-plan';
@@ -16,6 +17,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const exportLimit = await checkRateLimit(user.id, 'ask');
+    if (!exportLimit.allowed) {
+      return NextResponse.json({ error: 'Rate limit exceeded. Please try again later.' }, { status: 429 });
     }
 
     const { data: selectionData, error: selectionError } = await supabase

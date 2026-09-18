@@ -438,9 +438,10 @@ export function QaResults() {
                   <Button
                     className='w-full rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 sm:w-auto'
                     onClick={handleDownloadExcel}
+                    title='Download the Excel file for this analysis run'
                   >
                     <Download className='mr-2 h-4 w-4 shrink-0' />
-                    Download Excel
+                    Download this run
                   </Button>
                   {downloadNote && <span className='text-xs text-gray-500'>{downloadNote}</span>}
                 </div>
@@ -670,6 +671,14 @@ export function QaResults() {
                           <TableRow
                             className={`hover:bg-gray-50 ${hasExpandableRows && isSuccess ? 'cursor-pointer' : ''}`}
                             onClick={() => hasExpandableRows && isSuccess && toggleRow(rowId)}
+                            tabIndex={hasExpandableRows && isSuccess ? 0 : undefined}
+                            aria-expanded={hasExpandableRows && isSuccess ? isExpanded : undefined}
+                            onKeyDown={(e) => {
+                              if ((e.key === 'Enter' || e.key === ' ') && hasExpandableRows && isSuccess) {
+                                e.preventDefault();
+                                toggleRow(rowId);
+                              }
+                            }}
                           >
                             {hasExpandableRows && (
                               <TableCell className='w-10 px-3 py-3 text-gray-400'>

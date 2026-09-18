@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { getCollectionFromLocale, getDefaultLocale, getLocaleFromPath } from '@/libs/collection-mapping';
 import { getIdempotencyKey, getRequestId, IdempotencyHandler } from '@/libs/idempotency';
 import { getTopKLimit } from '@/libs/plan-config';
-import { checkRateLimit, searchRateLimiter } from '@/libs/ratelimit';
+import { checkRateLimit } from '@/libs/ratelimit';
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
 import { logUsage } from '@/libs/usage-tracking';
 import { getUserPlan } from '@/libs/user-plan';

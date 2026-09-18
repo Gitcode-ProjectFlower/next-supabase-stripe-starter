@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
       console.error('Webhook signature verification failed:', err);
       return NextResponse.json({ error: 'Webhook signature verification failed' }, { status: 400 });
     }
-    console.log('event12234', event);
+    console.log('[Stripe webhook] Received event:', event.type, event.id);
     switch (event.type) {
       case 'checkout.session.completed':
         await handleCheckoutSessionCompleted(event.data.object as Stripe.Checkout.Session);

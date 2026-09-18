@@ -30,6 +30,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { cn } from '@/utils/cn';
 import { getLocalePath } from '@/utils/get-locale-path';
 import { normalizeValue } from '@/utils/normalize-value';
+import { toSafeExternalUrl } from '@/utils/safe-url';
 
 // All 17 required fields + similarity (optional)
 type ColumnKey =
@@ -165,7 +166,7 @@ const COLUMN_CONFIG: Record<
   linkedin_company_url: {
     label: 'LinkedIn URL',
     render: (row) => {
-      const url = normalizeValue(row.linkedin_company_url);
+      const url = toSafeExternalUrl(row.linkedin_company_url);
       return url ? (
         <a href={url} target='_blank' rel='noopener noreferrer' className='text-blue-600 hover:underline'>
           {url}
@@ -718,6 +719,7 @@ export function Selection() {
               className='w-full rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 sm:w-auto'
               onClick={handleExport}
               disabled={isExporting}
+              title='Download one Excel workbook with all analyses of this selection'
             >
               <Download className='mr-2 h-4 w-4 shrink-0' />
               {isExporting ? 'Preparing...' : 'Prepare Download'}

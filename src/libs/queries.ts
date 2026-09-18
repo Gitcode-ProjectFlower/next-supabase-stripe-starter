@@ -3,6 +3,7 @@
 import { useQuery, type UseQueryOptions } from '@tanstack/react-query';
 
 import { ApiError, apiFetch } from './api-client';
+import { downloadTypeLabel, type DownloadTypeLabel } from './download-label';
 import type { UserPlan } from './plan-config';
 import { QUERY_KEYS } from './query-keys';
 import { createSupabaseBrowserClient } from './supabase/supabase-browser-client';
@@ -60,7 +61,7 @@ type SelectionDetailResponse = {
 
 type DownloadItem = {
   id: string;
-  type: 'Lookalike Excel' | 'Insights Excel';
+  type: DownloadTypeLabel;
   selectionId: string;
   selectionName?: string;
   createdAt: string;
@@ -149,10 +150,7 @@ export function useDownloadsQuery(
       const selectionIds = (downloads || []).map((d: any) => d.selection_id).filter(Boolean);
       const selectionNameMap: Record<string, string> = {};
       if (selectionIds.length > 0) {
-        const { data: selectionRows } = await supabase
-          .from('selections')
-          .select('id, name')
-          .in('id', selectionIds);
+        const { data: selectionRows } = await supabase.from('selections').select('id, name').in('id', selectionIds);
         for (const row of selectionRows || []) {
           // @ts-ignore - Supabase type inference issue with select queries
           selectionNameMap[row.id] = row.name;
@@ -167,7 +165,7 @@ export function useDownloadsQuery(
         const estimatedSizeKB = Math.round((download.row_count * 200) / 1024);
         const size = estimatedSizeKB > 0 ? `${estimatedSizeKB} KB` : '< 1 KB';
 
-        const type: 'Lookalike Excel' | 'Insights Excel' = download.type === 'lookalike' ? 'Lookalike Excel' : 'Insights Excel';
+        const type: DownloadTypeLabel = downloadTypeLabel(download.type, download.url);
 
         return {
           id: download.id,
@@ -196,7 +194,9 @@ type QAResultResponse = {
   selection_name: string;
   prompt: string;
   standard_question_id?: string | null;
-  input_snapshot?: { fields: Array<{ key: string; label: string; type: string; value: unknown; order: number }> } | null;
+  input_snapshot?: {
+    fields: Array<{ key: string; label: string; type: string; value: unknown; order: number }>;
+  } | null;
   total_items?: number;
   status: 'processing' | 'completed' | 'failed';
   progress: number;
@@ -320,173 +320,176 @@ export function useRecentActivityQuery(
         return { activities: [] };
       }
 
+      const timeWindow = 5 * 60 * 1000; // 5 minutes window
+      const logTimes = (usageLogs || []).map((log: any) => new Date(log.created_at || Date.now()).getTime());
+      const rangeStart = new Date(Math.min(...logTimes) - timeWindow).toISOString();
+      const rangeEnd = new Date(Math.max(...logTimes) + timeWindow).toISOString();
+
+      const [{ data: recentSessions }, { data: recentSelections }, { data: recentDownloads }] = await Promise.all([
+        supabase
+          .from('qa_sessions')
+          .select('id, selection_id, prompt, status, created_at')
+          .eq('user_id', user.id)
+          .gte('created_at', rangeStart)
+          .lte('created_at', rangeEnd)
+          .order('created_at', { ascending: false })
+          .limit(50),
+        supabase
+          .from('selections')
+          .select('id, name, item_count, created_at')
+          .eq('user_id', user.id)
+          .gte('created_at', rangeStart)
+          .lte('created_at', rangeEnd)
+          .order('created_at', { ascending: false })
+          .limit(50),
+        supabase
+          .from('downloads')
+          .select('id, selection_id, type, url, created_at, expires_at')
+          .eq('user_id', user.id)
+          .gte('created_at', rangeStart)
+          .lte('created_at', rangeEnd)
+          .order('created_at', { ascending: false })
+          .limit(50),
+      ]);
+
+      const sessionsList =
+        (recentSessions as Array<{
+          id: string;
+          selection_id: string;
+          prompt: string;
+          status: string;
+          created_at: string;
+        }> | null) || [];
+      const selectionsList =
+        (recentSelections as Array<{
+          id: string;
+          name: string;
+          item_count: number;
+          created_at: string;
+        }> | null) || [];
+      const downloadsList =
+        (recentDownloads as Array<{
+          id: string;
+          selection_id: string | null;
+          type: string;
+          url: string | null;
+          created_at: string;
+          expires_at: string | null;
+        }> | null) || [];
+      const selectionNameMap: Record<string, string> = {};
+      for (const s of selectionsList) selectionNameMap[s.id] = s.name;
+
+      const inWindow = (createdAt: string, logTime: number) => {
+        const t = new Date(createdAt).getTime();
+        return t >= logTime - timeWindow && t <= logTime + timeWindow;
+      };
+
       // Fetch related records to get metadata
-      const activitiesResults = await Promise.all(
-        (usageLogs || []).map(async (log: any): Promise<ActivityItem | null> => {
-          const logTime = new Date(log.created_at || Date.now());
-          const timeWindow = 5 * 60 * 1000; // 5 minutes window
+      const activitiesResults = (usageLogs || []).map((log: any): ActivityItem | null => {
+        const logTime = new Date(log.created_at || Date.now()).getTime();
 
-          if (log.action === 'ai_question') {
-            // Find related QA session
-            const { data: qaSessionsData } = await supabase
-              .from('qa_sessions')
-              .select('id, selection_id, prompt, status, created_at')
-              .eq('user_id', user.id)
-              .gte('created_at', new Date(logTime.getTime() - timeWindow).toISOString())
-              .lte('created_at', new Date(logTime.getTime() + timeWindow).toISOString())
-              .order('created_at', { ascending: false })
-              .limit(1)
-              .single();
+        if (log.action === 'ai_question') {
+          // Find related QA session
+          const qaSessions = sessionsList.find((s) => inWindow(s.created_at, logTime)) || null;
 
-            const qaSessions = qaSessionsData as {
-              id: string;
-              selection_id: string;
-              prompt: string;
-              status: string;
-              created_at: string;
-            } | null;
+          if (qaSessions) {
+            // Get selection name
+            const selectionName = qaSessions.selection_id
+              ? selectionNameMap[qaSessions.selection_id] || 'Unknown Selection'
+              : 'Unknown Selection';
 
-            if (qaSessions) {
-              // Get selection name
-              let selectionName = 'Unknown Selection';
-              if (qaSessions.selection_id) {
-                const { data: selectionData } = await supabase
-                  .from('selections')
-                  .select('name')
-                  .eq('id', qaSessions.selection_id)
-                  .single();
-                selectionName = (selectionData as { name?: string } | null)?.name || selectionName;
-              }
+            const statusMap: Record<string, 'queued' | 'running' | 'done' | 'failed'> = {
+              processing: 'running',
+              completed: 'done',
+              failed: 'failed',
+            };
 
-              const statusMap: Record<string, 'queued' | 'running' | 'done' | 'failed'> = {
-                processing: 'running',
-                completed: 'done',
-                failed: 'failed',
-              };
-
-              return {
-                id: log.id,
-                type: 'qa',
-                status: statusMap[qaSessions.status] || 'queued',
-                timestamp: log.created_at || new Date().toISOString(),
-                label: `${selectionName} - ${qaSessions.prompt.substring(0, 50)}${qaSessions.prompt.length > 50 ? '...' : ''
-                  }`,
-                link: `/selections/${qaSessions.selection_id}/qa/${qaSessions.id}`,
-                metadata: {
-                  selectionId: qaSessions.selection_id,
-                  qaSessionId: qaSessions.id,
-                  count: log.count,
-                },
-              };
-            }
-          } else if (log.action === 'selection_created') {
-            // Find related selection
-            const { data: selectionsData } = await supabase
-              .from('selections')
-              .select('id, name, item_count, created_at')
-              .eq('user_id', user.id)
-              .gte('created_at', new Date(logTime.getTime() - timeWindow).toISOString())
-              .lte('created_at', new Date(logTime.getTime() + timeWindow).toISOString())
-              .order('created_at', { ascending: false })
-              .limit(1)
-              .single();
-
-            const selections = selectionsData as {
-              id: string;
-              name: string;
-              item_count: number;
-              created_at: string;
-            } | null;
-
-            if (selections) {
-              return {
-                id: log.id,
-                type: 'search',
-                status: 'done',
-                timestamp: log.created_at || new Date().toISOString(),
-                label: `${selections.name} - ${selections.item_count} companies`,
-                link: `/selections/${selections.id}`,
-                metadata: {
-                  selectionId: selections.id,
-                  count: selections.item_count,
-                },
-              };
-            }
-          } else if (log.action === 'record_download') {
-            // Find related download
-            const { data: downloadsData } = await supabase
-              .from('downloads')
-              .select('id, selection_id, type, created_at, expires_at')
-              .eq('user_id', user.id)
-              .gte('created_at', new Date(logTime.getTime() - timeWindow).toISOString())
-              .lte('created_at', new Date(logTime.getTime() + timeWindow).toISOString())
-              .order('created_at', { ascending: false })
-              .limit(1)
-              .single();
-
-            const downloads = downloadsData as {
-              id: string;
-              selection_id: string | null;
-              type: string;
-              created_at: string;
-              expires_at: string | null;
-            } | null;
-
-            if (downloads) {
-              // Get selection name
-              let selectionName = 'Unknown Selection';
-              if (downloads.selection_id) {
-                const { data: selectionData } = await supabase
-                  .from('selections')
-                  .select('name')
-                  .eq('id', downloads.selection_id)
-                  .single();
-                selectionName = (selectionData as { name?: string } | null)?.name || selectionName;
-              }
-
-              const isExpired = downloads.expires_at ? new Date(downloads.expires_at) < new Date() : false;
-              const typeLabel = downloads.type === 'lookalike' ? 'Lookalike Excel' : 'Insights Excel';
-
-              return {
-                id: log.id,
-                type: 'export',
-                status: isExpired ? 'failed' : 'done',
-                timestamp: log.created_at || new Date().toISOString(),
-                label: `${typeLabel} - ${selectionName}`,
-                link: isExpired ? undefined : downloads.id, // Will be used to get download URL
-                metadata: {
-                  selectionId: downloads.selection_id || undefined,
-                  downloadId: downloads.id,
-                  count: log.count,
-                },
-              };
-            }
+            return {
+              id: log.id,
+              type: 'qa',
+              status: statusMap[qaSessions.status] || 'queued',
+              timestamp: log.created_at || new Date().toISOString(),
+              label: `${selectionName} - ${qaSessions.prompt.substring(0, 50)}${
+                qaSessions.prompt.length > 50 ? '...' : ''
+              }`,
+              link: `/selections/${qaSessions.selection_id}/qa/${qaSessions.id}`,
+              metadata: {
+                selectionId: qaSessions.selection_id,
+                qaSessionId: qaSessions.id,
+                count: log.count,
+              },
+            };
           }
+        } else if (log.action === 'selection_created') {
+          // Find related selection
+          const selections = selectionsList.find((s) => inWindow(s.created_at, logTime)) || null;
 
-          // If no related record found, return basic activity
-          let activityType: 'search' | 'qa' | 'export' = 'export';
-          let activityLabel = `Download Excel - ${log.count} records`;
-
-          if (log.action === 'ai_question') {
-            activityType = 'qa';
-            activityLabel = `Insights run (${log.count} ${log.count === 1 ? 'analysis' : 'analyses'})`;
-          } else if (log.action === 'selection_created') {
-            activityType = 'search';
-            activityLabel = `Lookalike search - ${log.count} selection${log.count > 1 ? 's' : ''}`;
+          if (selections) {
+            return {
+              id: log.id,
+              type: 'search',
+              status: 'done',
+              timestamp: log.created_at || new Date().toISOString(),
+              label: `${selections.name} - ${selections.item_count} companies`,
+              link: `/selections/${selections.id}`,
+              metadata: {
+                selectionId: selections.id,
+                count: selections.item_count,
+              },
+            };
           }
+        } else if (log.action === 'record_download') {
+          // Find related download
+          const downloads = downloadsList.find((d) => inWindow(d.created_at, logTime)) || null;
 
-          return {
-            id: log.id,
-            type: activityType,
-            status: 'done',
-            timestamp: log.created_at || new Date().toISOString(),
-            label: activityLabel,
-            metadata: {
-              count: log.count,
-            },
-          };
-        })
-      );
+          if (downloads) {
+            // Get selection name
+            const selectionName = downloads.selection_id
+              ? selectionNameMap[downloads.selection_id] || 'Unknown Selection'
+              : 'Unknown Selection';
+
+            const isExpired = downloads.expires_at ? new Date(downloads.expires_at) < new Date() : false;
+            const typeLabel = downloadTypeLabel(downloads.type, downloads.url);
+
+            return {
+              id: log.id,
+              type: 'export',
+              status: isExpired ? 'failed' : 'done',
+              timestamp: log.created_at || new Date().toISOString(),
+              label: `${typeLabel} - ${selectionName}`,
+              link: isExpired ? undefined : downloads.id, // Will be used to get download URL
+              metadata: {
+                selectionId: downloads.selection_id || undefined,
+                downloadId: downloads.id,
+                count: log.count,
+              },
+            };
+          }
+        }
+
+        // If no related record found, return basic activity
+        let activityType: 'search' | 'qa' | 'export' = 'export';
+        let activityLabel = `Download Excel - ${log.count} records`;
+
+        if (log.action === 'ai_question') {
+          activityType = 'qa';
+          activityLabel = `Insights run (${log.count} ${log.count === 1 ? 'analysis' : 'analyses'})`;
+        } else if (log.action === 'selection_created') {
+          activityType = 'search';
+          activityLabel = `Lookalike search - ${log.count} selection${log.count > 1 ? 's' : ''}`;
+        }
+
+        return {
+          id: log.id,
+          type: activityType,
+          status: 'done',
+          timestamp: log.created_at || new Date().toISOString(),
+          label: activityLabel,
+          metadata: {
+            count: log.count,
+          },
+        };
+      });
 
       // Filter out null entries and sort by timestamp
       const validActivities: ActivityItem[] = activitiesResults.filter((a): a is ActivityItem => a !== null);

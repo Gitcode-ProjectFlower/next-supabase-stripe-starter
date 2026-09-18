@@ -3,7 +3,7 @@ import { Metadata } from 'next';
 import { LegalPageLayout, LegalSection } from '@/components/legal-page-layout';
 
 export const metadata: Metadata = {
-  title: 'Data & Security | InsideFirms',
+  title: 'Data & Security | insidefirms',
   description: 'How data is handled within InsideFirms and the measures taken to protect user information.',
 };
 
@@ -15,9 +15,7 @@ export default function DataSecurityPage() {
           InsideFirms is designed to help teams analyze and prioritize companies using company data and public
           information.
         </p>
-        <p>
-          We aim to provide a platform that is reliable, secure, and designed for professional commercial use.
-        </p>
+        <p>We aim to provide a platform that is reliable, secure, and designed for professional commercial use.</p>
         <p>
           This page provides an overview of how data is handled within the platform and the measures taken to protect
           user information.
@@ -47,8 +45,8 @@ export default function DataSecurityPage() {
       <LegalSection heading='User Data and Privacy'>
         <p>
           User searches, selections, generated outputs, and account-related activity remain private to the account
-          owner, except where disclosure is required by law or necessary to operate the platform through trusted
-          service providers.
+          owner, except where disclosure is required by law or necessary to operate the platform through trusted service
+          providers.
         </p>
         <p>InsideFirms does not sell personal user data to advertisers or data brokers.</p>
         <p>
@@ -78,8 +76,7 @@ export default function DataSecurityPage() {
 
       <LegalSection heading='Payments and Billing'>
         <p>
-          Payments and subscription management are handled through trusted third-party payment providers such as
-          Stripe.
+          Payments and subscription management are handled through trusted third-party payment providers such as Stripe.
         </p>
         <p>InsideFirms does not store full payment card details on its own servers.</p>
       </LegalSection>
@@ -94,7 +91,9 @@ export default function DataSecurityPage() {
           <li>Payment processing</li>
           <li>Customer support</li>
         </ul>
-        <p>These providers may process limited data as necessary to operate the platform and deliver related services.</p>
+        <p>
+          These providers may process limited data as necessary to operate the platform and deliver related services.
+        </p>
       </LegalSection>
 
       <LegalSection heading='Data Retention'>

@@ -142,7 +142,7 @@ export function Product() {
   const searchHref = getLocalePath(locale, '/');
 
   return (
-    <main className='w-full text-slate-950'>
+    <div className='w-full text-slate-950'>
       <FullBleedSection>
         <section className='mx-auto grid max-w-7xl grid-cols-1 gap-12 px-4 py-12 sm:px-8 sm:py-16 lg:grid-cols-[1.05fr_.95fr] lg:items-center'>
           <div>
@@ -468,7 +468,7 @@ export function Product() {
           </div>
         </div>
       </section>
-    </main>
+    </div>
   );
 }
 

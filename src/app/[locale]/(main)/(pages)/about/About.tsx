@@ -52,7 +52,7 @@ export function About() {
   const helpHref = getLocalePath(locale, '/help');
 
   return (
-    <main className='w-full text-slate-950'>
+    <div className='w-full text-slate-950'>
       <FullBleedSection>
         <section className='mx-auto max-w-7xl px-4 py-10 sm:px-8 sm:py-16'>
           <div className='max-w-4xl'>
@@ -206,6 +206,6 @@ export function About() {
           </Link>
         </div>
       </section>
-    </main>
+    </div>
   );
 }

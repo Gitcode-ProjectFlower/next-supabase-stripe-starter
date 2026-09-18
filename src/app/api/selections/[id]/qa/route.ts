@@ -3,6 +3,7 @@ import { z } from 'zod';
 
 import { inngest } from '@/libs/inngest/client';
 import { buildInputSnapshot } from '@/libs/input-snapshot';
+import { checkRateLimit } from '@/libs/ratelimit';
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
 import type { Json } from '@/libs/supabase/types';
 import { checkUsageLimit } from '@/libs/usage-tracking';
@@ -72,6 +73,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const qaLimit = await checkRateLimit(user.id, 'ask');
+    if (!qaLimit.allowed) {
+      return NextResponse.json({ error: 'Rate limit exceeded. Please try again later.' }, { status: 429 });
     }
 
     const { data: selectionData, error: selectionError } = await supabase

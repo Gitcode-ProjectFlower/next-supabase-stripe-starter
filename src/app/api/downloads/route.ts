@@ -1,3 +1,4 @@
+import { downloadTypeLabel } from '@/libs/download-label';
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
 import { NextResponse } from 'next/server';
 
@@ -32,37 +33,34 @@ export async function GET() {
     }
 
     // Format downloads with selection names if available
-    const formattedDownloads = await Promise.all(
-      (downloads || []).map(async (download: any) => {
-        let selectionName: string | undefined;
+    const downloadsList = downloads || [];
+    const selectionIds = [...new Set(downloadsList.map((d: any) => d.selection_id).filter(Boolean))];
+    const selectionNameMap: Record<string, string> = {};
+    if (selectionIds.length > 0) {
+      const { data: selectionRows } = await supabase.from('selections').select('id, name').in('id', selectionIds);
+      for (const row of (selectionRows as Array<{ id: string; name: string }>) || []) {
+        selectionNameMap[row.id] = row.name;
+      }
+    }
 
-        if (download.selection_id) {
-          const { data: selection } = await supabase
-            .from('selections')
-            .select('name')
-            .eq('id', download.selection_id)
-            .single();
+    const formattedDownloads = downloadsList.map((download: any) => {
+      const selectionName = download.selection_id ? selectionNameMap[download.selection_id] : undefined;
 
-          // @ts-ignore - Supabase type inference issue with select queries
-          selectionName = selection?.name;
-        }
+      // Calculate file size (rough estimate: ~200 bytes per row)
+      const estimatedSizeKB = Math.round((download.row_count * 200) / 1024);
+      const size = estimatedSizeKB > 0 ? `${estimatedSizeKB} KB` : '< 1 KB';
 
-        // Calculate file size (rough estimate: ~200 bytes per row)
-        const estimatedSizeKB = Math.round((download.row_count * 200) / 1024);
-        const size = estimatedSizeKB > 0 ? `${estimatedSizeKB} KB` : '< 1 KB';
-
-        return {
-          id: download.id,
-          type: download.type === 'lookalike' ? 'Lookalike Excel' : 'Insights Excel',
-          selectionId: download.selection_id,
-          selectionName,
-          createdAt: download.created_at,
-          expiresAt: download.expires_at,
-          size,
-          downloadUrl: download.url,
-        };
-      })
-    );
+      return {
+        id: download.id,
+        type: downloadTypeLabel(download.type, download.url),
+        selectionId: download.selection_id,
+        selectionName,
+        createdAt: download.created_at,
+        expiresAt: download.expires_at,
+        size,
+        downloadUrl: download.url,
+      };
+    });
 
     return NextResponse.json({ downloads: formattedDownloads });
   } catch (error) {

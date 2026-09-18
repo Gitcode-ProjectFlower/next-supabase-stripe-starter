@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 import { getCollectionFromLocale, getDefaultLocale, getLocaleFromPath } from '@/libs/collection-mapping';
 import { getTopKLimit, validateFilterKeys } from '@/libs/facet-config';
-import { checkRateLimit, searchRateLimiter } from '@/libs/ratelimit';
+import { checkRateLimit, getClientIp } from '@/libs/ratelimit';
 import { createSupabaseServerClient } from '@/libs/supabase/supabase-server-client';
 import { getAnonymousPlan, getUserPlan, maskFields } from '@/libs/user-plan';
 import { normalizeValue } from '@/utils/normalize-value';
@@ -72,9 +72,32 @@ export async function POST(request: NextRequest) {
         // This prevents a Redis outage from blocking all authenticated searches
         console.error('[Search] Rate limit check failed, proceeding without limit:', rlError);
       }
+    } else {
+      try {
+        const anonymousLimit = await checkRateLimit(`anon:${getClientIp(request)}`, 'search');
+        if (!anonymousLimit.allowed) {
+          return NextResponse.json(
+            { error: 'Rate limit exceeded', message: 'Too many searches. Please try again later.' },
+            { status: 429 }
+          );
+        }
+      } catch (rlError) {
+        console.error('[Search] Anonymous rate limit check failed, proceeding without limit:', rlError);
+      }
     }
 
     const body = await request.json();
+
+    const earlyValidation = searchSchema.safeParse(body);
+    if (!earlyValidation.success) {
+      return NextResponse.json(
+        {
+          error: 'Invalid request data',
+          details: earlyValidation.error.errors,
+        },
+        { status: 400 }
+      );
+    }
 
     let locale = body.locale;
     let collection = body.collection;
@@ -105,26 +128,9 @@ export async function POST(request: NextRequest) {
       collection = getCollectionFromLocale(locale);
     }
 
-    // Debug: Log what we received from frontend
-    console.log('[API] Received request body:', {
-      raw: body,
-      formatted: JSON.stringify(body, null, 2),
-      detectedLocale: locale,
-      detectedCollection: collection,
-    });
+    console.log('[API] Search request:', { detectedLocale: locale, detectedCollection: collection });
 
-    const validation = searchSchema.safeParse(body);
-
-    if (!validation.success) {
-      console.error('[API] Validation failed:', validation.error.errors);
-      return NextResponse.json(
-        {
-          error: 'Invalid request data',
-          details: validation.error.errors,
-        },
-        { status: 400 }
-      );
-    }
+    const validation = earlyValidation;
 
     const {
       names,
@@ -243,12 +249,13 @@ export async function POST(request: NextRequest) {
       Object.assign(haystackPayload, explicitFilters);
     }
 
-    // Debug: Log exact payload being sent to Haystack backend
+    // Debug: Log request shape (no PII payload dumps in production logs)
     console.log('[Haystack API] Request:', {
       url: `${haystackUrl}/similarity`,
       method: 'POST',
-      payload: haystackPayload,
-      formatted: JSON.stringify(haystackPayload, null, 2),
+      topK: haystackPayload.top_k,
+      collection,
+      detectedLocale: locale,
     });
 
     const searchController = new AbortController();
@@ -280,7 +287,7 @@ export async function POST(request: NextRequest) {
     }
 
     const haystackData = await haystackResponse.json();
-    console.log('[Haystack API] Response:', haystackData);
+    console.log('[Haystack API] Response received:', { resultCount: (haystackData.results || []).length });
 
     const results = haystackData.results || [];
 

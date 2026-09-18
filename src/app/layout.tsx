@@ -1,7 +1,8 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Montserrat, Montserrat_Alternates } from 'next/font/google';
 import { PropsWithChildren, Suspense } from 'react';
 
+import { LocaleLang } from '@/components/locale-lang';
 import { Toaster } from '@/components/ui/toaster';
 import { PostHogPageView, PostHogProvider } from '@/providers/posthog-provider';
 import { ReactQueryProvider } from '@/providers/react-query-provider';
@@ -25,11 +26,23 @@ const montserratAlternates = Montserrat_Alternates({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://www.insidefirms.com'),
   title: {
     default: SEO_PROJECT_NAME,
     template: `%s | ${SEO_PROJECT_NAME}`,
   },
   description: SEO_PROJECT_DESCRIPTION,
+  openGraph: {
+    type: 'website',
+    siteName: SEO_PROJECT_NAME,
+    title: SEO_PROJECT_NAME,
+    description: SEO_PROJECT_DESCRIPTION,
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: SEO_PROJECT_NAME,
+    description: SEO_PROJECT_DESCRIPTION,
+  },
   icons: {
     icon: [
       { url: '/favicon.ico', media: '(prefers-color-scheme: light)' },
@@ -39,10 +52,15 @@ export const metadata: Metadata = {
   },
 };
 
+export const viewport: Viewport = {
+  themeColor: '#2563eb',
+};
+
 export default function RootLayout({ children }: PropsWithChildren) {
   return (
     <html lang='en'>
       <body className={cn('font-sans antialiased', montserrat.variable, montserratAlternates.variable)}>
+        <LocaleLang />
         <PostHogProvider>
           <Suspense fallback={null}>
             <PostHogPageView />

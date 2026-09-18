@@ -44,6 +44,8 @@ function ExampleHover({ variant }: { variant: 'sps' | 'segmentation' | 'brief' |
   const [fsClosing, setFsClosing] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const closeBtnRef = useRef<HTMLButtonElement>(null);
   const closeTimer = useRef<NodeJS.Timeout | null>(null);
   const exitTimer = useRef<NodeJS.Timeout | null>(null);
   const [pos, setPos] = useState<{ top: number; left: number; width: number }>({
@@ -161,11 +163,28 @@ function ExampleHover({ variant }: { variant: 'sps' | 'segmentation' | 'brief' |
 
   useEffect(() => {
     if (!fullscreen) return;
+    closeBtnRef.current?.focus();
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.stopPropagation();
         e.preventDefault();
         closeFullscreen();
+        return;
+      }
+      if (e.key === 'Tab' && dialogRef.current) {
+        const focusable = dialogRef.current.querySelectorAll<HTMLElement>(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+        if (focusable.length === 0) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
       }
     };
     document.addEventListener('keydown', handleKeyDown, true);
@@ -208,10 +227,14 @@ function ExampleHover({ variant }: { variant: 'sps' | 'segmentation' | 'brief' |
       {fullscreen &&
         createPortal(
           <div
+            ref={dialogRef}
             className={`pointer-events-auto fixed inset-0 flex items-center justify-center bg-black/60 p-4${
               fsClosing ? ' example-backdrop-closing' : ' example-backdrop'
             }`}
             style={{ zIndex: 200 }}
+            role='dialog'
+            aria-modal='true'
+            aria-label='Example preview'
             onClick={() => closeFullscreen()}
             onPointerDown={(e) => e.stopPropagation()}
           >
@@ -222,6 +245,7 @@ function ExampleHover({ variant }: { variant: 'sps' | 'segmentation' | 'brief' |
               onClick={(e) => e.stopPropagation()}
             >
               <button
+                ref={closeBtnRef}
                 type='button'
                 aria-label='Close example'
                 className='absolute right-3 top-3 rounded-full bg-white p-1.5 text-gray-500 shadow transition-colors hover:bg-gray-100 hover:text-gray-900'
@@ -360,8 +384,17 @@ function SQ2Form({
             return (
               <div
                 key={dim.name}
+                role='checkbox'
+                aria-checked={selected}
+                tabIndex={0}
                 onClick={() => toggleDimension(dim.name)}
-                className={`cursor-pointer rounded-lg border px-3 py-2.5 transition-colors ${
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    toggleDimension(dim.name);
+                  }
+                }}
+                className={`cursor-pointer rounded-lg border px-3 py-2.5 transition-colors focus-visible:outline-2 focus-visible:outline-purple-500 ${
                   selected ? 'border-purple-300 bg-purple-50' : 'border-gray-200 bg-white opacity-50'
                 }`}
               >
@@ -878,7 +911,10 @@ export function StandardQuestionModal({
         {/* Inline alert — limit state uses neutral Upgrade alert; other errors stay red */}
         {error && isLimitReached && <LimitReachedAlert locale={locale} />}
         {formError && (
-          <div className='flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700'>
+          <div
+            role='alert'
+            className='flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700'
+          >
             <svg className='mt-0.5 h-4 w-4 shrink-0' viewBox='0 0 20 20' fill='currentColor'>
               <path
                 fillRule='evenodd'
@@ -890,7 +926,10 @@ export function StandardQuestionModal({
           </div>
         )}
         {error && !isLimitReached && (
-          <div className='flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700'>
+          <div
+            role='alert'
+            className='flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700'
+          >
             <svg className='mt-0.5 h-4 w-4 shrink-0' viewBox='0 0 20 20' fill='currentColor'>
               <path
                 fillRule='evenodd'
